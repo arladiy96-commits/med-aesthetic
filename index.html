@@ -7,7 +7,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>MED AESTHETIC v17</title>
+  <title>MED AESTHETIC v18</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
   /* v16: let Telegram open the Mini App naturally from the bottom first.
@@ -74,8 +74,8 @@ img{display:block;width:100%;object-fit:cover}
 }
 .icon-btn.gold{border-color:rgba(228,183,93,.28);color:var(--gold)}
 .hero{
-  position:relative;overflow:hidden;border:1px solid rgba(228,183,93,.22);border-radius:26px;
-  min-height:320px;margin-top:14px;background:#12081d;box-shadow:var(--shadow)
+  position:relative;overflow:hidden;border:1px solid rgba(228,183,93,.22);border-radius:24px;
+  min-height:228px;margin-top:12px;background:#12081d;box-shadow:var(--shadow)
 }
 .hero:after{
   content:"";position:absolute;inset:0;
@@ -83,15 +83,15 @@ img{display:block;width:100%;object-fit:cover}
              linear-gradient(180deg,transparent 55%,rgba(7,4,13,.72) 100%);
   pointer-events:none
 }
-.hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.9;filter:saturate(.82) contrast(1.05)}
+.hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:58% 34%;opacity:.9;filter:saturate(.82) contrast(1.05)}
 .hero-orb{position:absolute;right:-80px;top:-80px;width:250px;height:250px;border-radius:50%;background:rgba(122,34,255,.27);filter:blur(44px)}
-.hero-content{position:relative;z-index:2;width:64%;padding:28px 20px 23px}
+.hero-content{position:relative;z-index:2;width:61%;padding:21px 18px 18px}
 .eyebrow{text-transform:uppercase;letter-spacing:2.3px;color:var(--gold2);font-size:10px;font-weight:800}
-.hero h1{font-family:"Cormorant Garamond",serif;font-size:34px;line-height:.98;margin:11px 0 10px}
-.hero p{font-size:11px;line-height:1.55;color:#c6bfce;margin:0 0 18px}
+.hero h1{font-family:"Cormorant Garamond",serif;font-size:30px;line-height:.94;margin:1px 0 9px;letter-spacing:-.2px}
+.hero p{font-size:10px;line-height:1.42;color:#c6bfce;margin:0 0 13px;max-width:245px}
 .btn-primary{
   border:1px solid #d5a348;background:linear-gradient(135deg,#d5a348,#f1cf84);
-  color:#201406;min-height:44px;padding:0 18px;border-radius:13px;font-weight:800;box-shadow:0 10px 28px rgba(224,174,76,.19)
+  color:#201406;min-height:40px;padding:0 17px;border-radius:12px;font-weight:800;box-shadow:0 9px 24px rgba(224,174,76,.18)
 }
 .btn-primary:active,.quick:active,.service-card:active,.master-pill:active,.booking-card:active{transform:scale(.985)}
 .section{margin-top:23px}
@@ -1262,9 +1262,8 @@ html.app-ready #app{
         <img class="hero-img" src="${IMG.hero}" alt="">
         <div class="hero-orb"></div>
         <div class="hero-content">
-          <div class="eyebrow">MED AESTHETIC · COSMETOLOGY · PIERCING</div>
-          <h1>Премиум уход<br>для особенных</h1>
-          <p>Косметология, пирсинг и аппаратные процедуры. Выберите услугу и удобное время онлайн.</p>
+          <h1>Уход. Акцент.<br>Характер.</h1>
+          <p>Косметология, пирсинг и аппаратные процедуры — в одном месте.</p>
           <button class="btn-primary" onclick="Beauty.go('services')">Записаться</button>
         </div>
       </section>
