@@ -571,27 +571,48 @@ html,body{touch-action:none}
 
   window.addEventListener("resize", syncTelegramShell, {passive:true});
 
-  // Быстрый старт: обычный пользователь сразу видит клиентское приложение.
-  // Для уже определённых creator/admin запоминаем роль локально, чтобы их
-  // рабочая панель при следующих открытиях появлялась без ожидания сети.
+  // Мгновенный вход без "переключения экранов".
+  // Telegram-бот задаёт персональный menu button:
+  //   ?entry=creator — создатель
+  //   ?entry=admin   — администратор
+  //   ?entry=client  — клиент
+  // Для повторных входов роль также кэшируется локально.
+  const entryHint = (() => {
+    try{
+      const v = new URLSearchParams(location.search).get("entry");
+      return (v === "creator" || v === "admin" || v === "client") ? v : null;
+    }catch(e){ return null; }
+  })();
+
   let cachedActualRole = "client";
-  let cachedRoleMode = "client";
   try{
     const savedActual = localStorage.getItem("medAestheticActualRole");
-    if(savedActual === "creator" || savedActual === "admin") cachedActualRole = savedActual;
-    const savedMode = sessionStorage.getItem("medAestheticRoleMode");
-    if(savedMode === "creator" || savedMode === "admin" || savedMode === "client") cachedRoleMode = savedMode;
+    if(savedActual === "creator" || savedActual === "admin")
+      cachedActualRole = savedActual;
   }catch(e){}
 
-  const cachedSwitch = cachedActualRole === "creator"
+  // При каждом новом открытии staff всегда стартует в своей рабочей роли.
+  // Переключение создателя/админа в клиентский режим действует только пока
+  // Mini App открыт и не переносится на следующий запуск.
+  const startupRole =
+    entryHint === "creator" ? "creator" :
+    entryHint === "admin"   ? "admin"   :
+    entryHint === "client"  ? "client"  :
+    cachedActualRole;
+
+  const cachedActualForUi =
+    startupRole === "creator" ? "creator" :
+    startupRole === "admin" ? "admin" :
+    cachedActualRole;
+
+  const cachedSwitch = cachedActualForUi === "creator"
     ? ["creator","admin","client"]
-    : cachedActualRole === "admin"
+    : cachedActualForUi === "admin"
       ? ["admin","client"]
       : ["client"];
-  if(!cachedSwitch.includes(cachedRoleMode)) cachedRoleMode = cachedActualRole;
 
   const S = {
-    view: cachedRoleMode === "client" ? "home" : "admin-home",
+    view: startupRole === "client" ? "home" : "admin-home",
     category: "Все",
     service: null,
     master: null,
@@ -599,8 +620,8 @@ html,body{touch-action:none}
     time: null,
     bookingConfirmed: false,
     identityReady: true,
-    actualRole: cachedActualRole,
-    roleMode: cachedRoleMode,
+    actualRole: cachedActualForUi,
+    roleMode: startupRole,
     roleSwitch: cachedSwitch,
     roleSheet: false,
     adminFilter: "Все",
@@ -885,9 +906,20 @@ html,body{touch-action:none}
         else
           localStorage.removeItem("medAestheticActualRole");
       }catch(e){}
-      const saved = sessionStorage.getItem("medAestheticRoleMode");
-      S.roleMode = S.roleSwitch.includes(saved) ? saved : S.actualRole;
-      S.view = S.roleMode === "client" ? "home" : "admin-home";
+
+      // Сервер только подтверждает права. Если staff уже открылся как staff,
+      // экран не прыгает. Если ссылка была подделана клиентом — безопасно
+      // возвращаем его в клиентскую часть после проверки.
+      if(S.actualRole === "client"){
+        S.roleMode = "client";
+        if(!["home","services","service","masters","datetime","confirm","booking","history","profile","bonus"].includes(S.view))
+          S.view = "home";
+      }else if(!S.roleSwitch.includes(S.roleMode)){
+        S.roleMode = S.actualRole;
+        S.view = "admin-home";
+      }else if(S.roleMode !== "client" && !String(S.view).startsWith("admin-")){
+        S.view = "admin-home";
+      }
     }catch(e){
       console.error("Role load failed:",e);
       // При ошибке проверки прав безопасно оставляем клиентский режим.
@@ -1313,7 +1345,6 @@ html,body{touch-action:none}
     switchRole(role){
       if(!S.roleSwitch.includes(role))return;
       S.roleMode=role;
-      sessionStorage.setItem("medAestheticRoleMode",role);
       S.roleSheet=false;
       S.view=role==="client"?"home":"admin-home";
       render();

@@ -80,20 +80,50 @@ def make_admin_invite_link(raw_token: str) -> str:
     return f"https://t.me/{username}?start=admin_{raw_token}"
 
 
-def _send_message(chat_id: int, text: str, with_app_button: bool = True) -> None:
+def role_app_url(role: str) -> str:
+    base_url = _base_url()
+    if not base_url:
+        return ""
+    safe_role = role if role in {"creator", "admin", "client"} else "client"
+    return f"{base_url}/?entry={safe_role}"
+
+
+def set_personal_menu_button(chat_id: int, role: str) -> None:
+    app_url = role_app_url(role)
+    if not app_url:
+        return
+    telegram_api(
+        "setChatMenuButton",
+        {
+            "chat_id": chat_id,
+            "menu_button": {
+                "type": "web_app",
+                "text": "MED AESTHETIC",
+                "web_app": {"url": app_url},
+            },
+        },
+    )
+
+
+def _send_message(
+    chat_id: int,
+    text: str,
+    with_app_button: bool = True,
+    role: str = "client",
+) -> None:
     payload: dict = {
         "chat_id": chat_id,
         "text": text,
     }
 
-    base_url = _base_url()
-    if with_app_button and base_url:
+    app_url = role_app_url(role)
+    if with_app_button and app_url:
         payload["reply_markup"] = {
             "inline_keyboard": [
                 [
                     {
                         "text": "Открыть MED AESTHETIC",
-                        "web_app": {"url": base_url},
+                        "web_app": {"url": app_url},
                     }
                 ]
             ]
@@ -120,10 +150,12 @@ def process_update(update: dict) -> None:
         app_user = upsert_app_user(sender)
 
         if text == "/id" or text.startswith("/id@"):
+            set_personal_menu_button(chat_id, app_user.get("role", "client"))
             _send_message(
                 chat_id,
                 f"Ваш Telegram ID: {telegram_user_id}",
                 with_app_button=False,
+                role=app_user.get("role", "client"),
             )
             return
 
@@ -136,7 +168,9 @@ def process_update(update: dict) -> None:
                 result = consume_admin_invite(raw_token, telegram_user_id)
 
                 if result.get("ok"):
-                    if result.get("role") == "creator":
+                    granted_role = result.get("role", "admin")
+                    set_personal_menu_button(chat_id, granted_role)
+                    if granted_role == "creator":
                         msg = (
                             "Приглашение проверено. Вы остались создателем — "
                             "права создателя не понижаются."
@@ -145,7 +179,7 @@ def process_update(update: dict) -> None:
                         msg = (
                             "Готово. Права администратора MED AESTHETIC активированы."
                         )
-                    _send_message(chat_id, msg)
+                    _send_message(chat_id, msg, role=granted_role)
                     return
 
                 _send_message(
@@ -161,9 +195,11 @@ def process_update(update: dict) -> None:
                 "client": "клиент",
             }.get(role, "клиент")
 
+            set_personal_menu_button(chat_id, role)
             _send_message(
                 chat_id,
                 f"MED AESTHETIC готово к работе.\nВаша роль: {role_text}.",
+                role=role,
             )
             return
     except Exception as exc:
