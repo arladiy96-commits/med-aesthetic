@@ -930,8 +930,8 @@ html.app-ready #app{
 }
 
 
-/* v26 — certificate visually matched to the girl banner only */
-/* Keep the first banner exactly as it is; match the certificate to its VISIBLE card. */
+/* v28 — certificate aligned to the girl banner, without content crop */
+/* The first banner remains untouched. Only the certificate slide is corrected. */
 .hero-slide .hero.hero-exact-card,
 .hero-slide .certificate-banner{
   width:93%!important;
@@ -941,8 +941,7 @@ html.app-ready #app{
   margin-right:0!important;
 }
 
-/* The girl artwork contains its own frame slightly inside the image.
-   Make the certificate's visible frame occupy that same width/height on screen. */
+/* Keep the already matched VISIBLE size and corner geometry of the girl banner. */
 .hero-slide:nth-child(2) .certificate-banner{
   aspect-ratio:1.437 / 1!important;
   margin-top:0!important;
@@ -953,23 +952,23 @@ html.app-ready #app{
   box-shadow:0 22px 45px rgba(0,0,0,.34)!important;
 }
 
-/* Crop away the certificate artwork's own large rounded outer frame.
-   The 14px shell above now defines the corners, matching the girl banner. */
+/* Do not zoom the certificate artwork. The previous 110% crop pushed the title
+   almost against the left edge and cut the artwork. Fill the matched shell with
+   the complete source image instead. */
 .hero-slide:nth-child(2) .certificate-banner img{
-  width:110%!important;
-  height:110%!important;
-  left:-5%!important;
-  top:-5%!important;
-  object-fit:cover!important;
+  width:100%!important;
+  height:100%!important;
+  left:0!important;
+  top:0!important;
+  object-fit:fill!important;
   object-position:center center!important;
 }
 
-/* Match the certificate CTA to the baked-in “Записаться” button:
-   same visual height/radius/type scale and sampled muted-gold gradient. */
+/* Same visual vertical level as the baked-in “Записаться” button on banner 1. */
 .hero-slide:nth-child(2) .certificate-action{
   left:5.6%!important;
-  bottom:11.2%!important;
-  height:15.03%!important;
+  bottom:8.5%!important;
+  height:15.2%!important;
   min-height:0!important;
   min-width:0!important;
   width:auto!important;
