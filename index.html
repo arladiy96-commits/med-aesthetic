@@ -7,7 +7,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>MED AESTHETIC v18</title>
+  <title>MED AESTHETIC v19</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
   /* v16: let Telegram open the Mini App naturally from the bottom first.
@@ -74,25 +74,139 @@ img{display:block;width:100%;object-fit:cover}
 }
 .icon-btn.gold{border-color:rgba(228,183,93,.28);color:var(--gold)}
 .hero{
-  position:relative;overflow:hidden;border:1px solid rgba(228,183,93,.22);border-radius:24px;
-  min-height:228px;margin-top:12px;background:#12081d;box-shadow:var(--shadow)
+  position:relative;
+  overflow:visible;
+  min-height:276px;
+  margin-top:18px;
+  isolation:isolate;
 }
-.hero:after{
-  content:"";position:absolute;inset:0;
-  background:linear-gradient(90deg,rgba(7,4,13,.97) 0%,rgba(7,4,13,.80) 38%,rgba(7,4,13,.12) 78%),
-             linear-gradient(180deg,transparent 55%,rgba(7,4,13,.72) 100%);
-  pointer-events:none
+.hero-frame{
+  position:absolute;
+  inset:0;
+  overflow:hidden;
+  border:1px solid rgba(222,174,87,.34);
+  border-radius:25px;
+  background:
+    radial-gradient(260px 210px at 83% 38%,rgba(101,43,154,.30),transparent 70%),
+    linear-gradient(135deg,#0c0911 0%,#130d1b 52%,#1a1026 100%);
+  box-shadow:
+    0 22px 45px rgba(0,0,0,.34),
+    inset 0 1px 0 rgba(255,255,255,.025);
 }
-.hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:58% 34%;opacity:.9;filter:saturate(.82) contrast(1.05)}
-.hero-orb{position:absolute;right:-80px;top:-80px;width:250px;height:250px;border-radius:50%;background:rgba(122,34,255,.27);filter:blur(44px)}
-.hero-content{position:relative;z-index:2;width:61%;padding:21px 18px 18px}
-.eyebrow{text-transform:uppercase;letter-spacing:2.3px;color:var(--gold2);font-size:10px;font-weight:800}
-.hero h1{font-family:"Cormorant Garamond",serif;font-size:30px;line-height:.94;margin:1px 0 9px;letter-spacing:-.2px}
-.hero p{font-size:10px;line-height:1.42;color:#c6bfce;margin:0 0 13px;max-width:245px}
+.hero-bg{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:63% 34%;
+  opacity:.58;
+  filter:saturate(.76) contrast(1.06) brightness(.82);
+}
+.hero-frame:after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(90deg,
+      rgba(6,5,10,.98) 0%,
+      rgba(7,5,11,.94) 32%,
+      rgba(8,5,12,.72) 53%,
+      rgba(9,6,14,.20) 75%,
+      rgba(10,6,16,.06) 100%),
+    linear-gradient(180deg,rgba(8,5,13,.03),rgba(8,5,13,.24));
+  pointer-events:none;
+}
+.hero-orb{
+  position:absolute;
+  right:1%;
+  top:-15%;
+  width:58%;
+  height:74%;
+  border-radius:50%;
+  background:rgba(111,49,190,.20);
+  filter:blur(42px);
+  z-index:1;
+  pointer-events:none;
+}
+.hero-model-pop{
+  position:absolute;
+  z-index:3;
+  right:-2.5%;
+  top:-28px;
+  width:58%;
+  height:calc(100% + 32px);
+  object-fit:cover;
+  object-position:61% 29%;
+  opacity:1;
+  filter:saturate(.86) contrast(1.08) drop-shadow(-12px 14px 18px rgba(0,0,0,.34));
+  -webkit-mask-image:radial-gradient(ellipse 68% 77% at 61% 47%,#000 0 58%,rgba(0,0,0,.94) 65%,transparent 86%);
+  mask-image:radial-gradient(ellipse 68% 77% at 61% 47%,#000 0 58%,rgba(0,0,0,.94) 65%,transparent 86%);
+  pointer-events:none;
+}
+.hero-content{
+  position:relative;
+  z-index:4;
+  width:56%;
+  padding:24px 0 20px 20px;
+}
+.hero-mark{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  height:18px;
+  margin:0 0 10px;
+  color:#e7bb5d;
+}
+.hero-mark .spark{
+  font-size:17px;
+  line-height:1;
+  text-shadow:0 0 16px rgba(231,187,93,.24);
+}
+.hero-mark .line{
+  width:43px;
+  height:1px;
+  background:linear-gradient(90deg,rgba(231,187,93,.70),rgba(231,187,93,.05));
+}
+.hero h1{
+  font-family:"Cormorant Garamond",serif;
+  font-size:34px;
+  line-height:.94;
+  font-weight:700;
+  letter-spacing:-.35px;
+  margin:0 0 13px;
+  color:#f5f0f7;
+  text-shadow:0 2px 12px rgba(0,0,0,.34);
+}
+.hero p{
+  max-width:220px;
+  margin:0 0 15px;
+  color:#c8c0ce;
+  font-size:10.4px;
+  line-height:1.48;
+  letter-spacing:.02px;
+}
 .btn-primary{
-  border:1px solid #d5a348;background:linear-gradient(135deg,#d5a348,#f1cf84);
-  color:#201406;min-height:40px;padding:0 17px;border-radius:12px;font-weight:800;box-shadow:0 9px 24px rgba(224,174,76,.18)
+  min-height:43px;
+  min-width:145px;
+  padding:0 18px;
+  border-radius:13px;
+  border:1px solid rgba(255,222,137,.78);
+  background:linear-gradient(135deg,#dfa63b 0%,#efc45c 47%,#f6da86 100%);
+  color:#211405;
+  font-size:13px;
+  font-weight:850;
+  box-shadow:0 10px 25px rgba(220,166,55,.22),inset 0 1px 0 rgba(255,255,255,.28);
 }
+.btn-primary:active{transform:translateY(1px) scale(.99)}
+@media (max-width:360px){
+  .hero{min-height:262px}
+  .hero-content{width:58%;padding-left:17px;padding-top:22px}
+  .hero h1{font-size:31px}
+  .hero p{font-size:9.7px}
+  .hero-model-pop{right:-5%;width:61%;top:-24px}
+}
+
 .btn-primary:active,.quick:active,.service-card:active,.master-pill:active,.booking-card:active{transform:scale(.985)}
 .section{margin-top:23px}
 .section-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:11px}
@@ -814,7 +928,7 @@ html.app-ready #app{
   };
 
   const IMG = {
-    hero:"https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1000&q=82",
+    hero:"https://images.pexels.com/photos/15515167/pexels-photo-15515167.jpeg?auto=compress&cs=tinysrgb&w=1200",
 
     faceCleaning:"https://images.unsplash.com/photo-1761718210089-ba3bb5ccb54f?auto=format&fit=crop&w=900&q=82",
     childPiercing:"https://images.unsplash.com/photo-1723986071829-42d53407ae38?auto=format&fit=crop&w=900&q=82",
@@ -1259,10 +1373,14 @@ html.app-ready #app{
   function home(){
     return `<main class="page">${topbar()}
       <section class="hero">
-        <img class="hero-img" src="${IMG.hero}" alt="">
+        <div class="hero-frame">
+          <img class="hero-bg" src="${IMG.hero}" alt="">
+        </div>
         <div class="hero-orb"></div>
+        <img class="hero-model-pop" src="${IMG.hero}" alt="">
         <div class="hero-content">
-          <h1>Уход. Акцент.<br>Характер.</h1>
+          <div class="hero-mark"><span class="spark">✦</span><span class="line"></span></div>
+          <h1>Красота<br>в каждой детали</h1>
           <p>Косметология, пирсинг и аппаратные процедуры — в одном месте.</p>
           <button class="btn-primary" onclick="Beauty.go('services')">Записаться</button>
         </div>
