@@ -930,58 +930,73 @@ html.app-ready #app{
 }
 
 
-/* v25 — certificate banner matched to the girl banner only */
-/* Exact same outer geometry for both carousel cards. */
+/* v26 — certificate visually matched to the girl banner only */
+/* Keep the first banner exactly as it is; match the certificate to its VISIBLE card. */
 .hero-slide .hero.hero-exact-card,
 .hero-slide .certificate-banner{
   width:93%!important;
   flex:0 0 93%!important;
-  height:auto!important;
   min-height:0!important;
-  aspect-ratio:941 / 684!important;
-  border-radius:24px!important;
+  margin-left:0!important;
+  margin-right:0!important;
+}
+
+/* The girl artwork contains its own frame slightly inside the image.
+   Make the certificate's visible frame occupy that same width/height on screen. */
+.hero-slide:nth-child(2) .certificate-banner{
+  aspect-ratio:1.437 / 1!important;
+  margin-top:0!important;
+  transform:translateY(2.2%)!important;
+  border-radius:14px!important;
   overflow:hidden!important;
   background:#0b0810!important;
   box-shadow:0 22px 45px rgba(0,0,0,.34)!important;
 }
 
-/* Crop the certificate source exactly like the girl banner.
-   This removes the extra baked-in rounded frame and makes the visible corners identical. */
+/* Crop away the certificate artwork's own large rounded outer frame.
+   The 14px shell above now defines the corners, matching the girl banner. */
 .hero-slide:nth-child(2) .certificate-banner img{
-  width:107%!important;
-  height:107%!important;
-  left:-3.5%!important;
-  top:-3.5%!important;
+  width:110%!important;
+  height:110%!important;
+  left:-5%!important;
+  top:-5%!important;
   object-fit:cover!important;
   object-position:center center!important;
 }
 
-/* Match the certificate CTA visually to the baked-in “Записаться” button. */
+/* Match the certificate CTA to the baked-in “Записаться” button:
+   same visual height/radius/type scale and sampled muted-gold gradient. */
 .hero-slide:nth-child(2) .certificate-action{
-  left:5.4%!important;
-  bottom:8.4%!important;
-  height:15.0%!important;
+  left:5.6%!important;
+  bottom:11.2%!important;
+  height:15.03%!important;
   min-height:0!important;
   min-width:0!important;
   width:auto!important;
-  padding:0 11px!important;
+  padding:0 12px!important;
   border-radius:9px!important;
-  border:1px solid rgba(255,222,137,.78)!important;
-  background:linear-gradient(135deg,#dfa63b 0%,#efc45c 47%,#f6da86 100%)!important;
-  color:#211405!important;
+  border:1px solid rgba(198,164,99,.78)!important;
+  background:linear-gradient(90deg,#d0a65b 0%,#d4ae62 25%,#dbb86d 52%,#dfbe77 75%,#e4c582 100%)!important;
+  color:#2f1e08!important;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif!important;
-  font-size:9.6px!important;
+  font-size:10.8px!important;
   line-height:1!important;
   font-weight:700!important;
   letter-spacing:0!important;
-  box-shadow:0 8px 18px rgba(220,166,55,.20),inset 0 1px 0 rgba(255,255,255,.28)!important;
+  text-shadow:none!important;
+  box-shadow:0 6px 14px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.07)!important;
   white-space:nowrap!important;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.hero-slide:nth-child(2) .certificate-action:active{
+  transform:translateY(1px) scale(.99)!important;
 }
 
 @media (max-width:360px){
   .hero-slide:nth-child(2) .certificate-action{
-    font-size:9px!important;
-    padding:0 10px!important;
+    font-size:10.2px!important;
+    padding:0 11px!important;
   }
 }
 
