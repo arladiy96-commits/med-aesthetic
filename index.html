@@ -7,7 +7,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>MED AESTHETIC v11</title>
+  <title>MED AESTHETIC v13 Admin</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style id="med-aesthetic-v11-css">
 /* MED AESTHETIC CLIENT v11 — JRMA root-path compatible */
@@ -461,6 +461,53 @@ html,body{touch-action:none}
   letter-spacing:1.8px!important;
 }
 
+
+/* v13 — Admin workspace, concept 5: automation-first */
+:root{
+  --admin-accent:#8f62ff;
+  --admin-accent2:#b493ff;
+  --admin-cyan:#55d6c2;
+  --admin-warn:#f0b55b;
+  --admin-panel:#111019;
+  --admin-panel2:#15131e;
+}
+.admin-page{padding:0 14px 28px}
+.admin-safe{height:calc(max(env(safe-area-inset-top,0px),var(--tg-safe-top,0px),44px) + 16px)}
+.admin-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.admin-brand{min-width:0}
+.admin-brand-title{font-family:"Cormorant Garamond",serif;color:#fff;font-size:25px;font-weight:700;letter-spacing:.4px;line-height:1}
+.admin-brand-title span{color:var(--admin-accent2)}
+.admin-role{font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:6px}
+.admin-head-actions{display:flex;align-items:center;gap:8px}
+.admin-round{width:40px;height:40px;border-radius:14px;border:1px solid rgba(143,98,255,.24);background:linear-gradient(180deg,#171421,#100e16);display:grid;place-items:center;color:var(--admin-accent2);font-size:17px;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.admin-avatar{width:40px;height:40px;border-radius:14px;object-fit:cover;border:1px solid rgba(180,147,255,.35);background:#17131f}
+.admin-date-row{display:flex;justify-content:space-between;align-items:end;gap:12px;margin:2px 0 13px}
+.admin-date-row h1{font-size:22px;margin:0;line-height:1.05}.admin-date-row p{margin:6px 0 0;font-size:9px;color:var(--muted)}
+.admin-link{border:0;background:none;color:var(--admin-accent2);font-size:9px;padding:7px 0}
+.admin-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:11px 0 18px}
+.admin-metric{min-width:0;border:1px solid rgba(255,255,255,.07);background:linear-gradient(180deg,#15131e,#0e0d14);border-radius:18px;padding:10px 6px;text-align:center}
+.admin-ring{--p:64;width:48px;height:48px;margin:0 auto 7px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--admin-accent) calc(var(--p)*1%),rgba(255,255,255,.07) 0);position:relative;box-shadow:0 0 22px rgba(143,98,255,.08)}
+.admin-ring:after{content:"";position:absolute;inset:5px;border-radius:50%;background:#111019;border:1px solid rgba(255,255,255,.04)}
+.admin-ring b{position:relative;z-index:1;font-size:11px}.admin-metric span{display:block;color:var(--muted);font-size:7.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.admin-metric small{display:block;color:var(--good);font-size:7px;margin-top:3px}
+.admin-section{margin-top:19px}.admin-section-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}.admin-section-title h2{font-size:13px;margin:0}.admin-section-title span,.admin-section-title button{font-size:8px;color:var(--muted);border:0;background:none}
+.admin-next{border:1px solid rgba(143,98,255,.22);background:radial-gradient(260px 100px at 100% 0%,rgba(143,98,255,.16),transparent 70%),linear-gradient(180deg,#15131e,#100e17);border-radius:20px;padding:13px;display:grid;grid-template-columns:50px 1fr auto;align-items:center;gap:11px}
+.admin-time{height:50px;border-radius:15px;background:rgba(143,98,255,.12);color:var(--admin-accent2);display:grid;place-items:center;font-size:14px;font-weight:800;border:1px solid rgba(143,98,255,.2)}
+.admin-next h3{font-size:11px;margin:0 0 4px}.admin-next p{font-size:8px;color:var(--muted);margin:2px 0;line-height:1.35}.admin-status{font-size:7px;padding:5px 7px;border-radius:999px;color:var(--good);background:rgba(112,216,154,.09)}
+.admin-empty{border:1px dashed rgba(255,255,255,.10);background:rgba(255,255,255,.015);border-radius:18px;padding:20px;text-align:center;color:var(--muted);font-size:9px;line-height:1.5}
+.admin-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.admin-action{border:1px solid rgba(255,255,255,.07);background:#121019;border-radius:17px;padding:11px 5px 9px;text-align:center;min-height:78px}.admin-action i{font-style:normal;width:32px;height:32px;border-radius:11px;display:grid;place-items:center;margin:0 auto 7px;background:rgba(143,98,255,.11);color:var(--admin-accent2);font-size:15px}.admin-action b{display:block;font-size:7.6px;line-height:1.25}
+.automation-card{border:1px solid rgba(85,214,194,.16);background:linear-gradient(180deg,rgba(85,214,194,.055),rgba(17,16,25,.95));border-radius:20px;padding:5px 13px}.auto-row{display:grid;grid-template-columns:34px 1fr auto;gap:9px;align-items:center;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.055)}.auto-row:last-child{border-bottom:0}.auto-ico{width:32px;height:32px;border-radius:11px;background:rgba(85,214,194,.10);color:var(--admin-cyan);display:grid;place-items:center}.auto-row b{font-size:9.3px}.auto-row p{margin:2px 0 0;color:var(--muted);font-size:7.5px}.auto-state{font-size:7px;color:var(--admin-cyan);background:rgba(85,214,194,.09);padding:5px 7px;border-radius:999px}
+.admin-list{display:grid;gap:8px}.admin-book-row{border:1px solid rgba(255,255,255,.07);background:#121019;border-radius:16px;padding:10px;display:grid;grid-template-columns:48px 1fr auto;gap:10px;align-items:center;text-align:left}.admin-book-row .t{font-size:11px;font-weight:800;color:var(--admin-accent2)}.admin-book-row h3{font-size:9.5px;margin:0 0 3px}.admin-book-row p{font-size:7.7px;color:var(--muted);margin:1px 0}.admin-book-row .dots{color:#6e6877;font-size:18px}
+.admin-filter{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;margin:8px 0 13px}.admin-filter button{flex:0 0 auto;border:1px solid rgba(255,255,255,.07);background:#111019;color:var(--muted);border-radius:999px;padding:8px 11px;font-size:8px}.admin-filter button.active{color:#fff;border-color:rgba(143,98,255,.36);background:rgba(143,98,255,.13)}
+.admin-calendar{border:1px solid rgba(255,255,255,.07);background:#111019;border-radius:20px;padding:12px}.admin-week{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:12px}.admin-day{border:0;background:#0e0d14;color:var(--muted);border-radius:12px;padding:7px 2px;text-align:center}.admin-day span{display:block;font-size:6.8px}.admin-day b{display:block;font-size:12px;margin-top:3px}.admin-day.active{background:linear-gradient(160deg,#7550e8,#9b72ff);color:#fff}.admin-timeline{display:grid;gap:7px}.admin-slot{display:grid;grid-template-columns:42px 1fr;gap:8px;align-items:stretch}.admin-slot-time{font-size:8px;color:var(--muted);padding-top:10px}.admin-slot-card{border-left:3px solid var(--admin-accent);background:rgba(143,98,255,.11);border-radius:10px;padding:8px 10px}.admin-slot-card b{display:block;font-size:8.5px}.admin-slot-card span{display:block;font-size:7px;color:var(--muted);margin-top:2px}.admin-slot-free{border:1px dashed rgba(255,255,255,.09);background:transparent;color:#67616e;border-radius:10px;padding:9px;font-size:7.5px;text-align:center}
+.admin-kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.admin-kpi{border:1px solid rgba(255,255,255,.07);background:#121019;border-radius:16px;padding:12px}.admin-kpi small{font-size:7.4px;color:var(--muted)}.admin-kpi strong{display:block;font-size:18px;margin-top:4px;color:#fff}
+.admin-menu{border:1px solid rgba(255,255,255,.07);border-radius:20px;overflow:hidden;background:#111019}.admin-menu button{width:100%;border:0;border-bottom:1px solid rgba(255,255,255,.055);background:none;color:#fff;padding:14px 12px;display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;text-align:left}.admin-menu button:last-child{border-bottom:0}.admin-menu .ico{width:30px;height:30px;border-radius:10px;background:rgba(143,98,255,.10);color:var(--admin-accent2);display:grid;place-items:center}.admin-menu b{font-size:9.5px}.admin-menu small{font-size:7.2px;color:var(--muted);display:block;margin-top:2px}.admin-menu .go{color:#746f7c;font-size:15px}
+.admin-client-switch{margin-top:14px;border:1px solid rgba(240,181,91,.20);background:rgba(240,181,91,.055);border-radius:18px;padding:13px;display:flex;align-items:center;justify-content:space-between;gap:12px}.admin-client-switch b{font-size:9.5px}.admin-client-switch p{font-size:7.5px;color:var(--muted);margin:3px 0 0}.switch-pill{width:44px;height:25px;border:0;border-radius:999px;background:#272331;padding:3px;position:relative}.switch-pill:after{content:"";display:block;width:19px;height:19px;border-radius:50%;background:#7a7382;transition:.2s}.switch-pill.on{background:var(--admin-accent)}.switch-pill.on:after{transform:translateX(19px);background:#fff}
+.admin-bottom .nav-inner{border-color:rgba(143,98,255,.12)}.admin-bottom .nav-btn.active{color:var(--admin-accent2)}
+.role-sheet-backdrop{position:fixed;z-index:120;inset:0;background:rgba(0,0,0,.62);backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center;padding:14px}.role-sheet{width:min(590px,100%);border:1px solid rgba(143,98,255,.25);background:linear-gradient(180deg,#181420,#0e0c13);border-radius:26px;padding:17px 14px calc(17px + env(safe-area-inset-bottom));box-shadow:0 -30px 70px rgba(0,0,0,.55)}.role-sheet h3{margin:0 0 4px;font-size:14px}.role-sheet p{margin:0 0 12px;color:var(--muted);font-size:8px}.role-choice{width:100%;border:1px solid rgba(255,255,255,.06);background:#111019;color:#fff;border-radius:15px;padding:12px;display:flex;align-items:center;justify-content:space-between;margin-top:7px;text-align:left}.role-choice b{font-size:10px}.role-choice span{font-size:8px;color:var(--muted)}.role-choice.active{border-color:rgba(143,98,255,.40);background:rgba(143,98,255,.10)}
+.test-mode-bar{position:fixed;z-index:75;left:50%;top:calc(max(env(safe-area-inset-top,0px),var(--tg-safe-top,0px),44px) + 6px);transform:translateX(-50%);width:min(440px,calc(100% - 96px));border:1px solid rgba(143,98,255,.28);background:rgba(20,16,29,.94);backdrop-filter:blur(14px);border-radius:999px;padding:7px 10px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:7.8px;box-shadow:0 8px 28px rgba(0,0,0,.3)}.test-mode-bar button{border:0;background:none;color:var(--admin-accent2);font-size:7.8px;font-weight:800}
+.role-loading{height:100%;display:grid;place-items:center;padding:24px}.role-loading-card{border:1px solid rgba(143,98,255,.14);background:#111019;border-radius:22px;padding:22px;text-align:center;color:var(--muted);font-size:9px}.role-spinner{width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,255,255,.07);border-top-color:var(--admin-accent2);margin:0 auto 12px;animation:adminspin .8s linear infinite}@keyframes adminspin{to{transform:rotate(360deg)}}
+
   </style>
 </head>
 <body>
@@ -532,7 +579,14 @@ html,body{touch-action:none}
     master: null,
     date: null,
     time: null,
-    bookingConfirmed: false
+    bookingConfirmed: false,
+    identityReady: false,
+    actualRole: "client",
+    roleMode: "client",
+    roleSwitch: ["client"],
+    roleSheet: false,
+    adminFilter: "Все",
+    adminDate: null
   };
 
   const IMG = {
@@ -787,12 +841,39 @@ html,body{touch-action:none}
     const headers = {
       "Content-Type":"application/json",
       "X-Telegram-Init-Data": tg?.initData || "",
+      "X-Act-As-Role": S.roleMode || "client",
       ...(options.headers || {})
     };
     const res = await fetch("/api/bookings" + path, {...options, headers});
     const data = await res.json().catch(()=>({}));
     if(!res.ok) throw new Error(data.detail || data.error || "Ошибка сервера");
     return data;
+  }
+
+  async function loadIdentity(){
+    try{
+      const res = await fetch("/api/me",{
+        headers:{
+          "X-Telegram-Init-Data": tg?.initData || ""
+        }
+      });
+      const data = await res.json().catch(()=>({}));
+      if(!res.ok) throw new Error(data.detail || "Не удалось определить роль");
+      S.actualRole = data?.user?.actualRole || "client";
+      S.roleSwitch = Array.isArray(data?.roleSwitch) ? data.roleSwitch : [S.actualRole];
+      const saved = sessionStorage.getItem("medAestheticRoleMode");
+      S.roleMode = S.roleSwitch.includes(saved) ? saved : S.actualRole;
+      S.view = S.roleMode === "client" ? "home" : "admin-home";
+    }catch(e){
+      console.error("Role load failed:",e);
+      S.actualRole="client";
+      S.roleMode="client";
+      S.roleSwitch=["client"];
+      S.view="home";
+    }finally{
+      S.identityReady=true;
+      render();
+    }
   }
 
   async function loadBookings(){
@@ -1031,6 +1112,144 @@ html,body{touch-action:none}
     </main>${nav("profile")}`;
   }
 
+
+
+  function ruRole(role){
+    return ({creator:"Создатель",admin:"Администратор",client:"Клиент"})[role] || "Клиент";
+  }
+
+  function isStaffMode(){ return S.roleMode === "creator" || S.roleMode === "admin"; }
+
+  function adminNav(active){
+    const items=[
+      ["admin-home","⌂","Главная"],
+      ["admin-bookings","▣","Записи"],
+      ["admin-calendar","□","Календарь"],
+      ["admin-clients","♙","Клиенты"],
+      ["admin-more","☷","Ещё"]
+    ];
+    return `<nav class="bottom-nav admin-bottom"><div class="nav-inner">${items.map(([v,i,l])=>`<button class="nav-btn ${active===v?"active":""}" onclick="Beauty.go('${v}')"><div class="nav-icon">${i}</div><span>${l}</span></button>`).join("")}</div></nav>`;
+  }
+
+  function adminHeader(){
+    const user=tg?.initDataUnsafe?.user;
+    const name=user?.first_name || "MED AESTHETIC";
+    const avatar=user?.photo_url || "";
+    return `<div class="admin-safe"></div><header class="admin-header">
+      <div class="admin-brand"><div class="admin-brand-title">MED <span>AESTHETIC</span></div><div class="admin-role">${esc(ruRole(S.roleMode))} · ${esc(name)}</div></div>
+      <div class="admin-head-actions">
+        ${S.actualRole==="creator"?`<button class="admin-round" onclick="Beauty.openRoleSheet()" aria-label="Переключить роль">♛</button>`:`<button class="admin-round" onclick="Beauty.toast('Новых уведомлений нет')">♧</button>`}
+        ${avatar?`<img class="admin-avatar" src="${avatar}" alt="">`:`<div class="admin-avatar" style="display:grid;place-items:center;color:var(--admin-accent2);font-weight:800">${esc((name||"A").slice(0,1).toUpperCase())}</div>`}
+      </div>
+    </header>`;
+  }
+
+  function roleSheet(){
+    if(!S.roleSheet)return "";
+    const labels={creator:["♛","Создатель","Полный доступ ко всем разделам"],admin:["◇","Администратор","Рабочая админ-панель"],client:["♡","Клиент","Полный клиентский сценарий"]};
+    return `<div class="role-sheet-backdrop" onclick="if(event.target===this)Beauty.closeRoleSheet()"><div class="role-sheet"><h3>♛ Режим создателя</h3><p>Переключение меняет рабочую роль для тестирования, но не ваши реальные права.</p>${S.roleSwitch.map(role=>{const x=labels[role]||labels.client;return `<button class="role-choice ${S.roleMode===role?"active":""}" onclick="Beauty.switchRole('${role}')"><div><b>${x[0]} ${x[1]}</b><span>${x[2]}</span></div><strong>${S.roleMode===role?"✓":"›"}</strong></button>`}).join("")}</div></div>`;
+  }
+
+  function testModeBar(){
+    if(S.roleMode!=="client" || !["creator","admin"].includes(S.actualRole))return "";
+    return `<div class="test-mode-bar"><span>${S.actualRole==="creator"?"♛":"◇"} Тест: клиент</span><button onclick="Beauty.switchRole('${S.actualRole}')">Вернуться в ${S.actualRole==="creator"?"создателя":"админку"}</button></div>`;
+  }
+
+  function todayISO(){ return new Date().toISOString().slice(0,10); }
+  function adminTodayBookings(){ return serverBookings.filter(b=>String(b.date||"").slice(0,10)===todayISO()); }
+  function sortedAdminBookings(){ return [...serverBookings].sort((a,b)=>String(a.date+a.time).localeCompare(String(b.date+b.time))); }
+  function adminNearest(){
+    const now=new Date();
+    return sortedAdminBookings().find(b=>{
+      const d=new Date(`${b.date}T${b.time||"00:00"}:00`);
+      return Number.isFinite(d.getTime()) && d>=now;
+    }) || sortedAdminBookings()[0] || null;
+  }
+  function niceToday(){
+    return new Intl.DateTimeFormat("ru-RU",{weekday:"long",day:"numeric",month:"long"}).format(new Date());
+  }
+  function adminMetric(value,label,p=50,small=""){
+    return `<div class="admin-metric"><div class="admin-ring" style="--p:${Math.max(2,Math.min(100,p))}"><b>${esc(value)}</b></div><span>${esc(label)}</span>${small?`<small>${esc(small)}</small>`:""}</div>`;
+  }
+  function adminBookingRow(b){
+    const s=services.find(x=>x.id===b.serviceId)||{};
+    const m=masters.find(x=>x.id===b.masterId)||{};
+    return `<button class="admin-book-row" onclick="Beauty.bookingInfo('${b.id}')"><div class="t">${esc(b.time||"—")}</div><div><h3>${esc(b.serviceName||s.name||"Запись")}</h3><p>${esc(b.masterName||m.name||"Мастер не указан")} · ${esc(b.date||"")}</p></div><div class="dots">⋮</div></button>`;
+  }
+
+  function adminHome(){
+    const today=adminTodayBookings();
+    const nearest=adminNearest();
+    const total=serverBookings.length;
+    return `<main class="admin-page">${adminHeader()}
+      <div class="admin-date-row"><div><h1>Сегодня</h1><p>${esc(niceToday())}</p></div><button class="admin-link" onclick="Beauty.go('admin-calendar')">Открыть календарь ›</button></div>
+      <div class="admin-metrics">
+        ${adminMetric(String(total),"Записи",Math.min(100,total*13),total?"активные":"пока нет")}
+        ${adminMetric(String(today.length),"Сегодня",Math.min(100,today.length*20),today.length?"по плану":"свободно")}
+        ${adminMetric("—","Клиенты",42,"подключим")}
+        ${adminMetric("0","Требует внимания",6,"всё спокойно")}
+      </div>
+      <section class="admin-section"><div class="admin-section-title"><h2>Ближайшая запись</h2><button onclick="Beauty.go('admin-bookings')">Все записи</button></div>
+        ${nearest?`<div class="admin-next"><div class="admin-time">${esc(nearest.time||"—")}</div><div><h3>${esc(nearest.serviceName||"Услуга")}</h3><p>${esc(nearest.masterName||"Мастер не указан")}</p><p>${esc(nearest.date||"")}</p></div><span class="admin-status">Активна</span></div>`:`<div class="admin-empty">Ближайших записей пока нет. Как только появятся реальные записи, они автоматически будут отображаться здесь.</div>`}
+      </section>
+      <section class="admin-section"><div class="admin-section-title"><h2>Быстрые действия</h2><span>1–2 касания</span></div><div class="admin-actions">
+        <button class="admin-action" onclick="Beauty.toast('Ручную запись подключим к расписанию')"><i>＋</i><b>Новая запись</b></button>
+        <button class="admin-action" onclick="Beauty.go('admin-clients')"><i>♙</i><b>Клиент</b></button>
+        <button class="admin-action" onclick="Beauty.toast('Редактор услуг — следующий этап')"><i>⌘</i><b>Услуги</b></button>
+        <button class="admin-action" onclick="Beauty.go('admin-calendar')"><i>□</i><b>Расписание</b></button>
+      </div></section>
+      <section class="admin-section"><div class="admin-section-title"><h2>Автоматизация</h2><span>Работает без ручной рутины</span></div><div class="automation-card">
+        <div class="auto-row"><div class="auto-ico">✓</div><div><b>Онлайн-запись</b><p>Клиент записывается самостоятельно</p></div><span class="auto-state">Включено</span></div>
+        <div class="auto-row"><div class="auto-ico">♧</div><div><b>Напоминания</b><p>Подготовлено место под автоматические уведомления</p></div><span class="auto-state">Следом</span></div>
+        <div class="auto-row"><div class="auto-ico">↻</div><div><b>Освободившиеся окна</b><p>Автопредложение свободного времени</p></div><span class="auto-state">Следом</span></div>
+      </div></section>
+    </main>${adminNav("admin-home")}${roleSheet()}`;
+  }
+
+  function adminBookingsView(){
+    const list=sortedAdminBookings();
+    return `<main class="admin-page">${adminHeader()}<div class="admin-date-row"><div><h1>Записи</h1><p>Быстрый контроль расписания</p></div><button class="admin-link" onclick="Beauty.toast('Поиск подключим вместе с клиентской базой')">⌕ Поиск</button></div>
+      <div class="admin-filter">${["Сегодня","Завтра","Неделя","Все"].map(x=>`<button class="${S.adminFilter===x?"active":""}" onclick="Beauty.setAdminFilter('${x}')">${x}</button>`).join("")}</div>
+      <div class="admin-list">${list.length?list.map(adminBookingRow).join(""):`<div class="admin-empty">Записей пока нет.</div>`}</div>
+      <section class="admin-section"><button class="btn-primary" style="width:100%;background:linear-gradient(135deg,#7651e8,#9c72ff);border-color:#9570ff;color:white" onclick="Beauty.toast('Ручную запись подключим следующим шагом')">＋ Новая запись</button></section>
+    </main>${adminNav("admin-bookings")}${roleSheet()}`;
+  }
+
+  function adminCalendarView(){
+    const ds=[];const w=["Вс","Пн","Вт","Ср","Чт","Пт","Сб"];
+    for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()+i);ds.push({iso:d.toISOString().slice(0,10),day:d.getDate(),w:w[d.getDay()]})}
+    if(!S.adminDate)S.adminDate=ds[0].iso;
+    const selected=serverBookings.filter(b=>String(b.date||"").slice(0,10)===S.adminDate).sort((a,b)=>String(a.time).localeCompare(String(b.time)));
+    return `<main class="admin-page">${adminHeader()}<div class="admin-date-row"><div><h1>Календарь</h1><p>Записи и свободные окна</p></div><button class="admin-link" onclick="Beauty.toast('Настройку рабочих часов добавим далее')">Настроить</button></div>
+      <div class="admin-calendar"><div class="admin-week">${ds.map(d=>`<button class="admin-day ${S.adminDate===d.iso?"active":""}" onclick="Beauty.pickAdminDate('${d.iso}')"><span>${d.w}</span><b>${d.day}</b></button>`).join("")}</div>
+      <div class="admin-timeline">${selected.length?selected.map(b=>`<div class="admin-slot"><div class="admin-slot-time">${esc(b.time||"—")}</div><div class="admin-slot-card"><b>${esc(b.serviceName||"Запись")}</b><span>${esc(b.masterName||"Мастер не указан")}</span></div></div>`).join(""):`<div class="admin-slot"><div class="admin-slot-time">День</div><div class="admin-slot-free">Свободно · записей нет</div></div>`}</div></div>
+      <section class="admin-section"><div class="admin-actions"><button class="admin-action" onclick="Beauty.toast('Создание ручной записи — следующим шагом')"><i>＋</i><b>Добавить запись</b></button><button class="admin-action" onclick="Beauty.toast('Блокировку окна подключим к расписанию')"><i>×</i><b>Закрыть окно</b></button><button class="admin-action" onclick="Beauty.toast('Перерыв подключим к расписанию')"><i>☕</i><b>Перерыв</b></button><button class="admin-action" onclick="Beauty.toast('Выходной подключим к расписанию')"><i>○</i><b>Выходной</b></button></div></section>
+    </main>${adminNav("admin-calendar")}${roleSheet()}`;
+  }
+
+  function adminClientsView(){
+    return `<main class="admin-page">${adminHeader()}<div class="admin-date-row"><div><h1>Клиенты</h1><p>Карточки, история и повторные записи</p></div><button class="admin-link" onclick="Beauty.toast('Добавление клиента подключим вместе с базой клиентов')">＋ Добавить</button></div>
+      <div class="search-box" style="margin-top:0">⌕ <input placeholder="Имя, Telegram, телефон" oninput="Beauty.toast('Поиск будет работать после подключения клиентской базы')"></div>
+      <div class="admin-kpis"><div class="admin-kpi"><small>Клиентов в базе</small><strong>—</strong></div><div class="admin-kpi"><small>Новых за месяц</small><strong>—</strong></div></div>
+      <section class="admin-section"><div class="admin-empty">Карточки реальных клиентов подключим к Neon следующим этапом. Никакие тестовые люди здесь не подставлены, чтобы не смешивать демо-данные с настоящими.</div></section>
+    </main>${adminNav("admin-clients")}${roleSheet()}`;
+  }
+
+  function adminMoreView(){
+    const creatorItem=S.actualRole==="creator"?`<button onclick="Beauty.toast('Управление администраторами подключим к уже готовым приглашениям')"><span class="ico">♛</span><div><b>Администраторы</b><small>Приглашения и права доступа</small></div><span class="go">›</span></button>`:"";
+    return `<main class="admin-page">${adminHeader()}<div class="admin-date-row"><div><h1>Ещё</h1><p>Управление и автоматизация</p></div></div>
+      <div class="admin-menu">
+        <button onclick="Beauty.toast('Редактор услуг подключим следующим этапом')"><span class="ico">⌘</span><div><b>Услуги</b><small>Цены, длительность, доступность</small></div><span class="go">›</span></button>
+        <button onclick="Beauty.go('admin-calendar')"><span class="ico">□</span><div><b>Расписание</b><small>Рабочие дни, перерывы, выходные</small></div><span class="go">›</span></button>
+        <button onclick="Beauty.toast('Автоматические уведомления — следующий модуль')"><span class="ico">♧</span><div><b>Уведомления</b><small>Напоминания и сообщения клиентам</small></div><span class="go">›</span></button>
+        <button onclick="Beauty.toast('Автоматизацию будем настраивать по сценариям')"><span class="ico">↻</span><div><b>Автоматизация</b><small>Правила без ручной работы</small></div><span class="go">›</span></button>
+        ${creatorItem}
+        <button onclick="Beauty.toast('Настройки появятся следующим этапом')"><span class="ico">⚙</span><div><b>Настройки</b><small>Интерфейс и параметры заведения</small></div><span class="go">›</span></button>
+      </div>
+      <div class="admin-client-switch"><div><b>Режим клиента</b><p>Полностью открыть приложение как покупатель</p></div><button class="switch-pill" onclick="Beauty.switchRole('client')"></button></div>
+    </main>${adminNav("admin-more")}${roleSheet()}`;
+  }
+
   function bookingInfo(id){
     const b=serverBookings.find(x=>String(x.id)===String(id));
     if(!b){toast("Запись из истории");return}
@@ -1039,8 +1258,17 @@ html,body{touch-action:none}
   }
 
   function render(){
+    if(!S.identityReady){
+      document.querySelector("#app").innerHTML=`<div class="role-loading"><div class="role-loading-card"><div class="role-spinner"></div>Определяем рабочую роль…</div></div>`;
+      return;
+    }
     let html="";
-    if(S.view==="home")html=home();
+    if(S.view==="admin-home")html=adminHome();
+    else if(S.view==="admin-bookings")html=adminBookingsView();
+    else if(S.view==="admin-calendar")html=adminCalendarView();
+    else if(S.view==="admin-clients")html=adminClientsView();
+    else if(S.view==="admin-more")html=adminMoreView();
+    else if(S.view==="home")html=home();
     else if(S.view==="services")html=servicesView();
     else if(S.view==="service")html=serviceDetail();
     else if(S.view==="masters")html=mastersView();
@@ -1050,13 +1278,27 @@ html,body{touch-action:none}
     else if(S.view==="history")html=historyView();
     else if(S.view==="profile")html=profileView();
     else if(S.view==="bonus")html=bonusView();
-    else html=home();
-    document.querySelector("#app").innerHTML=html;
+    else html=isStaffMode()?adminHome():home();
+    document.querySelector("#app").innerHTML=html + testModeBar();
   }
 
   window.Beauty = {
     go,
     toast,
+    openRoleSheet(){S.roleSheet=true;render();haptic()},
+    closeRoleSheet(){S.roleSheet=false;render()},
+    switchRole(role){
+      if(!S.roleSwitch.includes(role))return;
+      S.roleMode=role;
+      sessionStorage.setItem("medAestheticRoleMode",role);
+      S.roleSheet=false;
+      S.view=role==="client"?"home":"admin-home";
+      render();
+      window.scrollTo(0,0);
+      haptic("medium");
+    },
+    setAdminFilter(v){S.adminFilter=v;render();haptic()},
+    pickAdminDate(v){S.adminDate=v;render();haptic()},
     openCategory(c){
       S.category=c;
       S.view="services";
@@ -1103,10 +1345,9 @@ html,body{touch-action:none}
   };
 
   render();
-  loadBookings();
+  Promise.allSettled([loadBookings(),loadIdentity()]);
 })();
   </script>
 </body>
 </html>
 
-<!-- autodeploy-test -->
