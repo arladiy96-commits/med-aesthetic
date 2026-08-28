@@ -7,7 +7,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>MED AESTHETIC v22</title>
+  <title>MED AESTHETIC v23</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
   /* v16: let Telegram open the Mini App naturally from the bottom first.
@@ -862,6 +862,23 @@ html.app-ready #app{
     min-height:40px;
     padding:0 13px;
   }
+}
+
+
+/* v23 — equal visual size for the first and second banners */
+.hero-slide:first-child .hero-exact-image{
+  width:112%;
+  height:112%;
+  left:-6%;
+  top:-6%;
+  object-fit:cover;
+  object-position:center center;
+}
+.hero-slide:first-child .hero-exact-hit{
+  left:3.4%;
+  bottom:2.1%;
+  width:35.6%;
+  height:16.1%;
 }
 
 </style>
