@@ -7,7 +7,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>MED AESTHETIC v23</title>
+  <title>MED AESTHETIC v24</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
   /* v16: let Telegram open the Mini App naturally from the bottom first.
@@ -865,20 +865,68 @@ html.app-ready #app{
 }
 
 
-/* v23 — equal visual size for the first and second banners */
+/* v24 — both banners use the same compact visual size */
+.hero-carousel{
+  padding-left:14px;
+  padding-right:30px;
+}
+
+/* Keep the original carousel slide size so the swipe/peek behavior stays the same. */
+.hero-slide{
+  display:flex;
+  align-items:flex-start;
+}
+
+/* Both visible cards are now the same size inside their slide. */
+.hero-slide .hero.hero-exact-card,
+.hero-slide .certificate-banner{
+  width:93%;
+  flex:0 0 93%;
+  margin:0!important;
+  aspect-ratio:941 / 684;
+}
+
+/* First banner: crop away the dark area that was baked into the source image,
+   while keeping the card itself at the old visual size. */
+.hero-slide:first-child .hero.hero-exact-card{
+  overflow:hidden!important;
+}
 .hero-slide:first-child .hero-exact-image{
-  width:112%;
-  height:112%;
-  left:-6%;
-  top:-6%;
+  width:107%;
+  height:107%;
+  left:-3.5%;
+  top:-3.5%;
   object-fit:cover;
   object-position:center center;
 }
+
+/* Correct the invisible click zone after cropping. */
 .hero-slide:first-child .hero-exact-hit{
-  left:3.4%;
-  bottom:2.1%;
-  width:35.6%;
-  height:16.1%;
+  left:5.7%;
+  bottom:4.6%;
+  width:34.1%;
+  height:15.2%;
+}
+
+/* Second banner: same exact shell size as the first. */
+.hero-slide:nth-child(2) .certificate-banner{
+  overflow:hidden;
+}
+.hero-slide:nth-child(2) .certificate-banner img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center center;
+}
+
+/* Keep the certificate action aligned to the same visual scale. */
+.hero-slide:nth-child(2) .certificate-action{
+  left:5.4%;
+  bottom:7.1%;
+  min-height:40px;
+  min-width:36%;
+  padding:0 15px;
+  font-size:11px;
 }
 
 </style>
