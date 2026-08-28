@@ -1,0 +1,1110 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#09060f" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>MED AESTHETIC v11</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style id="med-aesthetic-v11-css">
+/* MED AESTHETIC CLIENT v11 — JRMA root-path compatible */
+*{box-sizing:border-box}
+:root{
+  --bg:#07050c;
+  --bg2:#0d0717;
+  --card:#12101a;
+  --card2:#17121f;
+  --line:rgba(222,173,80,.20);
+  --line2:rgba(255,255,255,.07);
+  --gold:#e4b75d;
+  --gold2:#f4d48e;
+  --violet:#6d2cff;
+  --violet2:#a460ff;
+  --text:#f7f2ff;
+  --muted:#8f8997;
+  --good:#70d89a;
+  --danger:#ff6f85;
+  --shadow:0 18px 46px rgba(0,0,0,.42);
+}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Manrope,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{
+  background:
+    radial-gradient(700px 380px at 85% -80px,rgba(113,32,191,.22),transparent 62%),
+    radial-gradient(540px 350px at -20% 25%,rgba(107,44,255,.09),transparent 60%),
+    linear-gradient(180deg,#08060e 0%,#07050c 100%);
+  overflow-x:hidden;
+}
+button,input{font:inherit}
+button{color:inherit}
+img{display:block;width:100%;object-fit:cover}
+#app{max-width:620px;margin:0 auto;min-height:100vh;padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+.page{padding:0 14px 22px}
+.safe-top{height:max(8px,env(safe-area-inset-top))}
+.topbar{
+  position:sticky;top:0;z-index:40;margin:0 -14px;padding:10px 14px 11px;
+  background:linear-gradient(180deg,rgba(8,6,14,.97),rgba(8,6,14,.89));
+  backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.045)
+}
+.toprow{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{font-family:"Cormorant Garamond",serif;font-size:24px;font-weight:700;letter-spacing:.8px;color:var(--gold2)}
+.brand span{color:#fff}
+.icon-btn{
+  border:1px solid var(--line2);background:#11101a;width:40px;height:40px;border-radius:13px;
+  display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.03)
+}
+.icon-btn.gold{border-color:rgba(228,183,93,.28);color:var(--gold)}
+.hero{
+  position:relative;overflow:hidden;border:1px solid rgba(228,183,93,.22);border-radius:26px;
+  min-height:320px;margin-top:14px;background:#12081d;box-shadow:var(--shadow)
+}
+.hero:after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,rgba(7,4,13,.97) 0%,rgba(7,4,13,.80) 38%,rgba(7,4,13,.12) 78%),
+             linear-gradient(180deg,transparent 55%,rgba(7,4,13,.72) 100%);
+  pointer-events:none
+}
+.hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.9;filter:saturate(.82) contrast(1.05)}
+.hero-orb{position:absolute;right:-80px;top:-80px;width:250px;height:250px;border-radius:50%;background:rgba(122,34,255,.27);filter:blur(44px)}
+.hero-content{position:relative;z-index:2;width:64%;padding:28px 20px 23px}
+.eyebrow{text-transform:uppercase;letter-spacing:2.3px;color:var(--gold2);font-size:10px;font-weight:800}
+.hero h1{font-family:"Cormorant Garamond",serif;font-size:34px;line-height:.98;margin:11px 0 10px}
+.hero p{font-size:11px;line-height:1.55;color:#c6bfce;margin:0 0 18px}
+.btn-primary{
+  border:1px solid #d5a348;background:linear-gradient(135deg,#d5a348,#f1cf84);
+  color:#201406;min-height:44px;padding:0 18px;border-radius:13px;font-weight:800;box-shadow:0 10px 28px rgba(224,174,76,.19)
+}
+.btn-primary:active,.quick:active,.service-card:active,.master-pill:active,.booking-card:active{transform:scale(.985)}
+.section{margin-top:23px}
+.section-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:11px}
+.section-head h2{font-size:15px;margin:0;font-weight:800}
+.section-head button{border:0;background:none;color:var(--gold);font-size:10px;padding:4px}
+.quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.quick{
+  border:1px solid var(--line2);background:linear-gradient(180deg,#15121d,#0f0d15);
+  border-radius:16px;padding:12px 5px 10px;text-align:center;min-height:74px
+}
+.quick .qicon{font-size:20px;color:var(--gold);height:26px}
+.quick span{display:block;color:#bbb4c2;font-size:9px;margin-top:4px}
+.service-scroll{display:grid;grid-auto-flow:column;grid-auto-columns:42%;gap:10px;overflow-x:auto;padding:1px 1px 6px;scrollbar-width:none}
+.service-scroll::-webkit-scrollbar,.masters::-webkit-scrollbar,.chips::-webkit-scrollbar{display:none}
+.service-card{
+  border:1px solid rgba(228,183,93,.22);background:linear-gradient(180deg,#17121f,#0f0d15);
+  padding:0;border-radius:18px;overflow:hidden;text-align:left;box-shadow:0 9px 25px rgba(0,0,0,.16)
+}
+.service-card img{height:112px;background:#1b1424}
+.service-card .body{padding:10px}
+.service-card b{font-size:11px;display:block;line-height:1.25}
+.service-card .meta{display:flex;justify-content:space-between;align-items:center;margin-top:7px;color:var(--muted);font-size:9px}
+.service-card .price{color:var(--gold2);font-weight:800}
+.masters{display:grid;grid-auto-flow:column;grid-auto-columns:74px;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.master-pill{border:0;background:none;padding:0;text-align:center}
+.master-pill img{width:58px;height:58px;margin:auto;border-radius:50%;border:1px solid rgba(228,183,93,.42);padding:2px;background:#17121f}
+.master-pill b{display:block;font-size:9.5px;margin-top:6px}
+.master-pill span{display:block;font-size:7.8px;color:var(--muted);margin-top:2px}
+.promo{
+  margin-top:14px;border:1px solid rgba(136,70,255,.26);background:
+  radial-gradient(300px 130px at 15% 20%,rgba(120,49,226,.2),transparent 62%),
+  linear-gradient(135deg,#161022,#0f0c16);
+  border-radius:19px;padding:14px;display:flex;justify-content:space-between;align-items:center
+}
+.promo strong{font-family:"Cormorant Garamond",serif;font-size:19px;color:var(--gold2)}
+.promo p{margin:3px 0 0;font-size:9px;color:var(--muted)}
+.promo .gift{font-size:28px}
+.page-title{font-family:"Cormorant Garamond",serif;font-size:30px;margin:20px 0 4px}
+.page-sub{color:var(--muted);font-size:11px;margin:0 0 15px}
+.chips{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;margin:4px -14px 12px;padding:0 14px}
+.chip{flex:0 0 auto;border:1px solid var(--line2);background:#111019;color:#aaa4b2;border-radius:999px;padding:8px 12px;font-size:9px}
+.chip.active{border-color:rgba(228,183,93,.52);background:rgba(228,183,93,.11);color:var(--gold2)}
+.service-list{display:grid;gap:10px}
+.service-row{
+  display:grid;grid-template-columns:84px 1fr auto;gap:11px;align-items:center;
+  border:1px solid var(--line2);background:linear-gradient(180deg,#15131b,#0f0e14);
+  border-radius:17px;padding:8px;text-align:left
+}
+.service-row img{width:84px;height:74px;border-radius:12px}
+.service-row h3{font-size:12px;margin:0 0 5px}
+.service-row p{font-size:8.8px;color:var(--muted);line-height:1.4;margin:0}
+.service-row .row-meta{font-size:9px;margin-top:7px;color:var(--gold2);font-weight:800}
+.chev{color:var(--gold);font-size:18px;padding-right:5px}
+.detail-cover{height:270px;margin:12px -14px 0;position:relative;overflow:hidden}
+.detail-cover img{height:100%}
+.detail-cover:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 54%,#07050c)}
+.back-float{position:absolute;z-index:4;left:14px;top:14px}
+.heart-float{position:absolute;z-index:4;right:14px;top:14px}
+.detail-box{margin-top:-38px;position:relative;z-index:3}
+.detail-box h1{font-family:"Cormorant Garamond",serif;font-size:30px;margin:0 0 5px}
+.detail-price{display:flex;align-items:center;justify-content:space-between;color:var(--gold2);font-weight:800;font-size:14px}
+.detail-price span{font-size:10px;color:var(--muted);font-weight:600}
+.detail-copy{font-size:10px;line-height:1.6;color:#b9b3c1;margin-top:15px}
+.includes{border-top:1px solid var(--line2);margin-top:15px;padding-top:14px}
+.includes h3{font-size:12px;margin:0 0 9px}
+.includes div{font-size:10px;color:#c7c0cd;margin:7px 0}
+.includes div:before{content:"✓";color:var(--gold);margin-right:8px}
+.sticky-action{
+  position:sticky;bottom:84px;z-index:20;margin:18px 0 0;padding:10px 0;
+  background:linear-gradient(180deg,transparent,rgba(7,5,12,.93) 30%)
+}
+.sticky-action .btn-primary{width:100%}
+.master-list{display:grid;gap:10px}
+.master-card{
+  display:grid;grid-template-columns:62px 1fr auto;gap:11px;align-items:center;border:1px solid var(--line2);
+  background:#121018;border-radius:18px;padding:10px
+}
+.master-card.selected{border-color:rgba(228,183,93,.55);box-shadow:0 0 0 1px rgba(228,183,93,.08)}
+.master-card img{width:62px;height:62px;border-radius:16px}
+.master-card h3{font-size:12px;margin:0 0 3px}
+.master-card p{font-size:8.7px;color:var(--muted);margin:2px 0}
+.rating{color:var(--gold2);font-size:9px;margin-top:5px}
+.select-btn{border:1px solid rgba(228,183,93,.35);background:rgba(228,183,93,.08);color:var(--gold2);border-radius:10px;padding:8px 10px;font-size:9px}
+.calendar-card{border:1px solid var(--line2);background:#111019;border-radius:20px;padding:13px;margin-top:12px}
+.date-strip{display:grid;grid-auto-flow:column;grid-auto-columns:57px;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:3px}
+.date-btn{border:1px solid var(--line2);background:#0d0c12;border-radius:14px;padding:9px 4px;color:#918b98;text-align:center}
+.date-btn span{display:block;font-size:8px;text-transform:uppercase}
+.date-btn b{display:block;font-size:16px;margin:3px 0}
+.date-btn small{font-size:7px}
+.date-btn.active{border-color:var(--gold);background:linear-gradient(180deg,#d7aa53,#a8792e);color:#160e05}
+.time-title{font-size:12px;font-weight:800;margin:18px 0 10px}
+.time-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.time-btn{border:1px solid rgba(228,183,93,.27);background:#100e16;border-radius:12px;padding:11px 5px;color:var(--gold2);font-size:10px}
+.time-btn.active{background:linear-gradient(135deg,#d7a950,#f0ce82);color:#1b1208;font-weight:800}
+.summary{
+  border:1px solid rgba(228,183,93,.22);background:linear-gradient(180deg,#15111d,#0e0c13);
+  border-radius:19px;padding:14px;margin-top:17px
+}
+.summary h3{font-size:11px;margin:0 0 10px;color:var(--gold2)}
+.summary-line{display:flex;justify-content:space-between;gap:20px;font-size:9px;color:var(--muted);margin:7px 0}
+.summary-line b{color:#eee9f2;text-align:right;font-weight:700}
+.confirm-wrap{text-align:center;padding:48px 5px 10px}
+.confirm-icon{
+  width:94px;height:94px;border-radius:50%;margin:0 auto 18px;display:grid;place-items:center;font-size:43px;
+  color:#1b1207;background:linear-gradient(135deg,#e1b55e,#f6db9d);box-shadow:0 0 55px rgba(228,183,93,.18)
+}
+.confirm-wrap h1{font-family:"Cormorant Garamond",serif;font-size:32px;margin:0 0 8px}
+.confirm-wrap p{font-size:10px;color:var(--muted);line-height:1.55}
+.booking-card{
+  border:1px solid var(--line2);background:linear-gradient(180deg,#15121d,#0f0d14);
+  border-radius:18px;padding:12px;display:grid;grid-template-columns:60px 1fr auto;gap:11px;align-items:center;margin-bottom:10px;text-align:left
+}
+.booking-card img{width:60px;height:60px;border-radius:14px}
+.booking-card h3{font-size:11px;margin:0 0 4px}
+.booking-card p{font-size:8.6px;color:var(--muted);margin:2px 0}
+.status-pill{font-size:7.5px;border-radius:999px;padding:5px 7px;background:rgba(228,183,93,.10);color:var(--gold2);white-space:nowrap}
+.status-pill.done{background:rgba(112,216,154,.09);color:var(--good)}
+.empty{border:1px dashed rgba(255,255,255,.12);border-radius:20px;padding:35px 20px;text-align:center;color:var(--muted);font-size:10px}
+.profile-head{display:flex;align-items:center;gap:13px;margin-top:20px}
+.profile-avatar{width:68px;height:68px;border-radius:22px;border:1px solid rgba(228,183,93,.35);object-fit:cover}
+.profile-head h2{font-size:17px;margin:0 0 3px}
+.profile-head p{font-size:9px;color:var(--muted);margin:0}
+.menu-list{border:1px solid var(--line2);border-radius:20px;overflow:hidden;margin-top:17px;background:#111019}
+.menu-item{display:flex;align-items:center;gap:11px;padding:14px;border-bottom:1px solid var(--line2);background:none;width:100%;text-align:left}
+.menu-item:last-child{border-bottom:0}
+.menu-item .mi{width:28px;text-align:center;color:var(--gold)}
+.menu-item b{font-size:10px;flex:1}
+.menu-item span{font-size:9px;color:var(--muted)}
+.bonus-card{
+  border:1px solid rgba(228,183,93,.26);background:
+  radial-gradient(300px 160px at 85% 0%,rgba(109,44,255,.22),transparent 70%),
+  linear-gradient(140deg,#1a1027,#0e0b14);
+  border-radius:24px;padding:20px;margin-top:16px
+}
+.bonus-card small{color:#aaa2b2;font-size:9px}
+.bonus-card strong{display:block;font-family:"Cormorant Garamond",serif;font-size:44px;color:var(--gold2);line-height:1.05;margin-top:4px}
+.bonus-status{display:flex;justify-content:space-between;border-top:1px solid var(--line2);margin-top:16px;padding-top:13px;font-size:9px}
+.bottom-nav{
+  position:fixed;z-index:60;left:50%;transform:translateX(-50%);bottom:0;width:min(620px,100%);
+  padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+  background:linear-gradient(180deg,rgba(7,5,12,.80),rgba(7,5,12,.98) 20%);
+  backdrop-filter:blur(18px)
+}
+.nav-inner{border:1px solid var(--line2);background:rgba(17,15,23,.94);border-radius:24px;padding:8px 5px 7px;display:grid;grid-template-columns:repeat(5,1fr);box-shadow:0 -8px 30px rgba(0,0,0,.18)}
+.nav-btn{border:0;background:none;color:#77727f;padding:3px 2px;min-width:0}
+.nav-btn .nav-icon{font-size:18px;height:23px}
+.nav-btn span{display:block;font-size:7.5px;white-space:nowrap}
+.nav-btn.active{color:var(--gold2)}
+.toast{
+  position:fixed;z-index:100;left:50%;bottom:105px;transform:translate(-50%,15px);opacity:0;
+  background:#eee7f6;color:#130e18;padding:10px 14px;border-radius:999px;font-size:9px;font-weight:800;
+  pointer-events:none;transition:.22s;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.badge{display:inline-flex;align-items:center;gap:5px;color:var(--gold2);font-size:8px;margin-top:4px}
+.search-box{display:flex;gap:8px;border:1px solid var(--line2);background:#111019;border-radius:15px;padding:10px 12px;margin:12px 0}
+.search-box input{border:0;outline:0;background:transparent;color:#fff;width:100%;font-size:10px}
+.search-box input::placeholder{color:#6f6976}
+@media(min-width:520px){
+  #app{border-left:1px solid rgba(255,255,255,.04);border-right:1px solid rgba(255,255,255,.04)}
+  .service-scroll{grid-auto-columns:31%}
+}
+
+
+/* v5 — Telegram fullscreen + fixed Mini App shell */
+html,body{
+  width:100%;
+  height:100%;
+  min-height:100%;
+  overflow:hidden!important;
+  overscroll-behavior:none!important;
+}
+body{
+  position:fixed!important;
+  inset:0!important;
+  width:100%!important;
+  height:var(--beauty-vh,100dvh)!important;
+  max-height:var(--beauty-vh,100dvh)!important;
+  touch-action:manipulation;
+}
+#app{
+  position:fixed!important;
+  inset:0!important;
+  width:100%!important;
+  max-width:620px!important;
+  height:var(--beauty-vh,100dvh)!important;
+  max-height:var(--beauty-vh,100dvh)!important;
+  margin:0 auto!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  overscroll-behavior-y:contain!important;
+  -webkit-overflow-scrolling:touch;
+  padding-bottom:calc(96px + max(env(safe-area-inset-bottom,0px),var(--tg-safe-bottom,0px)))!important;
+}
+.safe-top{
+  height:max(8px,env(safe-area-inset-top,0px),var(--tg-safe-top,0px))!important;
+}
+.bottom-nav{
+  padding-bottom:calc(8px + max(env(safe-area-inset-bottom,0px),var(--tg-safe-bottom,0px)))!important;
+}
+/* Stop Safari/Telegram rubber-band on the outer document. */
+html,body{touch-action:none}
+#app, #app *{touch-action:auto}
+
+
+.brand-wrap{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  line-height:1;
+  transform:translateY(2px);
+}
+.brand-sub{
+  margin-top:4px;
+  font-size:7px;
+  line-height:1;
+  letter-spacing:1.6px;
+  text-transform:lowercase;
+  color:#8f8997;
+  white-space:nowrap;
+}
+/* Move the whole app header a little lower under Telegram's fullscreen controls. */
+.safe-top{
+  height:calc(max(8px,env(safe-area-inset-top,0px),var(--tg-safe-top,0px)) + 10px)!important;
+}
+.topbar{
+  padding-top:12px!important;
+}
+
+
+/* v7 — enlarged top brand area, centered below Telegram system controls */
+.safe-top{
+  height:0!important;
+  min-height:0!important;
+}
+
+.topbar{
+  position:sticky!important;
+  top:0!important;
+  z-index:40!important;
+  margin:0 -14px!important;
+
+  /* The tile itself now covers the whole upper system-control area. */
+  min-height:calc(max(
+    env(safe-area-inset-top,0px),
+    var(--tg-safe-top,0px),
+    44px
+  ) + 72px)!important;
+
+  padding:
+    calc(max(
+      env(safe-area-inset-top,0px),
+      var(--tg-safe-top,0px),
+      44px
+    ) + 8px)
+    14px
+    12px!important;
+
+  display:flex!important;
+  align-items:center!important;
+
+  background:
+    linear-gradient(180deg,rgba(8,6,14,.995),rgba(8,6,14,.94))!important;
+  border-bottom:1px solid rgba(255,255,255,.055)!important;
+  backdrop-filter:blur(18px)!important;
+  -webkit-backdrop-filter:blur(18px)!important;
+}
+
+.toprow{
+  position:relative!important;
+  width:100%!important;
+  min-height:52px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+}
+
+.brand-wrap{
+  position:absolute!important;
+  left:50%!important;
+  top:50%!important;
+  transform:translate(-50%,-50%)!important;
+  width:max-content!important;
+  max-width:calc(100% - 112px)!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+  line-height:1!important;
+}
+
+.brand{
+  text-align:center!important;
+  white-space:nowrap!important;
+}
+
+.brand-sub{
+  text-align:center!important;
+  white-space:nowrap!important;
+}
+
+
+/* v8 — brand is pinned to the lower part of the top tile, safely below Telegram controls */
+.topbar{
+  min-height:210px!important;
+  padding:0 14px 14px!important;
+  display:block!important;
+}
+
+.toprow{
+  position:relative!important;
+  width:100%!important;
+  height:196px!important;
+  min-height:196px!important;
+}
+
+/* Keep our own left/right controls away from Telegram's top overlay */
+.toprow > .icon-btn{
+  position:absolute!important;
+  top:118px!important;
+}
+.toprow > .icon-btn:first-child{left:0!important;}
+.toprow > .icon-btn:last-child{right:0!important;}
+
+/* Main title sits in its own clear zone below the system buttons */
+.brand-wrap{
+  position:absolute!important;
+  left:50%!important;
+  top:auto!important;
+  bottom:18px!important;
+  transform:translateX(-50%)!important;
+  width:calc(100% - 120px)!important;
+  max-width:none!important;
+  text-align:center!important;
+}
+
+.brand{
+  width:100%!important;
+  text-align:center!important;
+  font-size:28px!important;
+  line-height:1.05!important;
+}
+
+.brand-sub{
+  margin-top:7px!important;
+  text-align:center!important;
+  font-size:7.5px!important;
+  letter-spacing:2px!important;
+}
+
+
+/* v9 — compact top area: below Telegram controls without wasting vertical space */
+.topbar{
+  min-height:160px!important;
+  height:160px!important;
+  padding:0 14px 10px!important;
+}
+
+.toprow{
+  height:150px!important;
+  min-height:150px!important;
+}
+
+/* Our own buttons sit on the same lower row as the brand, below Telegram controls. */
+.toprow > .icon-btn{
+  top:92px!important;
+}
+
+/* Raise the brand compared with v8, while keeping it safely below Telegram overlay. */
+.brand-wrap{
+  bottom:10px!important;
+}
+
+.brand{
+  font-size:26px!important;
+}
+
+.brand-sub{
+  margin-top:6px!important;
+  font-size:7px!important;
+  letter-spacing:1.8px!important;
+}
+
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="toast" class="toast"></div>
+    <script id="med-aesthetic-v11-js">
+/* MED AESTHETIC CLIENT v11 — JRMA root-path compatible */
+(() => {
+  const tg = window.Telegram?.WebApp;
+
+  function syncTelegramShell(){
+    try{
+      const h = Number(tg?.viewportStableHeight || tg?.viewportHeight || window.innerHeight || 0);
+      if(h > 0){
+        document.documentElement.style.setProperty("--beauty-vh", Math.round(h) + "px");
+      }
+
+      const safe = tg?.contentSafeAreaInset || tg?.safeAreaInset;
+      if(safe){
+        if(Number.isFinite(Number(safe.top))){
+          document.documentElement.style.setProperty("--tg-safe-top", Number(safe.top) + "px");
+        }
+        if(Number.isFinite(Number(safe.bottom))){
+          document.documentElement.style.setProperty("--tg-safe-bottom", Number(safe.bottom) + "px");
+        }
+      }
+    }catch(e){}
+  }
+
+  function initTelegramShell(){
+    try{ tg?.ready?.(); }catch(e){}
+    try{ tg?.expand?.(); }catch(e){}
+
+    /* Telegram 8.0+: remove the large Mini App title bar where supported. */
+    try{
+      if(tg?.requestFullscreen && !tg?.isFullscreen) tg.requestFullscreen();
+    }catch(e){}
+
+    /* The Mini App itself stays fixed and cannot be dragged down to collapse. */
+    try{ tg?.disableVerticalSwipes?.(); }catch(e){}
+
+    /* Keep this interface in portrait mode when the client supports it. */
+    try{ tg?.lockOrientation?.(); }catch(e){}
+
+    try{ tg?.setHeaderColor?.("#07050c"); }catch(e){}
+    try{ tg?.setBackgroundColor?.("#07050c"); }catch(e){}
+    try{ tg?.setBottomBarColor?.("#07050c"); }catch(e){}
+
+    syncTelegramShell();
+  }
+
+  initTelegramShell();
+  setTimeout(initTelegramShell, 120);
+  setTimeout(initTelegramShell, 450);
+
+  try{
+    tg?.onEvent?.("viewportChanged", syncTelegramShell);
+    tg?.onEvent?.("safeAreaChanged", syncTelegramShell);
+    tg?.onEvent?.("contentSafeAreaChanged", syncTelegramShell);
+    tg?.onEvent?.("fullscreenChanged", syncTelegramShell);
+  }catch(e){}
+
+  window.addEventListener("resize", syncTelegramShell, {passive:true});
+
+  const S = {
+    view: "home",
+    category: "Все",
+    service: null,
+    master: null,
+    date: null,
+    time: null,
+    bookingConfirmed: false
+  };
+
+  const IMG = {
+    hero:"https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1000&q=82",
+
+    faceCleaning:"https://images.unsplash.com/photo-1761718210089-ba3bb5ccb54f?auto=format&fit=crop&w=900&q=82",
+    childPiercing:"https://images.unsplash.com/photo-1723986071829-42d53407ae38?auto=format&fit=crop&w=900&q=82",
+    lesionRemoval:"https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=900&q=82",
+
+    earPiercing:"https://images.unsplash.com/photo-1723986071829-42d53407ae38?auto=format&fit=crop&w=900&q=82",
+    nosePiercing:"https://www.covetear.com/cdn/shop/files/NOSE_IMAGES_1.png?v=1718343576&width=900",
+    lipPiercing:"https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?auto=format&fit=crop&w=900&q=82",
+    tonguePiercing:"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=900&q=82",
+    browPiercing:"https://images.unsplash.com/photo-1555697594-6a6168782157?auto=format&fit=crop&w=900&q=82",
+    navelPiercing:"https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=900&q=82",
+    bodyPiercing:"https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=82",
+
+    laser:"https://static.shumailas.com/wp-content/uploads/2025/07/Full-Body-Laser-Hair-Removal-1024x683.jpg",
+    bodyCorrection:"https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&w=900&q=82",
+    currentTherapy:"https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=900&q=82",
+    certificate:"https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=900&q=82"
+  };
+
+  const masters = [
+    {id:1,name:"Анна",role:"Nail-мастер",rating:"4.9",exp:"7 лет",img:"https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=300&q=80"},
+    {id:2,name:"Мария",role:"Бровист",rating:"4.8",exp:"4 года",img:"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80"},
+    {id:3,name:"Елена",role:"Косметолог",rating:"4.9",exp:"7 лет",img:"https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=300&q=80"},
+    {id:4,name:"Кристина",role:"Стилист",rating:"4.7",exp:"3 года",img:"https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=300&q=80"}
+  ];
+
+  const services = [
+    {
+      id:1,
+      cat:"Косметология",
+      name:"Чистка лица",
+      price:null,
+      duration:null,
+      img:IMG.faceCleaning,
+      desc:"Профессиональное очищение кожи с подбором метода по её состоянию и чувствительности.",
+      includes:[
+        "Аппаратная чистка",
+        "Механическая чистка",
+        "Комбинированная чистка",
+        "Подбор варианта после консультации"
+      ]
+    },
+    {
+      id:2,
+      cat:"Пирсинг",
+      name:"Детский прокол ушей",
+      price:null,
+      duration:null,
+      img:IMG.childPiercing,
+      desc:"Аккуратный прокол мочек ушей для детей с внимательным и спокойным подходом к процедуре.",
+      includes:[
+        "Подбор места прокола",
+        "Подготовка и обработка зоны",
+        "Прокол мочек ушей",
+        "Рекомендации по домашнему уходу"
+      ]
+    },
+    {
+      id:3,
+      cat:"Косметология",
+      name:"Удаление кожных новообразований",
+      price:null,
+      duration:null,
+      img:IMG.lesionRemoval,
+      desc:"Удаление подходящих кожных новообразований после предварительной оценки специалистом.",
+      includes:[
+        "Предварительная консультация",
+        "Оценка зоны",
+        "Проведение процедуры при отсутствии противопоказаний",
+        "Рекомендации по уходу после процедуры"
+      ]
+    },
+    {
+      id:4,
+      cat:"Пирсинг",
+      name:"Пирсинг уха",
+      price:null,
+      duration:null,
+      img:IMG.earPiercing,
+      desc:"Проколы разных зон уха — от классической мочки до сложных композиций.",
+      includes:[
+        "Мочка и верхняя мочка",
+        "Хеликс и форвард-хеликс",
+        "Трагус, конч, дейс и rook",
+        "Индустриал"
+      ]
+    },
+    {
+      id:5,
+      cat:"Пирсинг",
+      name:"Пирсинг носа",
+      price:null,
+      duration:null,
+      img:IMG.nosePiercing,
+      desc:"Подбор прокола под анатомию и желаемый образ — от аккуратной ноздри до более выразительных вариантов.",
+      includes:[
+        "Ноздря",
+        "Септум",
+        "Бридж",
+        "Рекомендации по уходу"
+      ]
+    },
+    {
+      id:6,
+      cat:"Пирсинг",
+      name:"Пирсинг губ",
+      price:null,
+      duration:null,
+      img:IMG.lipPiercing,
+      desc:"Разные варианты пирсинга губ с подбором расположения под черты лица и анатомию.",
+      includes:[
+        "Лабрет",
+        "Медуза",
+        "Монро",
+        "Вертикальный лабрет",
+        "Snake bites и другие парные варианты"
+      ]
+    },
+    {
+      id:7,
+      cat:"Пирсинг",
+      name:"Пирсинг языка",
+      price:null,
+      duration:null,
+      img:IMG.tonguePiercing,
+      desc:"Классический прокол языка и отдельные варианты поверхностного пирсинга после оценки анатомии.",
+      includes:[
+        "Классический прокол языка",
+        "Оценка анатомии перед процедурой",
+        "Некоторые поверхностные варианты",
+        "Подробные рекомендации по уходу"
+      ]
+    },
+    {
+      id:8,
+      cat:"Пирсинг",
+      name:"Пирсинг брови",
+      price:null,
+      duration:null,
+      img:IMG.browPiercing,
+      desc:"Стандартный прокол брови с выбором подходящего расположения и украшения.",
+      includes:[
+        "Подбор точки прокола",
+        "Стандартный прокол брови",
+        "Установка украшения",
+        "Рекомендации по уходу"
+      ]
+    },
+    {
+      id:9,
+      cat:"Пирсинг",
+      name:"Пирсинг пупка",
+      price:null,
+      duration:null,
+      img:IMG.navelPiercing,
+      desc:"Классический пирсинг пупка и отдельные анатомические варианты при подходящем строении зоны.",
+      includes:[
+        "Оценка анатомии",
+        "Классический прокол",
+        "Некоторые анатомические варианты",
+        "Рекомендации по заживлению"
+      ]
+    },
+    {
+      id:10,
+      cat:"Пирсинг",
+      name:"Пирсинг тела",
+      price:null,
+      duration:null,
+      img:IMG.bodyPiercing,
+      desc:"Пирсинг отдельных зон тела с обязательной предварительной оценкой анатомии и возможности безопасного размещения.",
+      includes:[
+        "Пирсинг сосков",
+        "Различные поверхностные проколы",
+        "Подбор расположения",
+        "Рекомендации по уходу"
+      ]
+    },
+    {
+      id:11,
+      cat:"Аппаратные процедуры",
+      name:"Лазерная эпиляция",
+      price:null,
+      duration:null,
+      img:IMG.laser,
+      desc:"Аппаратная процедура для длительного уменьшения роста нежелательных волос на выбранных зонах.",
+      includes:[
+        "Подбор зоны обработки",
+        "Настройка параметров под клиента",
+        "Проведение процедуры",
+        "Рекомендации между сеансами"
+      ]
+    },
+    {
+      id:12,
+      cat:"Аппаратные процедуры",
+      name:"Курс аппаратной коррекции",
+      price:null,
+      duration:null,
+      img:IMG.bodyCorrection,
+      desc:"Курс процедур для работы с выбранными зонами тела по индивидуально подобранной программе.",
+      includes:[
+        "Первичная консультация",
+        "Подбор курса",
+        "Аппаратная работа по выбранным зонам",
+        "Контроль динамики в процессе курса"
+      ]
+    },
+    {
+      id:13,
+      cat:"Аппаратные процедуры",
+      name:"Токовая терапия",
+      price:null,
+      duration:null,
+      img:IMG.currentTherapy,
+      desc:"Аппаратная процедура с использованием слабых электрических импульсов по индивидуально выбранному протоколу.",
+      includes:[
+        "Оценка состояния кожи",
+        "Подбор режима процедуры",
+        "Проведение токовой терапии",
+        "Рекомендации по дальнейшему уходу"
+      ]
+    },
+    {
+      id:14,
+      cat:"Сертификаты",
+      name:"Подарочные сертификаты",
+      price:null,
+      duration:null,
+      img:IMG.certificate,
+      desc:"Красивый способ подарить близкому человеку процедуру или возможность самостоятельно выбрать услугу.",
+      includes:[
+        "Подбор номинала",
+        "Возможность подарить на выбранную услугу",
+        "Оформление сертификата",
+        "Уточнение условий использования при записи"
+      ]
+    }
+  ];
+
+  const fmt = n => new Intl.NumberFormat("ru-RU").format(n) + " ₸";
+  const priceLabel = s => Number.isFinite(Number(s?.price)) ? fmt(Number(s.price)) : "Цена по записи";
+  const durationLabel = s => Number.isFinite(Number(s?.duration)) ? `${Number(s.duration)} мин` : "Время индивидуально";
+  const esc = s => String(s ?? "").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]));
+  let serverBookings = [];
+
+  async function bookingApi(path="", options={}){
+    const headers = {
+      "Content-Type":"application/json",
+      "X-Telegram-Init-Data": tg?.initData || "",
+      ...(options.headers || {})
+    };
+    const res = await fetch("/api/bookings" + path, {...options, headers});
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok) throw new Error(data.detail || data.error || "Ошибка сервера");
+    return data;
+  }
+
+  async function loadBookings(){
+    try{
+      const data = await bookingApi();
+      serverBookings = Array.isArray(data.bookings) ? data.bookings : [];
+      if(S.view==="booking") render();
+    }catch(e){
+      console.error("Booking load failed:", e);
+      if(S.view==="booking") toast(e.message || "Не удалось загрузить записи");
+    }
+  }
+
+  function toast(text){
+    const el=document.querySelector("#toast");
+    if(!el)return;
+    el.textContent=text;el.classList.add("show");
+    clearTimeout(window.__toast);
+    window.__toast=setTimeout(()=>el.classList.remove("show"),1800);
+  }
+
+  function haptic(kind="light"){
+    try{ tg?.HapticFeedback?.impactOccurred?.(kind); }catch(e){}
+  }
+
+  function go(view){
+    S.view=view;
+    S.bookingConfirmed=false;
+    window.scrollTo({top:0,behavior:"smooth"});
+    render();
+    haptic();
+  }
+
+  function nav(active){
+    const items=[
+      ["home","⌂","Главная"],
+      ["services","⌘","Услуги"],
+      ["booking","▣","Запись"],
+      ["history","◷","История"],
+      ["profile","♙","Профиль"]
+    ];
+    return `<nav class="bottom-nav"><div class="nav-inner">${items.map(([v,i,l])=>`<button class="nav-btn ${active===v?"active":""}" onclick="Beauty.go('${v}')"><div class="nav-icon">${i}</div><span>${l}</span></button>`).join("")}</div></nav>`;
+  }
+
+  function topbar(opts={}){
+    return `<div class="safe-top"></div><header class="topbar"><div class="toprow">
+      ${opts.back?`<button class="icon-btn" onclick="${opts.back}">‹</button>`:`<button class="icon-btn" onclick="Beauty.toast('Меню появится позже')">☰</button>`}
+      <div class="brand-wrap"><div class="brand">MED <span>AESTHETIC</span></div><div class="brand-sub">cosmetology · piercing</div></div>
+      <button class="icon-btn gold" onclick="Beauty.toast('Новых уведомлений нет')">♧</button>
+    </div></header>`;
+  }
+
+  function serviceCard(s){
+    return `<button class="service-card" onclick="Beauty.openService(${s.id})">
+      <img src="${s.img}" alt="${esc(s.name)}">
+      <div class="body"><b>${esc(s.name)}</b><div class="meta"><span class="price">${priceLabel(s)}</span><span>${durationLabel(s)}</span></div></div>
+    </button>`;
+  }
+
+  function home(){
+    return `<main class="page">${topbar()}
+      <section class="hero">
+        <img class="hero-img" src="${IMG.hero}" alt="">
+        <div class="hero-orb"></div>
+        <div class="hero-content">
+          <div class="eyebrow">MED AESTHETIC · COSMETOLOGY · PIERCING</div>
+          <h1>Премиум уход<br>для особенных</h1>
+          <p>Косметология, пирсинг и аппаратные процедуры. Выберите услугу и удобное время онлайн.</p>
+          <button class="btn-primary" onclick="Beauty.go('services')">Записаться</button>
+        </div>
+      </section>
+      <div class="quick-grid">
+        <button class="quick" onclick="Beauty.openCategory('Косметология')"><div class="qicon">✦</div><span>Косметология</span></button>
+        <button class="quick" onclick="Beauty.openCategory('Пирсинг')"><div class="qicon">◇</div><span>Пирсинг</span></button>
+        <button class="quick" onclick="Beauty.openCategory('Аппаратные процедуры')"><div class="qicon">⌁</div><span>Аппаратные</span></button>
+        <button class="quick" onclick="Beauty.openCategory('Сертификаты')"><div class="qicon">♢</div><span>Сертификаты</span></button>
+      </div>
+      <section class="section">
+        <div class="section-head"><h2>Популярные услуги</h2><button onclick="Beauty.go('services')">Все</button></div>
+        <div class="service-scroll">${[services[0],services[1],services[10],services[3]].map(serviceCard).join("")}</div>
+      </section>
+      <div class="promo" onclick="Beauty.openService(14)"><div><strong>Подарочные сертификаты</strong><p>Подарите близкому человеку уход, процедуру или выбор услуги</p></div><div class="gift">♔</div></div>
+      <section class="section">
+        <div class="section-head"><h2>Наши мастера</h2><button onclick="Beauty.go('masters')">Все</button></div>
+        <div class="masters">${masters.map(m=>`<button class="master-pill" onclick="Beauty.openMaster(${m.id})"><img src="${m.img}" alt=""><b>${m.name}</b><span>${m.role}</span></button>`).join("")}</div>
+      </section>
+    </main>${nav("home")}`;
+  }
+
+  function servicesView(){
+    const cats=["Все",...new Set(services.map(x=>x.cat))];
+    const list=S.category==="Все"?services:services.filter(x=>x.cat===S.category);
+    return `<main class="page">${topbar()}
+      <h1 class="page-title">Услуги</h1>
+      <p class="page-sub">Выберите направление и откройте карточку услуги для подробностей.</p>
+      <div class="search-box">⌕ <input id="serviceSearch" placeholder="Найти услугу" oninput="Beauty.filterServices(this.value)"></div>
+      <div class="chips">${cats.map(c=>`<button class="chip ${S.category===c?"active":""}" onclick="Beauty.setCategory('${c}')">${c}</button>`).join("")}</div>
+      <div class="service-list" id="serviceList">${list.map(serviceRow).join("")}</div>
+    </main>${nav("services")}`;
+  }
+
+  function serviceRow(s){
+    return `<button class="service-row" data-name="${esc(s.name.toLowerCase())}" onclick="Beauty.openService(${s.id})">
+      <img src="${s.img}" alt="">
+      <div><h3>${esc(s.name)}</h3><p>${esc(s.desc)}</p><div class="row-meta">${priceLabel(s)} · ${durationLabel(s)}</div></div>
+      <div class="chev">›</div>
+    </button>`;
+  }
+
+  function serviceDetail(){
+    const s=S.service || services[0];
+    return `<main class="page">
+      <div class="detail-cover"><img src="${s.img}" alt="">
+        <button class="icon-btn back-float" onclick="Beauty.go('services')">‹</button>
+        <button class="icon-btn heart-float gold" onclick="Beauty.toast('Добавлено в избранное')">♡</button>
+      </div>
+      <div class="detail-box">
+        <h1>${esc(s.name)}</h1>
+        <div class="detail-price">${priceLabel(s)} <span>${durationLabel(s)}</span></div>
+        <p class="detail-copy">${esc(s.desc)}</p>
+        <div class="includes"><h3>Что входит</h3>${s.includes.map(x=>`<div>${esc(x)}</div>`).join("")}</div>
+        <div class="sticky-action"><button class="btn-primary" onclick="Beauty.startBooking(${s.id})">Выбрать мастера</button></div>
+      </div>
+    </main>${nav("services")}`;
+  }
+
+  function mastersView(){
+    return `<main class="page">${topbar({back:S.service?"Beauty.openService("+S.service.id+")":"Beauty.go('home')"})}
+      <h1 class="page-title">Выбор мастера</h1><p class="page-sub">${S.service?esc(S.service.name):"Выберите специалиста"}</p>
+      <div class="master-list">${masters.map(m=>`<div class="master-card ${S.master?.id===m.id?"selected":""}">
+        <img src="${m.img}" alt=""><div><h3>${m.name}</h3><p>${m.role}</p><p>Опыт ${m.exp}</p><div class="rating">★ ${m.rating}</div></div>
+        <button class="select-btn" onclick="Beauty.selectMaster(${m.id})">${S.master?.id===m.id?"Выбран":"Выбрать"}</button>
+      </div>`).join("")}</div>
+      ${S.service&&S.master?`<div class="sticky-action"><button class="btn-primary" onclick="Beauty.go('datetime')">Выбрать дату и время</button></div>`:""}
+    </main>${nav("services")}`;
+  }
+
+  function dates(){
+    const a=[]; const weekdays=["Вс","Пн","Вт","Ср","Чт","Пт","Сб"];
+    const months=["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
+    for(let i=1;i<=14;i++){
+      const d=new Date();d.setDate(d.getDate()+i);
+      const iso=d.toISOString().slice(0,10);
+      a.push({iso,day:d.getDate(),w:weekdays[d.getDay()],m:months[d.getMonth()]});
+    }
+    return a;
+  }
+
+  function datetimeView(){
+    const ds=dates(), times=["10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00","19:00","20:00"];
+    if(!S.date)S.date=ds[1].iso;
+    return `<main class="page">${topbar({back:"Beauty.go('masters')"})}
+      <h1 class="page-title">Выбор времени</h1><p class="page-sub">Свободные окна выбранного мастера.</p>
+      <div class="calendar-card"><div class="date-strip">${ds.map(d=>`<button class="date-btn ${S.date===d.iso?"active":""}" onclick="Beauty.pickDate('${d.iso}')"><span>${d.w}</span><b>${d.day}</b><small>${d.m}</small></button>`).join("")}</div>
+      <div class="time-title">Доступное время</div><div class="time-grid">${times.map(t=>`<button class="time-btn ${S.time===t?"active":""}" onclick="Beauty.pickTime('${t}')">${t}</button>`).join("")}</div></div>
+      <div class="summary"><h3>Ваш выбор</h3>
+        <div class="summary-line"><span>Услуга</span><b>${esc(S.service?.name||"—")}</b></div>
+        <div class="summary-line"><span>Мастер</span><b>${esc(S.master?.name||"—")}</b></div>
+        <div class="summary-line"><span>Дата</span><b>${esc(S.date||"—")} ${esc(S.time||"")}</b></div>
+        <div class="summary-line"><span>Стоимость</span><b>${S.service?priceLabel(S.service):"—"}</b></div>
+      </div>
+      <div class="sticky-action"><button class="btn-primary" ${!S.time?"disabled style='opacity:.45'":""} onclick="Beauty.confirmBooking()">Записаться</button></div>
+    </main>${nav("booking")}`;
+  }
+
+  function confirmView(){
+    return `<main class="page">${topbar()}
+      <div class="confirm-wrap"><div class="confirm-icon">✓</div><h1>Запись подтверждена</h1>
+      <p>Детали сохранены в разделе «Мои записи».<br>Напоминание о визите появится позже после подключения backend.</p></div>
+      <div class="summary">
+        <div class="summary-line"><span>Услуга</span><b>${esc(S.service.name)}</b></div>
+        <div class="summary-line"><span>Мастер</span><b>${esc(S.master.name)}</b></div>
+        <div class="summary-line"><span>Дата / время</span><b>${esc(S.date)} · ${esc(S.time)}</b></div>
+        <div class="summary-line"><span>Стоимость</span><b>${priceLabel(S.service)}</b></div>
+      </div>
+      <div class="sticky-action"><button class="btn-primary" onclick="Beauty.go('booking')">Мои записи</button></div>
+    </main>${nav("booking")}`;
+  }
+
+  function bookingView(){
+    const bookings=serverBookings;
+    return `<main class="page">${topbar()}
+      <h1 class="page-title">Мои записи</h1><p class="page-sub">Предстоящие процедуры и управление записью.</p>
+      ${bookings.length?bookings.map(b=>bookingCard(b,false)).join(""):`<div class="empty">У вас пока нет предстоящих записей.<br><br><button class="btn-primary" onclick="Beauty.go('services')">Выбрать услугу</button></div>`}
+    </main>${nav("booking")}`;
+  }
+
+  function bookingCard(b,done){
+    const s=services.find(x=>x.id===b.serviceId)||services[0];
+    const m=masters.find(x=>x.id===b.masterId)||masters[0];
+    const serviceName=b.serviceName||s.name;
+    const masterName=b.masterName||m.name;
+    return `<button class="booking-card" onclick="Beauty.bookingInfo('${b.id}')"><img src="${s.img}" alt=""><div><h3>${esc(serviceName)}</h3><p>${esc(b.date)} · ${esc(b.time)}</p><p>Мастер: ${esc(masterName)} · ${priceLabel(s)}</p></div><span class="status-pill ${done?"done":""}">${done?"Завершено":"Предстоит"}</span></button>`;
+  }
+
+  function historyView(){
+    const demo=[
+      {id:"h1",serviceId:6,masterId:2,date:"18.08.2026",time:"12:00"},
+      {id:"h2",serviceId:1,masterId:1,date:"05.08.2026",time:"14:00"},
+      {id:"h3",serviceId:7,masterId:3,date:"20.07.2026",time:"16:00"}
+    ];
+    return `<main class="page">${topbar()}
+      <h1 class="page-title">История</h1><p class="page-sub">Прошлые посещения и быстрый повтор записи.</p>
+      ${demo.map(b=>bookingCard(b,true)).join("")}
+    </main>${nav("history")}`;
+  }
+
+  function profileView(){
+    const user=tg?.initDataUnsafe?.user;
+    const name=[user?.first_name,user?.last_name].filter(Boolean).join(" ") || "Алина";
+    const avatar=user?.photo_url || masters[1].img;
+    return `<main class="page">${topbar()}
+      <div class="profile-head"><img class="profile-avatar" src="${avatar}" alt=""><div><h2>${esc(name)}</h2><p>${user?.username?"@"+esc(user.username):"+7 (999) 123-45-67"}</p><div class="badge">♔ Gold клиент</div></div></div>
+      <div class="menu-list">
+        <button class="menu-item" onclick="Beauty.toast('Редактирование профиля подключим позже')"><span class="mi">♙</span><b>Личные данные</b><span>›</span></button>
+        <button class="menu-item" onclick="Beauty.go('masters')"><span class="mi">♡</span><b>Мои мастера</b><span>›</span></button>
+        <button class="menu-item" onclick="Beauty.go('bonus')"><span class="mi">♢</span><b>Бонусы</b><span>1 250 ₸ ›</span></button>
+        <button class="menu-item" onclick="Beauty.toast('Сертификаты появятся позже')"><span class="mi">▣</span><b>Подарочные сертификаты</b><span>›</span></button>
+        <button class="menu-item" onclick="Beauty.toast('Уведомления включены')"><span class="mi">♧</span><b>Уведомления</b><span>›</span></button>
+        <button class="menu-item" onclick="Beauty.toast('Раздел поддержки подключим позже')"><span class="mi">?</span><b>Помощь и поддержка</b><span>›</span></button>
+      </div>
+    </main>${nav("profile")}`;
+  }
+
+  function bonusView(){
+    return `<main class="page">${topbar({back:"Beauty.go('profile')"})}
+      <h1 class="page-title">Бонусная программа</h1><p class="page-sub">Копите бонусы и оплачивайте ими услуги.</p>
+      <div class="bonus-card"><small>Ваши бонусы</small><strong>1 250 ₸</strong><small>Доступно для оплаты услуг</small>
+        <div class="bonus-status"><span>Ваш статус: <b style="color:var(--gold2)">Gold</b></span><span>до Platinum 2 750 ₸</span></div>
+      </div>
+      <div class="menu-list">
+        <div class="menu-item"><span class="mi">▣</span><b>За каждую запись</b><span>5% от суммы</span></div>
+        <div class="menu-item"><span class="mi">★</span><b>За отзыв о мастере</b><span>100 ₸</span></div>
+        <div class="menu-item"><span class="mi">♙</span><b>За приглашённую подругу</b><span>200 ₸</span></div>
+      </div>
+    </main>${nav("profile")}`;
+  }
+
+  function bookingInfo(id){
+    const b=serverBookings.find(x=>String(x.id)===String(id));
+    if(!b){toast("Запись из истории");return}
+    const s=services.find(x=>x.id===b.serviceId), m=masters.find(x=>x.id===b.masterId);
+    toast(`${b.serviceName||s?.name||"Услуга"} · ${b.masterName||m?.name||"Мастер"} · ${b.date} ${b.time}`);
+  }
+
+  function render(){
+    let html="";
+    if(S.view==="home")html=home();
+    else if(S.view==="services")html=servicesView();
+    else if(S.view==="service")html=serviceDetail();
+    else if(S.view==="masters")html=mastersView();
+    else if(S.view==="datetime")html=datetimeView();
+    else if(S.view==="confirm")html=confirmView();
+    else if(S.view==="booking")html=bookingView();
+    else if(S.view==="history")html=historyView();
+    else if(S.view==="profile")html=profileView();
+    else if(S.view==="bonus")html=bonusView();
+    else html=home();
+    document.querySelector("#app").innerHTML=html;
+  }
+
+  window.Beauty = {
+    go,
+    toast,
+    openCategory(c){
+      S.category=c;
+      S.view="services";
+      render();
+      document.querySelector("#app")?.scrollTo?.({top:0,behavior:"smooth"});
+      haptic();
+    },
+    setCategory(c){S.category=c;render()},
+    filterServices(q){
+      q=q.trim().toLowerCase();
+      document.querySelectorAll("#serviceList .service-row").forEach(el=>{
+        el.style.display=el.dataset.name.includes(q)?"grid":"none";
+      });
+    },
+    openService(id){S.service=services.find(x=>x.id===id);S.master=null;S.time=null;S.view="service";render();window.scrollTo(0,0);haptic()},
+    startBooking(id){S.service=services.find(x=>x.id===id);S.master=null;S.date=null;S.time=null;go("masters")},
+    openMaster(id){S.master=masters.find(x=>x.id===id);if(!S.service){S.service=services[0]}go("masters")},
+    selectMaster(id){S.master=masters.find(x=>x.id===id);render();haptic()},
+    pickDate(d){S.date=d;S.time=null;render();haptic()},
+    pickTime(t){S.time=t;render();haptic()},
+    async confirmBooking(){
+      if(!S.service||!S.master||!S.date||!S.time)return;
+      try{
+        const data = await bookingApi("",{
+          method:"POST",
+          body:JSON.stringify({
+            service_id:S.service.id,
+            service_name:S.service.name,
+            master_id:S.master.id,
+            master_name:S.master.name,
+            booking_date:S.date,
+            booking_time:S.time
+          })
+        });
+        if(data.booking) serverBookings.unshift(data.booking);
+        S.view="confirm";
+        render();
+        haptic("medium");
+      }catch(e){
+        toast(e.message || "Не удалось создать запись");
+      }
+    },
+    bookingInfo
+  };
+
+  render();
+  loadBookings();
+})();
+  </script>
+</body>
+</html>
