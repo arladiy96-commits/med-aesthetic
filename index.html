@@ -929,6 +929,62 @@ html.app-ready #app{
   font-size:11px;
 }
 
+
+/* v25 — certificate banner matched to the girl banner only */
+/* Exact same outer geometry for both carousel cards. */
+.hero-slide .hero.hero-exact-card,
+.hero-slide .certificate-banner{
+  width:93%!important;
+  flex:0 0 93%!important;
+  height:auto!important;
+  min-height:0!important;
+  aspect-ratio:941 / 684!important;
+  border-radius:24px!important;
+  overflow:hidden!important;
+  background:#0b0810!important;
+  box-shadow:0 22px 45px rgba(0,0,0,.34)!important;
+}
+
+/* Crop the certificate source exactly like the girl banner.
+   This removes the extra baked-in rounded frame and makes the visible corners identical. */
+.hero-slide:nth-child(2) .certificate-banner img{
+  width:107%!important;
+  height:107%!important;
+  left:-3.5%!important;
+  top:-3.5%!important;
+  object-fit:cover!important;
+  object-position:center center!important;
+}
+
+/* Match the certificate CTA visually to the baked-in “Записаться” button. */
+.hero-slide:nth-child(2) .certificate-action{
+  left:5.4%!important;
+  bottom:8.4%!important;
+  height:15.0%!important;
+  min-height:0!important;
+  min-width:0!important;
+  width:auto!important;
+  padding:0 11px!important;
+  border-radius:9px!important;
+  border:1px solid rgba(255,222,137,.78)!important;
+  background:linear-gradient(135deg,#dfa63b 0%,#efc45c 47%,#f6da86 100%)!important;
+  color:#211405!important;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif!important;
+  font-size:9.6px!important;
+  line-height:1!important;
+  font-weight:700!important;
+  letter-spacing:0!important;
+  box-shadow:0 8px 18px rgba(220,166,55,.20),inset 0 1px 0 rgba(255,255,255,.28)!important;
+  white-space:nowrap!important;
+}
+
+@media (max-width:360px){
+  .hero-slide:nth-child(2) .certificate-action{
+    font-size:9px!important;
+    padding:0 10px!important;
+  }
+}
+
 </style>
 </head>
 <body>
