@@ -506,7 +506,6 @@ html,body{touch-action:none}
 .admin-bottom .nav-inner{border-color:rgba(143,98,255,.12)}.admin-bottom .nav-btn.active{color:var(--admin-accent2)}
 .role-sheet-backdrop{position:fixed;z-index:120;inset:0;background:rgba(0,0,0,.62);backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center;padding:14px}.role-sheet{width:min(590px,100%);border:1px solid rgba(143,98,255,.25);background:linear-gradient(180deg,#181420,#0e0c13);border-radius:26px;padding:17px 14px calc(17px + env(safe-area-inset-bottom));box-shadow:0 -30px 70px rgba(0,0,0,.55)}.role-sheet h3{margin:0 0 4px;font-size:14px}.role-sheet p{margin:0 0 12px;color:var(--muted);font-size:8px}.role-choice{width:100%;border:1px solid rgba(255,255,255,.06);background:#111019;color:#fff;border-radius:15px;padding:12px;display:flex;align-items:center;justify-content:space-between;margin-top:7px;text-align:left}.role-choice b{font-size:10px}.role-choice span{font-size:8px;color:var(--muted)}.role-choice.active{border-color:rgba(143,98,255,.40);background:rgba(143,98,255,.10)}
 .test-mode-bar{position:fixed;z-index:75;left:50%;top:calc(max(env(safe-area-inset-top,0px),var(--tg-safe-top,0px),44px) + 6px);transform:translateX(-50%);width:min(440px,calc(100% - 96px));border:1px solid rgba(143,98,255,.28);background:rgba(20,16,29,.94);backdrop-filter:blur(14px);border-radius:999px;padding:7px 10px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:7.8px;box-shadow:0 8px 28px rgba(0,0,0,.3)}.test-mode-bar button{border:0;background:none;color:var(--admin-accent2);font-size:7.8px;font-weight:800}
-.role-loading{height:100%;display:grid;place-items:center;padding:24px}.role-loading-card{border:1px solid rgba(143,98,255,.14);background:#111019;border-radius:22px;padding:22px;text-align:center;color:var(--muted);font-size:9px}.role-spinner{width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,255,255,.07);border-top-color:var(--admin-accent2);margin:0 auto 12px;animation:adminspin .8s linear infinite}@keyframes adminspin{to{transform:rotate(360deg)}}
 
   </style>
 </head>
@@ -572,18 +571,37 @@ html,body{touch-action:none}
 
   window.addEventListener("resize", syncTelegramShell, {passive:true});
 
+  // Быстрый старт: обычный пользователь сразу видит клиентское приложение.
+  // Для уже определённых creator/admin запоминаем роль локально, чтобы их
+  // рабочая панель при следующих открытиях появлялась без ожидания сети.
+  let cachedActualRole = "client";
+  let cachedRoleMode = "client";
+  try{
+    const savedActual = localStorage.getItem("medAestheticActualRole");
+    if(savedActual === "creator" || savedActual === "admin") cachedActualRole = savedActual;
+    const savedMode = sessionStorage.getItem("medAestheticRoleMode");
+    if(savedMode === "creator" || savedMode === "admin" || savedMode === "client") cachedRoleMode = savedMode;
+  }catch(e){}
+
+  const cachedSwitch = cachedActualRole === "creator"
+    ? ["creator","admin","client"]
+    : cachedActualRole === "admin"
+      ? ["admin","client"]
+      : ["client"];
+  if(!cachedSwitch.includes(cachedRoleMode)) cachedRoleMode = cachedActualRole;
+
   const S = {
-    view: "home",
+    view: cachedRoleMode === "client" ? "home" : "admin-home",
     category: "Все",
     service: null,
     master: null,
     date: null,
     time: null,
     bookingConfirmed: false,
-    identityReady: false,
-    actualRole: "client",
-    roleMode: "client",
-    roleSwitch: ["client"],
+    identityReady: true,
+    actualRole: cachedActualRole,
+    roleMode: cachedRoleMode,
+    roleSwitch: cachedSwitch,
     roleSheet: false,
     adminFilter: "Все",
     adminDate: null
@@ -861,15 +879,23 @@ html,body{touch-action:none}
       if(!res.ok) throw new Error(data.detail || "Не удалось определить роль");
       S.actualRole = data?.user?.actualRole || "client";
       S.roleSwitch = Array.isArray(data?.roleSwitch) ? data.roleSwitch : [S.actualRole];
+      try{
+        if(S.actualRole === "creator" || S.actualRole === "admin")
+          localStorage.setItem("medAestheticActualRole", S.actualRole);
+        else
+          localStorage.removeItem("medAestheticActualRole");
+      }catch(e){}
       const saved = sessionStorage.getItem("medAestheticRoleMode");
       S.roleMode = S.roleSwitch.includes(saved) ? saved : S.actualRole;
       S.view = S.roleMode === "client" ? "home" : "admin-home";
     }catch(e){
       console.error("Role load failed:",e);
+      // При ошибке проверки прав безопасно оставляем клиентский режим.
       S.actualRole="client";
       S.roleMode="client";
       S.roleSwitch=["client"];
       S.view="home";
+      try{ localStorage.removeItem("medAestheticActualRole"); }catch(_e){}
     }finally{
       S.identityReady=true;
       render();
@@ -1258,10 +1284,7 @@ html,body{touch-action:none}
   }
 
   function render(){
-    if(!S.identityReady){
-      document.querySelector("#app").innerHTML=`<div class="role-loading"><div class="role-loading-card"><div class="role-spinner"></div>Определяем рабочую роль…</div></div>`;
-      return;
-    }
+    // Никаких экранов «определяем роль»: интерфейс показывается сразу.
     let html="";
     if(S.view==="admin-home")html=adminHome();
     else if(S.view==="admin-bookings")html=adminBookingsView();
