@@ -7,10 +7,12 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>MED AESTHETIC v15</title>
+  <title>MED AESTHETIC v16</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
-  /* v15: start Telegram expansion/fullscreen as early as physically possible */
+  /* v16: let Telegram open the Mini App naturally from the bottom first.
+     We expand immediately, but fullscreen is requested a moment later,
+     after the WebView has a real viewport. This avoids the side-opening effect. */
   (() => {
     const tg = window.Telegram?.WebApp;
     if(!tg) return;
@@ -20,10 +22,8 @@
     try{ tg.disableVerticalSwipes?.(); }catch(e){}
     try{ tg.lockOrientation?.(); }catch(e){}
     try{ tg.expand?.(); }catch(e){}
-    try{
-      if(tg.requestFullscreen && !tg.isFullscreen) tg.requestFullscreen();
-    }catch(e){}
     window.__medAestheticEarlyTelegramBoot = true;
+    window.__medAestheticFullscreenRequested = false;
   })();
   </script>
   <style id="med-aesthetic-v11-css">
@@ -493,13 +493,13 @@ body{
 html:not(.app-ready) #app{
   opacity:0!important;
   visibility:hidden!important;
-  transform:translate3d(0,6px,0)!important;
+  transform:translate3d(0,18px,0)!important;
 }
 html.app-ready #app{
   opacity:1!important;
   visibility:visible!important;
   transform:translate3d(0,0,0)!important;
-  transition:opacity .09s ease-out, transform .11s cubic-bezier(.2,.8,.2,1)!important;
+  transition:opacity .10s ease-out, transform .16s cubic-bezier(.18,.82,.22,1)!important;
 }
 #app{
   will-change:opacity,transform;
@@ -582,19 +582,19 @@ html.app-ready #app{
     }catch(e){}
   }
 
+  function requestTelegramFullscreenOnce(){
+    if(window.__medAestheticFullscreenRequested) return;
+    window.__medAestheticFullscreenRequested = true;
+    try{
+      if(tg?.requestFullscreen && !tg?.isFullscreen) tg.requestFullscreen();
+    }catch(e){}
+  }
+
   function initTelegramShell(){
-    /*
-      Fullscreen/expand already started in <head>, before CSS parsing.
-      Here we only tell Telegram that the actual UI is ready and sync sizes.
-    */
     try{ tg?.ready?.(); }catch(e){}
 
-    /* Fallback only for clients where the early head call was unavailable. */
     if(!window.__medAestheticEarlyTelegramBoot){
       try{ tg?.expand?.(); }catch(e){}
-      try{
-        if(tg?.requestFullscreen && !tg?.isFullscreen) tg.requestFullscreen();
-      }catch(e){}
       try{ tg?.disableVerticalSwipes?.(); }catch(e){}
       try{ tg?.lockOrientation?.(); }catch(e){}
       try{ tg?.setHeaderColor?.("#07050c"); }catch(e){}
@@ -603,6 +603,12 @@ html.app-ready #app{
     }
 
     syncTelegramShell();
+
+    /*
+      Do not fullscreen at the first zero-size/intermediate frame.
+      Give Telegram one short bottom-sheet expansion beat, then fullscreen.
+    */
+    setTimeout(requestTelegramFullscreenOnce, 70);
   }
 
   initTelegramShell();
@@ -664,6 +670,9 @@ html.app-ready #app{
       tg?.onEvent?.("viewportChanged", () => {
         syncTelegramShell();
         stableTicks = 0;
+        if((tg?.viewportHeight || window.innerHeight) > 300){
+          requestTelegramFullscreenOnce();
+        }
       });
     }catch(e){}
   })();
