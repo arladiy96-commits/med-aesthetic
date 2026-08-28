@@ -7,7 +7,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>MED AESTHETIC v16</title>
+  <title>MED AESTHETIC v17</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
   /* v16: let Telegram open the Mini App naturally from the bottom first.
@@ -553,7 +553,76 @@ html.app-ready #app{
 .role-sheet-backdrop{position:fixed;z-index:120;inset:0;background:rgba(0,0,0,.62);backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center;padding:14px}.role-sheet{width:min(590px,100%);border:1px solid rgba(143,98,255,.25);background:linear-gradient(180deg,#181420,#0e0c13);border-radius:26px;padding:17px 14px calc(17px + env(safe-area-inset-bottom));box-shadow:0 -30px 70px rgba(0,0,0,.55)}.role-sheet h3{margin:0 0 4px;font-size:14px}.role-sheet p{margin:0 0 12px;color:var(--muted);font-size:8px}.role-choice{width:100%;border:1px solid rgba(255,255,255,.06);background:#111019;color:#fff;border-radius:15px;padding:12px;display:flex;align-items:center;justify-content:space-between;margin-top:7px;text-align:left}.role-choice b{font-size:10px}.role-choice span{font-size:8px;color:var(--muted)}.role-choice.active{border-color:rgba(143,98,255,.40);background:rgba(143,98,255,.10)}
 .test-mode-bar{position:fixed;z-index:75;left:50%;top:calc(max(env(safe-area-inset-top,0px),var(--tg-safe-top,0px),44px) + 6px);transform:translateX(-50%);width:min(440px,calc(100% - 96px));border:1px solid rgba(143,98,255,.28);background:rgba(20,16,29,.94);backdrop-filter:blur(14px);border-radius:999px;padding:7px 10px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:7.8px;box-shadow:0 8px 28px rgba(0,0,0,.3)}.test-mode-bar button{border:0;background:none;color:var(--admin-accent2);font-size:7.8px;font-weight:800}
 
-  </style>
+  
+/* v17 — creator crown + administrator invitations */
+.creator-crown{
+  width:40px;height:40px;border-radius:13px;border:1px solid rgba(235,190,92,.42);
+  background:
+    radial-gradient(circle at 35% 25%,rgba(255,226,151,.18),transparent 42%),
+    linear-gradient(180deg,#18131f,#100d16);
+  color:#f0ca78;display:grid;place-items:center;font-size:19px;
+  box-shadow:0 8px 24px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.05);
+}
+.creator-crown:active{transform:scale(.96)}
+.role-sheet h3{display:flex;align-items:center;gap:7px}
+.role-choice b{letter-spacing:.1px}
+
+.access-hero{
+  margin:4px 0 14px;border:1px solid rgba(151,105,255,.24);
+  border-radius:22px;padding:16px;background:
+  radial-gradient(260px 120px at 90% 0%,rgba(127,71,255,.18),transparent 60%),
+  linear-gradient(180deg,#15111d,#0f0d15);
+}
+.access-hero h2{font-size:16px;margin:0 0 6px}
+.access-hero p{font-size:10px;line-height:1.55;color:#9d96a8;margin:0}
+.access-primary{
+  width:100%;min-height:48px;margin-top:14px;border-radius:14px;
+  border:1px solid rgba(156,114,255,.62);
+  background:linear-gradient(135deg,#6742da,#9b69f5);
+  color:white;font-weight:800;
+  box-shadow:0 12px 28px rgba(101,57,200,.22)
+}
+.access-primary:disabled{opacity:.55}
+.invite-card{
+  border:1px solid rgba(228,183,93,.30);background:linear-gradient(180deg,#16121c,#0f0d14);
+  border-radius:18px;padding:13px;margin-top:12px
+}
+.invite-card .invite-label{font-size:9px;color:#8e8797;margin-bottom:7px}
+.invite-link{
+  width:100%;border:1px solid rgba(255,255,255,.08);background:#0b0910;color:#eee8f4;
+  border-radius:12px;padding:11px 12px;font-size:10px;line-height:1.4;word-break:break-all
+}
+.invite-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}
+.invite-actions button{
+  min-height:40px;border-radius:11px;border:1px solid rgba(255,255,255,.08);
+  background:#15121b;font-size:10px;font-weight:750
+}
+.invite-actions button:first-child{color:#f0ca78;border-color:rgba(228,183,93,.27)}
+.admins-head{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;margin:18px 0 9px
+}
+.admins-head h2{font-size:14px;margin:0}
+.admins-head button{border:0;background:none;color:#9c72ff;font-size:10px;padding:6px}
+.admin-person{
+  display:grid;grid-template-columns:42px 1fr auto;gap:10px;align-items:center;
+  border:1px solid rgba(255,255,255,.06);background:#121018;border-radius:16px;padding:10px;margin-bottom:8px
+}
+.admin-person-avatar{
+  width:42px;height:42px;border-radius:13px;display:grid;place-items:center;
+  background:linear-gradient(135deg,#31224c,#171020);color:#c8a9ff;font-weight:850
+}
+.admin-person h3{font-size:11px;margin:0 0 3px}
+.admin-person p{font-size:8.8px;color:#8e8797;margin:0}
+.admin-remove{
+  border:1px solid rgba(255,104,127,.20);background:rgba(255,104,127,.06);
+  color:#ff8799;border-radius:10px;padding:8px 9px;font-size:9px
+}
+.admin-empty-mini{
+  border:1px dashed rgba(255,255,255,.08);border-radius:16px;padding:17px 12px;
+  text-align:center;color:#8e8797;font-size:10px;line-height:1.5
+}
+
+</style>
 </head>
 <body>
   <div id="app"></div>
@@ -738,7 +807,10 @@ html.app-ready #app{
     roleSwitch: cachedSwitch,
     roleSheet: false,
     adminFilter: "Все",
-    adminDate: null
+    adminDate: null,
+    admins: [],
+    adminsLoading: false,
+    adminInviteLink: ""
   };
 
   const IMG = {
@@ -1002,6 +1074,84 @@ html.app-ready #app{
     return data;
   }
 
+  async function accessApi(path="", options={}){
+    const headers = {
+      "Content-Type":"application/json",
+      "X-Telegram-Init-Data": tg?.initData || "",
+      ...(options.headers || {})
+    };
+    const res = await fetch("/api" + path, {...options, headers});
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok) throw new Error(data.detail || data.error || "Ошибка сервера");
+    return data;
+  }
+
+  async function loadAdmins(silent=false){
+    if(S.actualRole!=="creator")return;
+    S.adminsLoading=true;
+    if(!silent)render();
+    try{
+      const data=await accessApi("/admins");
+      S.admins=Array.isArray(data.admins)?data.admins:[];
+    }catch(e){
+      if(!silent)toast(e.message || "Не удалось загрузить администраторов");
+    }finally{
+      S.adminsLoading=false;
+      if(S.view==="admin-access")render();
+    }
+  }
+
+  async function createAdminInvite(){
+    if(S.actualRole!=="creator")return;
+    const btn=document.querySelector("#createAdminInviteBtn");
+    if(btn)btn.disabled=true;
+    haptic("medium");
+    try{
+      const data=await accessApi("/admin-invites",{method:"POST",body:"{}"});
+      S.adminInviteLink=data?.invite?.link || "";
+      render();
+      if(S.adminInviteLink)toast("Ссылка администратора создана");
+    }catch(e){
+      toast(e.message || "Не удалось создать приглашение");
+      if(btn)btn.disabled=false;
+    }
+  }
+
+  async function copyAdminInvite(){
+    if(!S.adminInviteLink)return;
+    try{
+      await navigator.clipboard.writeText(S.adminInviteLink);
+      toast("Ссылка скопирована");
+    }catch(e){
+      const ta=document.createElement("textarea");
+      ta.value=S.adminInviteLink;
+      ta.style.position="fixed";ta.style.opacity="0";
+      document.body.appendChild(ta);ta.select();
+      try{document.execCommand("copy");toast("Ссылка скопирована")}catch(_e){toast("Не удалось скопировать")}
+      ta.remove();
+    }
+    haptic();
+  }
+
+  function shareAdminInvite(){
+    if(!S.adminInviteLink)return;
+    const url="https://t.me/share/url?url="+encodeURIComponent(S.adminInviteLink)+"&text="+encodeURIComponent("Приглашение администратора MED AESTHETIC");
+    try{tg?.openTelegramLink?.(url)}catch(e){window.open(url,"_blank")}
+    haptic();
+  }
+
+  async function removeAdmin(id){
+    if(S.actualRole!=="creator")return;
+    if(!confirm("Убрать права администратора?"))return;
+    try{
+      await accessApi("/admins/"+encodeURIComponent(id),{method:"DELETE"});
+      S.admins=S.admins.filter(x=>String(x.telegramUserId)!==String(id));
+      render();toast("Права администратора удалены");haptic("medium");
+    }catch(e){
+      toast(e.message || "Не удалось удалить администратора");
+    }
+  }
+
   async function loadIdentity(){
     try{
       const res = await fetch("/api/me",{
@@ -1093,7 +1243,9 @@ html.app-ready #app{
     return `<div class="safe-top"></div><header class="topbar"><div class="toprow">
       ${opts.back?`<button class="icon-btn" onclick="${opts.back}">‹</button>`:`<button class="icon-btn" onclick="Beauty.toast('Меню появится позже')">☰</button>`}
       <div class="brand-wrap"><div class="brand">MED <span>AESTHETIC</span></div><div class="brand-sub">cosmetology · piercing</div></div>
-      <button class="icon-btn gold" onclick="Beauty.toast('Новых уведомлений нет')">♧</button>
+      ${S.actualRole==="creator"
+        ? `<button class="creator-crown" onclick="Beauty.openRoleSheet()" aria-label="Переключить роль">♛</button>`
+        : `<button class="icon-btn gold" onclick="Beauty.toast('Новых уведомлений нет')">♧</button>`}
     </div></header>`;
   }
 
@@ -1286,7 +1438,7 @@ html.app-ready #app{
 
 
   function ruRole(role){
-    return ({creator:"Создатель",admin:"Администратор",client:"Клиент"})[role] || "Клиент";
+    return ({creator:"Создатель",admin:"Администратор",client:"Покупатель"})[role] || "Покупатель";
   }
 
   function isStaffMode(){ return S.roleMode === "creator" || S.roleMode === "admin"; }
@@ -1317,8 +1469,8 @@ html.app-ready #app{
 
   function roleSheet(){
     if(!S.roleSheet)return "";
-    const labels={creator:["♛","Создатель","Полный доступ ко всем разделам"],admin:["◇","Администратор","Рабочая админ-панель"],client:["♡","Клиент","Полный клиентский сценарий"]};
-    return `<div class="role-sheet-backdrop" onclick="if(event.target===this)Beauty.closeRoleSheet()"><div class="role-sheet"><h3>♛ Режим создателя</h3><p>Переключение меняет рабочую роль для тестирования, но не ваши реальные права.</p>${S.roleSwitch.map(role=>{const x=labels[role]||labels.client;return `<button class="role-choice ${S.roleMode===role?"active":""}" onclick="Beauty.switchRole('${role}')"><div><b>${x[0]} ${x[1]}</b><span>${x[2]}</span></div><strong>${S.roleMode===role?"✓":"›"}</strong></button>`}).join("")}</div></div>`;
+    const labels={creator:["♛","Создатель","Полный доступ и управление ролями"],admin:["◇","Администратор","Полный рабочий функционал администратора"],client:["♡","Покупатель","Полный клиентский сценарий для теста"]};
+    return `<div class="role-sheet-backdrop" onclick="if(event.target===this)Beauty.closeRoleSheet()"><div class="role-sheet"><h3>♛ Переключить роль</h3><p>Вы получаете полноценный функционал выбранной роли. Ваши реальные права создателя не меняются.</p>${S.roleSwitch.map(role=>{const x=labels[role]||labels.client;return `<button class="role-choice ${S.roleMode===role?"active":""}" onclick="Beauty.switchRole('${role}')"><div><b>${x[0]} ${x[1]}</b><span>${x[2]}</span></div><strong>${S.roleMode===role?"✓":"›"}</strong></button>`}).join("")}</div></div>`;
   }
 
   function testModeBar(){
@@ -1406,8 +1558,56 @@ html.app-ready #app{
     </main>${adminNav("admin-clients")}${roleSheet()}`;
   }
 
+  function adminAccessView(){
+    if(S.actualRole!=="creator"){
+      return adminMoreView();
+    }
+    const admins=Array.isArray(S.admins)?S.admins:[];
+    return `<main class="admin-page">${adminHeader()}
+      <div class="admin-date-row">
+        <div><h1>Администраторы</h1><p>Доступ выдаётся через одноразовую Telegram-ссылку</p></div>
+        <button class="admin-link" onclick="Beauty.go('admin-more')">Назад</button>
+      </div>
+
+      <div class="access-hero">
+        <h2>Добавить администратора</h2>
+        <p>Создайте персональную ссылку и отправьте её нужному человеку. После перехода бот сам привяжет его Telegram ID и выдаст роль администратора.</p>
+        <button id="createAdminInviteBtn" class="access-primary" onclick="Beauty.createAdminInvite()">＋ Создать ссылку-приглашение</button>
+
+        ${S.adminInviteLink?`<div class="invite-card">
+          <div class="invite-label">Одноразовая ссылка администратора</div>
+          <div class="invite-link">${esc(S.adminInviteLink)}</div>
+          <div class="invite-actions">
+            <button onclick="Beauty.copyAdminInvite()">Копировать</button>
+            <button onclick="Beauty.shareAdminInvite()">Отправить в Telegram</button>
+          </div>
+        </div>`:""}
+      </div>
+
+      <div class="admins-head">
+        <h2>Действующие администраторы</h2>
+        <button onclick="Beauty.loadAdmins()">↻ Обновить</button>
+      </div>
+
+      ${S.adminsLoading
+        ? `<div class="admin-empty-mini">Обновляем список…</div>`
+        : admins.length
+          ? admins.map(a=>{
+              const name=[a.firstName,a.lastName].filter(Boolean).join(" ") || (a.username?"@"+a.username:"Telegram "+a.telegramUserId);
+              const sub=a.username?"@"+a.username:`ID ${a.telegramUserId}`;
+              return `<div class="admin-person">
+                <div class="admin-person-avatar">${esc((name||"A").slice(0,1).toUpperCase())}</div>
+                <div><h3>${esc(name)}</h3><p>${esc(sub)}</p></div>
+                <button class="admin-remove" onclick="Beauty.removeAdmin('${a.telegramUserId}')">Убрать</button>
+              </div>`;
+            }).join("")
+          : `<div class="admin-empty-mini">Пока нет назначенных администраторов. Создайте ссылку выше и отправьте её нужному человеку.</div>`
+      }
+    </main>${adminNav("admin-more")}${roleSheet()}`;
+  }
+
   function adminMoreView(){
-    const creatorItem=S.actualRole==="creator"?`<button onclick="Beauty.toast('Управление администраторами подключим к уже готовым приглашениям')"><span class="ico">♛</span><div><b>Администраторы</b><small>Приглашения и права доступа</small></div><span class="go">›</span></button>`:"";
+    const creatorItem=S.actualRole==="creator"?`<button onclick="Beauty.openAdminAccess()"><span class="ico">♛</span><div><b>Администраторы</b><small>Добавление по ссылке и права доступа</small></div><span class="go">›</span></button>`:"";
     return `<main class="admin-page">${adminHeader()}<div class="admin-date-row"><div><h1>Ещё</h1><p>Управление и автоматизация</p></div></div>
       <div class="admin-menu">
         <button onclick="Beauty.toast('Редактор услуг подключим следующим этапом')"><span class="ico">⌘</span><div><b>Услуги</b><small>Цены, длительность, доступность</small></div><span class="go">›</span></button>
@@ -1436,6 +1636,7 @@ html.app-ready #app{
     else if(S.view==="admin-calendar")html=adminCalendarView();
     else if(S.view==="admin-clients")html=adminClientsView();
     else if(S.view==="admin-more")html=adminMoreView();
+    else if(S.view==="admin-access")html=adminAccessView();
     else if(S.view==="home")html=home();
     else if(S.view==="services")html=servicesView();
     else if(S.view==="service")html=serviceDetail();
@@ -1447,7 +1648,7 @@ html.app-ready #app{
     else if(S.view==="profile")html=profileView();
     else if(S.view==="bonus")html=bonusView();
     else html=isStaffMode()?adminHome():home();
-    document.querySelector("#app").innerHTML=html + testModeBar();
+    document.querySelector("#app").innerHTML=html + testModeBar() + (S.roleMode==="client" ? roleSheet() : "");
   }
 
   window.Beauty = {
@@ -1455,6 +1656,16 @@ html.app-ready #app{
     toast,
     openRoleSheet(){S.roleSheet=true;render();haptic()},
     closeRoleSheet(){S.roleSheet=false;render()},
+    async openAdminAccess(){
+      S.view="admin-access";
+      render();
+      await loadAdmins(true);
+    },
+    loadAdmins(){return loadAdmins(false)},
+    createAdminInvite,
+    copyAdminInvite,
+    shareAdminInvite,
+    removeAdmin,
     switchRole(role){
       if(!S.roleSwitch.includes(role))return;
       S.roleMode=role;
