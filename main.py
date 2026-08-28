@@ -5,6 +5,11 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse, JSONResponse
 
 from api import router as api_router
+from bot import (
+    bot_webhook_enabled,
+    router as telegram_router,
+    setup_telegram_webhook,
+)
 from database import database_status, init_db
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -18,17 +23,22 @@ app = FastAPI(
 )
 
 app.include_router(api_router, prefix="/api")
+app.include_router(telegram_router)
+
 
 @app.on_event("startup")
 def startup() -> None:
     init_db()
+    setup_telegram_webhook()
 
 
 @app.middleware("http")
 async def no_cache_for_app(request, call_next):
     response = await call_next(request)
     if request.url.path == "/":
-        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Cache-Control"] = (
+            "no-store, no-cache, must-revalidate, max-age=0"
+        )
     return response
 
 
@@ -45,6 +55,7 @@ async def health() -> JSONResponse:
             "status": "ok" if db["ok"] else "degraded",
             "service": "med-aesthetic-mini-app",
             "bot_configured": bool(BOT_TOKEN),
+            "telegram_webhook_enabled": bot_webhook_enabled(),
             "database": db,
         }
     )

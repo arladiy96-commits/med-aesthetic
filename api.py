@@ -8,7 +8,15 @@ from pydantic import BaseModel, Field
 from psycopg.errors import UniqueViolation
 
 from auth import validate_telegram_init_data
-from database import db
+from bot import make_admin_invite_link
+from database import (
+    create_admin_invite,
+    db,
+    list_admins,
+    resolve_effective_role,
+    revoke_admin,
+    upsert_app_user,
+)
 
 router = APIRouter()
 
@@ -22,15 +30,132 @@ class BookingCreate(BaseModel):
     booking_time: time
 
 
-def _user(init_data: str | None) -> dict:
-    return validate_telegram_init_data(init_data or "")
+def _identity(init_data: str | None) -> tuple[dict, dict]:
+    telegram_user = validate_telegram_init_data(init_data or "")
+    app_user = upsert_app_user(telegram_user)
+    return telegram_user, app_user
+
+
+def _require_creator(app_user: dict) -> None:
+    if app_user.get("role") != "creator":
+        raise HTTPException(status_code=403, detail="Требуются права создателя")
+
+
+@router.get("/me")
+def me(
+    x_telegram_init_data: str | None = Header(
+        default=None, alias="X-Telegram-Init-Data"
+    ),
+    x_act_as_role: str | None = Header(
+        default=None, alias="X-Act-As-Role"
+    ),
+):
+    telegram_user, app_user = _identity(x_telegram_init_data)
+    actual_role = app_user["role"]
+    effective_role = resolve_effective_role(actual_role, x_act_as_role)
+
+    return {
+        "ok": True,
+        "user": {
+            "telegramUserId": int(telegram_user["id"]),
+            "firstName": app_user.get("first_name"),
+            "lastName": app_user.get("last_name"),
+            "username": app_user.get("username"),
+            "actualRole": actual_role,
+            "effectiveRole": effective_role,
+        },
+        "roleSwitch": {
+            "creator": ["creator", "admin", "client"],
+            "admin": ["admin", "client"],
+            "client": ["client"],
+        }[actual_role],
+    }
+
+
+@router.post("/admin-invites")
+def new_admin_invite(
+    x_telegram_init_data: str | None = Header(
+        default=None, alias="X-Telegram-Init-Data"
+    ),
+):
+    _, app_user = _identity(x_telegram_init_data)
+    _require_creator(app_user)
+
+    invite = create_admin_invite(
+        created_by=int(app_user["telegram_user_id"])
+    )
+
+    try:
+        link = make_admin_invite_link(invite["token"])
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Не удалось получить ссылку Telegram: {str(exc)[:140]}",
+        )
+
+    return {
+        "ok": True,
+        "invite": {
+            "link": link,
+            "expiresAt": invite["expires_at"].isoformat(),
+        },
+    }
+
+
+@router.get("/admins")
+def admins(
+    x_telegram_init_data: str | None = Header(
+        default=None, alias="X-Telegram-Init-Data"
+    ),
+):
+    _, app_user = _identity(x_telegram_init_data)
+    _require_creator(app_user)
+
+    result = []
+    for row in list_admins():
+        result.append(
+            {
+                "telegramUserId": int(row["telegram_user_id"]),
+                "firstName": row.get("first_name"),
+                "lastName": row.get("last_name"),
+                "username": row.get("username"),
+                "lastSeenAt": (
+                    row["last_seen_at"].isoformat()
+                    if row.get("last_seen_at")
+                    else None
+                ),
+            }
+        )
+
+    return {"ok": True, "admins": result}
+
+
+@router.delete("/admins/{telegram_user_id}")
+def remove_admin(
+    telegram_user_id: int,
+    x_telegram_init_data: str | None = Header(
+        default=None, alias="X-Telegram-Init-Data"
+    ),
+):
+    _, app_user = _identity(x_telegram_init_data)
+    _require_creator(app_user)
+
+    if not revoke_admin(telegram_user_id):
+        raise HTTPException(
+            status_code=404,
+            detail="Администратор не найден или его нельзя удалить",
+        )
+
+    return {"ok": True}
 
 
 @router.get("/bookings")
 def list_bookings(
-    x_telegram_init_data: str | None = Header(default=None, alias="X-Telegram-Init-Data"),
+    x_telegram_init_data: str | None = Header(
+        default=None, alias="X-Telegram-Init-Data"
+    ),
 ):
-    user = _user(x_telegram_init_data)
+    user, _ = _identity(x_telegram_init_data)
     uid = int(user["id"])
 
     with db() as conn:
@@ -68,9 +193,11 @@ def list_bookings(
 @router.post("/bookings")
 def create_booking(
     payload: BookingCreate,
-    x_telegram_init_data: str | None = Header(default=None, alias="X-Telegram-Init-Data"),
+    x_telegram_init_data: str | None = Header(
+        default=None, alias="X-Telegram-Init-Data"
+    ),
 ):
-    user = _user(x_telegram_init_data)
+    user, _ = _identity(x_telegram_init_data)
     uid = int(user["id"])
     first_name = str(user.get("first_name") or "")[:120] or None
     username = str(user.get("username") or "")[:120] or None
@@ -125,9 +252,11 @@ def create_booking(
 @router.delete("/bookings/{booking_id}")
 def cancel_booking(
     booking_id: int,
-    x_telegram_init_data: str | None = Header(default=None, alias="X-Telegram-Init-Data"),
+    x_telegram_init_data: str | None = Header(
+        default=None, alias="X-Telegram-Init-Data"
+    ),
 ):
-    user = _user(x_telegram_init_data)
+    user, _ = _identity(x_telegram_init_data)
     uid = int(user["id"])
 
     with db() as conn:
@@ -135,7 +264,9 @@ def cancel_booking(
             """
             UPDATE beauty_bookings
             SET status='cancelled', updated_at=NOW()
-            WHERE id=%s AND telegram_user_id=%s AND status <> 'cancelled'
+            WHERE id=%s
+              AND telegram_user_id=%s
+              AND status <> 'cancelled'
             RETURNING id
             """,
             (booking_id, uid),
