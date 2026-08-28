@@ -869,35 +869,29 @@ html.app-ready #app{
 .hero-carousel{
   padding-left:14px;
   padding-right:30px;
-  scroll-snap-type:x mandatory;
 }
 
 /* Keep the original carousel slide size so the swipe/peek behavior stays the same. */
 .hero-slide{
   display:flex;
   align-items:flex-start;
-  justify-content:center;
-  scroll-snap-align:center;
-  scroll-snap-stop:always;
 }
 
-/* All visible cards share the same compact shell size inside their slide. */
+/* Both visible cards are now the same size inside their slide. */
 .hero-slide .hero.hero-exact-card,
-.hero-slide .certificate-banner,
-.hero-slide .laser-banner{
-  width:93%!important;
-  flex:0 0 93%!important;
-  min-height:0!important;
-  margin-left:0!important;
-  margin-right:0!important;
-  margin-top:0!important;
+.hero-slide .certificate-banner{
+  width:93%;
+  flex:0 0 93%;
+  margin:0!important;
+  aspect-ratio:941 / 684;
 }
 
-/* Girl banner: keep the proven crop/position exactly as before. */
-.hero-slide.slide-girl .hero.hero-exact-card{
+/* First banner: crop away the dark area that was baked into the source image,
+   while keeping the card itself at the old visual size. */
+.hero-slide:first-child .hero.hero-exact-card{
   overflow:hidden!important;
 }
-.hero-slide.slide-girl .hero-exact-image{
+.hero-slide:first-child .hero-exact-image{
   width:107%;
   height:107%;
   left:-3.5%;
@@ -905,17 +899,52 @@ html.app-ready #app{
   object-fit:cover;
   object-position:center center;
 }
-.hero-slide.slide-girl .hero-exact-hit{
+
+/* Correct the invisible click zone after cropping. */
+.hero-slide:first-child .hero-exact-hit{
   left:5.7%;
   bottom:4.6%;
   width:34.1%;
   height:15.2%;
 }
 
-/* Certificate banner: this shell is the reference for the аккуратная обводка. */
-.hero-slide.slide-certificate .certificate-banner,
-.hero-slide.slide-laser .laser-banner{
+/* Second banner: same exact shell size as the first. */
+.hero-slide:nth-child(2) .certificate-banner{
+  overflow:hidden;
+}
+.hero-slide:nth-child(2) .certificate-banner img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center center;
+}
+
+/* Keep the certificate action aligned to the same visual scale. */
+.hero-slide:nth-child(2) .certificate-action{
+  left:5.4%;
+  bottom:7.1%;
+  min-height:40px;
+  min-width:36%;
+  padding:0 15px;
+  font-size:11px;
+}
+
+
+/* v28 — certificate aligned to the girl banner, without content crop */
+/* The first banner remains untouched. Only the certificate slide is corrected. */
+.hero-slide .hero.hero-exact-card,
+.hero-slide .certificate-banner{
+  width:93%!important;
+  flex:0 0 93%!important;
+  min-height:0!important;
+  margin-left:0!important;
+  margin-right:0!important;
+}
+
+/* Keep the already matched VISIBLE size and corner geometry of the girl banner. */
+.hero-slide:nth-child(2) .certificate-banner{
   aspect-ratio:1.437 / 1!important;
+  margin-top:0!important;
   transform:translateY(2.2%)!important;
   border-radius:14px!important;
   overflow:hidden!important;
@@ -923,7 +952,10 @@ html.app-ready #app{
   box-shadow:0 22px 45px rgba(0,0,0,.34)!important;
 }
 
-.hero-slide.slide-certificate .certificate-banner img{
+/* Do not zoom the certificate artwork. The previous 110% crop pushed the title
+   almost against the left edge and cut the artwork. Fill the matched shell with
+   the complete source image instead. */
+.hero-slide:nth-child(2) .certificate-banner img{
   width:100%!important;
   height:100%!important;
   left:0!important;
@@ -933,7 +965,7 @@ html.app-ready #app{
 }
 
 /* Same visual vertical level as the baked-in “Записаться” button on banner 1. */
-.hero-slide.slide-certificate .certificate-action{
+.hero-slide:nth-child(2) .certificate-action{
   left:5.6%!important;
   bottom:8.5%!important;
   height:15.2%!important;
@@ -955,29 +987,50 @@ html.app-ready #app{
   white-space:nowrap!important;
   -webkit-tap-highlight-color:transparent;
 }
-.hero-slide.slide-certificate .certificate-action:active{
+
+.hero-slide:nth-child(2) .certificate-action:active{
   transform:translateY(1px) scale(.99)!important;
 }
+
 @media (max-width:360px){
-  .hero-slide.slide-certificate .certificate-action{
+  .hero-slide:nth-child(2) .certificate-action{
     font-size:10.2px!important;
     padding:0 11px!important;
   }
 }
 
-/* Third banner: preserve the selected artwork fully to keep its delicate frame,
-   but give it the exact same outer shell geometry as the certificate banner. */
-.hero-slide.slide-laser .laser-banner img{
+
+/* v29 — third home banner: laser hair removal, matched to banner 1 */
+.hero-slide .laser-banner{
+  position:relative;
+  width:93%!important;
+  flex:0 0 93%!important;
+  min-height:0!important;
+  margin:0!important;
+  aspect-ratio:941 / 684!important;
+  overflow:hidden!important;
+  border-radius:24px!important;
+  background:#0b0810!important;
+  box-shadow:0 22px 45px rgba(0,0,0,.34)!important;
+  isolation:isolate;
+}
+
+/* The selected artwork has the same baked-in outer margin as banner 1.
+   Use the exact same 107% crop so the visible card has the same size and corners. */
+.hero-slide:nth-child(3) .laser-banner img{
   position:absolute;
-  inset:0;
   z-index:1;
-  width:100%!important;
-  height:100%!important;
+  width:107%!important;
+  height:107%!important;
+  left:-3.5%!important;
+  top:-3.5%!important;
   object-fit:fill!important;
   object-position:center center!important;
   display:block;
 }
-.hero-slide.slide-laser .laser-hit{
+
+/* Invisible tap area over the button already drawn into the selected banner. */
+.hero-slide:nth-child(3) .laser-hit{
   position:absolute;
   z-index:3;
   left:4.7%;
@@ -990,200 +1043,11 @@ html.app-ready #app{
   color:transparent;
   -webkit-tap-highlight-color:transparent;
 }
-.hero-slide.slide-laser .laser-hit:active{
+.hero-slide:nth-child(3) .laser-hit:active{
   background:rgba(255,222,137,.08);
   transform:scale(.985);
 }
 
-
-
-/* v30 — centered infinite-feel home banners + laser border matched to certificate */
-.hero-carousel{
-  --hero-slide-basis:84%;
-  display:flex!important;
-  gap:10px!important;
-  overflow-x:auto!important;
-  overflow-y:visible!important;
-  scroll-snap-type:x mandatory!important;
-  scroll-behavior:smooth!important;
-  overscroll-behavior-x:contain!important;
-  -webkit-overflow-scrolling:touch!important;
-  scrollbar-width:none!important;
-  margin:18px -14px 0!important;
-  padding:0 0 8px!important;
-  scroll-padding-inline:0!important;
-  touch-action:pan-x pan-y!important;
-}
-.hero-carousel::-webkit-scrollbar{display:none!important}
-.hero-slide{
-  position:relative!important;
-  flex:0 0 var(--hero-slide-basis)!important;
-  min-width:0!important;
-  display:flex!important;
-  justify-content:center!important;
-  align-items:flex-start!important;
-  scroll-snap-align:center!important;
-  scroll-snap-stop:always!important;
-}
-.hero-slide .hero.hero-exact-card,
-.hero-slide .certificate-banner,
-.hero-slide .laser-banner{
-  width:100%!important;
-  flex:0 0 100%!important;
-  margin:0!important;
-}
-.hero-slide .certificate-banner,
-.hero-slide .laser-banner{
-  aspect-ratio:941 / 684!important;
-  border-radius:14px!important;
-  overflow:hidden!important;
-  background:#0b0810!important;
-  box-shadow:0 22px 45px rgba(0,0,0,.34)!important;
-}
-.hero-slide .laser-banner{
-  position:relative!important;
-  isolation:isolate!important;
-}
-.hero-slide .laser-banner::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  z-index:2;
-  border-radius:inherit;
-  border:1px solid rgba(149,112,170,.22);
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.03);
-  pointer-events:none;
-}
-.hero-slide .laser-banner img{
-  position:absolute!important;
-  inset:0!important;
-  z-index:1!important;
-  width:100%!important;
-  height:100%!important;
-  object-fit:cover!important;
-  object-position:center center!important;
-  display:block!important;
-}
-@media (max-width:360px){
-  .hero-carousel{
-    --hero-slide-basis:86%;
-    gap:8px!important;
-  }
-}
-
-/* v31 — FINAL: equal banner frames + centered endless carousel */
-.hero-carousel{
-  --hero-slide-basis:78%;
-  --hero-gap:10px;
-  display:flex!important;
-  gap:var(--hero-gap)!important;
-  overflow-x:auto!important;
-  overflow-y:visible!important;
-  scroll-snap-type:x mandatory!important;
-  scroll-behavior:smooth!important;
-  overscroll-behavior-x:contain!important;
-  -webkit-overflow-scrolling:touch!important;
-  scrollbar-width:none!important;
-  margin:18px -14px 0!important;
-  padding:0 calc((100% - var(--hero-slide-basis)) / 2) 8px!important;
-  scroll-padding-inline:calc((100% - var(--hero-slide-basis)) / 2)!important;
-  touch-action:pan-x pan-y!important;
-}
-.hero-carousel::-webkit-scrollbar{display:none!important}
-.hero-carousel::before,
-.hero-carousel::after{
-  content:"";
-  flex:0 0 calc((100% - var(--hero-slide-basis)) / 2 - (var(--hero-gap) / 2));
-  width:calc((100% - var(--hero-slide-basis)) / 2 - (var(--hero-gap) / 2));
-  pointer-events:none;
-}
-.hero-carousel > .hero-slide{
-  position:relative!important;
-  flex:0 0 var(--hero-slide-basis)!important;
-  width:var(--hero-slide-basis)!important;
-  min-width:0!important;
-  display:flex!important;
-  justify-content:center!important;
-  align-items:flex-start!important;
-  scroll-snap-align:center!important;
-  scroll-snap-stop:always!important;
-}
-
-/* Every visible banner uses one and the same card size. */
-.hero-carousel > .hero-slide > .hero.hero-exact-card,
-.hero-carousel > .hero-slide > .certificate-banner,
-.hero-carousel > .hero-slide > .laser-banner{
-  width:100%!important;
-  flex:0 0 100%!important;
-  min-height:0!important;
-  margin:0!important;
-  aspect-ratio:941 / 684!important;
-}
-
-/* Certificate is the frame reference. Laser receives exactly the same shell. */
-.hero-carousel > .hero-slide.slide-certificate > .certificate-banner,
-.hero-carousel > .hero-slide.slide-laser > .laser-banner{
-  transform:none!important;
-  border-radius:14px!important;
-  overflow:hidden!important;
-  background:#0b0810!important;
-  box-shadow:0 22px 45px rgba(0,0,0,.34)!important;
-  isolation:isolate!important;
-}
-.hero-carousel > .hero-slide.slide-certificate > .certificate-banner > img,
-.hero-carousel > .hero-slide.slide-laser > .laser-banner > img{
-  position:absolute!important;
-  inset:0!important;
-  width:100%!important;
-  height:100%!important;
-  left:0!important;
-  top:0!important;
-  object-fit:fill!important;
-  object-position:center center!important;
-  display:block!important;
-}
-
-/* Do not draw a second artificial frame over the laser artwork:
-   the selected image already contains the same fine perimeter treatment. */
-.hero-carousel > .hero-slide.slide-laser > .laser-banner::after{
-  display:none!important;
-}
-
-/* Invisible click zone follows the baked-in “Подробнее” button after removing crop. */
-.hero-carousel > .hero-slide.slide-laser .laser-hit{
-  left:7.1%!important;
-  bottom:10.5%!important;
-  width:29.6%!important;
-  height:12.3%!important;
-  border-radius:12px!important;
-}
-
-@media (max-width:360px){
-  .hero-carousel{
-    --hero-slide-basis:80%;
-    --hero-gap:8px;
-  }
-}
-
-
-/* v32 — final laser frame matches certificate */
-.hero-carousel > .hero-slide.slide-laser > .laser-banner{
-  border-radius:14px!important;
-  overflow:hidden!important;
-  background:#0b0810!important;
-  box-shadow:0 22px 45px rgba(0,0,0,.34)!important;
-}
-.hero-carousel > .hero-slide.slide-laser > .laser-banner::after{
-  content:""!important;
-  display:block!important;
-  position:absolute!important;
-  inset:0!important;
-  z-index:2!important;
-  border-radius:inherit!important;
-  border:1px solid rgba(155,118,179,.24)!important;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.035)!important;
-  pointer-events:none!important;
-}
 </style>
 </head>
 <body>
@@ -1826,34 +1690,22 @@ html.app-ready #app{
   function home(){
     return `<main class="page">${topbar()}
       <div class="hero-carousel" aria-label="Баннеры">
-        <div class="hero-slide slide-laser" data-clone="true">
-          <section class="laser-banner">
-            <img src="${LASER_BANNER}" alt="Лазерная эпиляция — скидка 20%">
-            <button class="laser-hit" onclick="Beauty.openService(11)" aria-label="Подробнее о лазерной эпиляции">Подробнее</button>
-          </section>
-        </div>
-        <div class="hero-slide slide-girl" data-real="girl">
+        <div class="hero-slide">
           <section class="hero hero-exact-card">
             <img class="hero-exact-image" src="${HERO_EXACT_CARD}" alt="Красота в каждой детали">
             <button class="hero-exact-hit" onclick="Beauty.go('services')" aria-label="Записаться">Записаться</button>
           </section>
         </div>
-        <div class="hero-slide slide-certificate" data-real="certificate">
+        <div class="hero-slide">
           <section class="certificate-banner">
             <img src="${CERTIFICATE_BANNER}" alt="Подарочный сертификат">
             <button class="certificate-action" onclick="Beauty.openService(14)">Оформить сертификат</button>
           </section>
         </div>
-        <div class="hero-slide slide-laser" data-real="laser">
+        <div class="hero-slide">
           <section class="laser-banner">
             <img src="${LASER_BANNER}" alt="Лазерная эпиляция — скидка 20%">
             <button class="laser-hit" onclick="Beauty.openService(11)" aria-label="Подробнее о лазерной эпиляции">Подробнее</button>
-          </section>
-        </div>
-        <div class="hero-slide slide-girl" data-clone="true">
-          <section class="hero hero-exact-card">
-            <img class="hero-exact-image" src="${HERO_EXACT_CARD}" alt="Красота в каждой детали">
-            <button class="hero-exact-hit" onclick="Beauty.go('services')" aria-label="Записаться">Записаться</button>
           </section>
         </div>
       </div>
@@ -2217,82 +2069,6 @@ html.app-ready #app{
     toast(`${b.serviceName||s?.name||"Услуга"} · ${b.masterName||m?.name||"Мастер"} · ${b.date} ${b.time}`);
   }
 
-
-  function initHomeBannerCarousel(){
-    const carousel=document.querySelector(".hero-carousel");
-    if(!carousel || carousel.dataset.loopReady==="1") return;
-
-    const slides=Array.from(carousel.querySelectorAll(":scope > .hero-slide"));
-    // Markup is: laser clone | girl | certificate | laser | girl clone.
-    if(slides.length!==5) return;
-    carousel.dataset.loopReady="1";
-
-    const centeredLeft=(slide)=>
-      slide.offsetLeft-((carousel.clientWidth-slide.offsetWidth)/2);
-
-    const jumpTo=(index)=>{
-      const slide=slides[index];
-      if(!slide) return;
-      const oldValue=carousel.style.getPropertyValue("scroll-behavior");
-      const oldPriority=carousel.style.getPropertyPriority("scroll-behavior");
-      carousel.style.setProperty("scroll-behavior","auto","important");
-      carousel.scrollLeft=centeredLeft(slide);
-      void carousel.offsetWidth;
-      if(oldValue) carousel.style.setProperty("scroll-behavior",oldValue,oldPriority);
-      else carousel.style.removeProperty("scroll-behavior");
-    };
-
-    const nearestIndex=()=>{
-      const center=carousel.scrollLeft+carousel.clientWidth/2;
-      let bestIndex=0;
-      let bestDistance=Infinity;
-      slides.forEach((slide,index)=>{
-        const slideCenter=slide.offsetLeft+slide.offsetWidth/2;
-        const distance=Math.abs(slideCenter-center);
-        if(distance<bestDistance){
-          bestDistance=distance;
-          bestIndex=index;
-        }
-      });
-      return bestIndex;
-    };
-
-    let correcting=false;
-    const normalizeLoop=()=>{
-      if(correcting) return;
-      const index=nearestIndex();
-      if(index===0){
-        // Left laser clone -> identical real laser. Previous becomes certificate,
-        // next becomes girl, so the carousel continues forever to the left.
-        correcting=true;
-        jumpTo(3);
-        requestAnimationFrame(()=>{correcting=false;});
-      }else if(index===4){
-        // Right girl clone -> identical real girl. Previous becomes laser,
-        // next becomes certificate, so the carousel continues forever to the right.
-        correcting=true;
-        jumpTo(1);
-        requestAnimationFrame(()=>{correcting=false;});
-      }
-    };
-
-    // Start with the girl exactly in the center. At the same time the previous
-    // laser is visible on the left and the next certificate on the right.
-    requestAnimationFrame(()=>requestAnimationFrame(()=>jumpTo(1)));
-
-    let settleTimer=0;
-    carousel.addEventListener("scroll",()=>{
-      if(correcting) return;
-      clearTimeout(settleTimer);
-      settleTimer=setTimeout(normalizeLoop,110);
-    },{passive:true});
-    carousel.addEventListener("touchend",()=>setTimeout(normalizeLoop,130),{passive:true});
-    carousel.addEventListener("pointerup",()=>setTimeout(normalizeLoop,130),{passive:true});
-    if("onscrollend" in carousel){
-      carousel.addEventListener("scrollend",normalizeLoop,{passive:true});
-    }
-  }
-
   function render(){
     // Никаких экранов «определяем роль»: интерфейс показывается сразу.
     let html="";
@@ -2314,7 +2090,6 @@ html.app-ready #app{
     else if(S.view==="bonus")html=bonusView();
     else html=isStaffMode()?adminHome():home();
     document.querySelector("#app").innerHTML=html + testModeBar() + (S.roleMode==="client" ? roleSheet() : "");
-    if(S.view==="home") requestAnimationFrame(initHomeBannerCarousel);
   }
 
   window.Beauty = {
