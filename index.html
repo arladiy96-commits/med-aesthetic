@@ -7,7 +7,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>MED AESTHETIC v13 Admin</title>
+  <title>MED AESTHETIC v14</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style id="med-aesthetic-v11-css">
 /* MED AESTHETIC CLIENT v11 — JRMA root-path compatible */
@@ -462,6 +462,35 @@ html,body{touch-action:none}
 }
 
 
+
+/* v14 — clean Telegram opening: no side/cropped first frame */
+html{
+  background:#07050c!important;
+}
+body{
+  background:
+    radial-gradient(700px 380px at 85% -80px,rgba(113,32,191,.22),transparent 62%),
+    radial-gradient(540px 350px at -20% 25%,rgba(107,44,255,.09),transparent 60%),
+    linear-gradient(180deg,#08060e 0%,#07050c 100%)!important;
+}
+html:not(.app-ready) #app{
+  opacity:0!important;
+  visibility:hidden!important;
+  transform:translate3d(0,10px,0)!important;
+}
+html.app-ready #app{
+  opacity:1!important;
+  visibility:visible!important;
+  transform:translate3d(0,0,0)!important;
+  transition:opacity .14s ease-out, transform .18s cubic-bezier(.2,.8,.2,1)!important;
+}
+#app{
+  will-change:opacity,transform;
+}
+@media (prefers-reduced-motion:reduce){
+  html.app-ready #app{transition:none!important}
+}
+
 /* v13 — Admin workspace, concept 5: automation-first */
 :root{
   --admin-accent:#8f62ff;
@@ -559,14 +588,67 @@ html,body{touch-action:none}
   }
 
   initTelegramShell();
-  setTimeout(initTelegramShell, 120);
-  setTimeout(initTelegramShell, 450);
+  setTimeout(syncTelegramShell, 120);
+  setTimeout(syncTelegramShell, 450);
+
+  (() => {
+    const started = performance.now();
+    let lastW = 0;
+    let lastH = 0;
+    let stableTicks = 0;
+    let revealed = false;
+
+    const reveal = () => {
+      if(revealed) return;
+      revealed = true;
+      syncTelegramShell();
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          document.documentElement.classList.add("app-ready");
+        });
+      });
+    };
+
+    const probe = () => {
+      if(revealed) return;
+      const w = Math.round(window.innerWidth || 0);
+      const h = Math.round(
+        Number(tg?.viewportStableHeight || tg?.viewportHeight || window.innerHeight || 0)
+      );
+
+      if(w > 0 && h > 0 && Math.abs(w-lastW) <= 1 && Math.abs(h-lastH) <= 1){
+        stableTicks += 1;
+      }else{
+        stableTicks = 0;
+        lastW = w;
+        lastH = h;
+      }
+
+      const elapsed = performance.now() - started;
+      if((stableTicks >= 2 && elapsed >= 90) || elapsed >= 420){
+        reveal();
+        return;
+      }
+      setTimeout(probe, 45);
+    };
+
+    setTimeout(probe, 45);
+
+    try{
+      tg?.onEvent?.("fullscreenChanged", () => {
+        syncTelegramShell();
+        setTimeout(probe, 30);
+      });
+      tg?.onEvent?.("viewportChanged", () => {
+        syncTelegramShell();
+        stableTicks = 0;
+      });
+    }catch(e){}
+  })();
 
   try{
-    tg?.onEvent?.("viewportChanged", syncTelegramShell);
     tg?.onEvent?.("safeAreaChanged", syncTelegramShell);
     tg?.onEvent?.("contentSafeAreaChanged", syncTelegramShell);
-    tg?.onEvent?.("fullscreenChanged", syncTelegramShell);
   }catch(e){}
 
   window.addEventListener("resize", syncTelegramShell, {passive:true});
