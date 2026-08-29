@@ -172,12 +172,12 @@
 
   window.addEventListener("resize", syncTelegramShell, {passive:true});
 
-  // Мгновенный вход без "переключения экранов".
-  // Telegram-бот задаёт персональный menu button:
-  //   ?entry=creator — создатель
-  //   ?entry=admin   — администратор
-  //   ?entry=client  — клиент
-  // Для повторных входов роль также кэшируется локально.
+  // Роль не угадываем по старому localStorage.
+  // Бот выдаёт каждому Telegram ID персональную кнопку:
+  //   ?entry=creator / ?entry=admin / ?entry=client
+  // Поэтому обычный вход сразу открывает правильный интерфейс.
+  // Если Mini App открыт по старой/прямой ссылке без entry, показываем
+  // нейтральный экран на время серверной проверки, а не чужой интерфейс.
   const entryHint = (() => {
     try{
       const v = new URLSearchParams(location.search).get("entry");
@@ -185,45 +185,28 @@
     }catch(e){ return null; }
   })();
 
-  let cachedActualRole = "client";
-  try{
-    const savedActual = localStorage.getItem("medAestheticActualRole");
-    if(savedActual === "creator" || savedActual === "admin")
-      cachedActualRole = savedActual;
-  }catch(e){}
-
-  // При каждом новом открытии staff всегда стартует в своей рабочей роли.
-  // Переключение создателя/админа в клиентский режим действует только пока
-  // Mini App открыт и не переносится на следующий запуск.
-  const startupRole =
-    entryHint === "creator" ? "creator" :
-    entryHint === "admin"   ? "admin"   :
-    entryHint === "client"  ? "client"  :
-    cachedActualRole;
-
-  const cachedActualForUi =
-    startupRole === "creator" ? "creator" :
-    startupRole === "admin" ? "admin" :
-    cachedActualRole;
-
-  const cachedSwitch = cachedActualForUi === "creator"
-    ? ["creator","admin","client"]
-    : cachedActualForUi === "admin"
-      ? ["admin","client"]
-      : ["client"];
+  const startupRole = entryHint;
+  const startupSwitch =
+    startupRole === "creator" ? ["creator","client"] :
+    startupRole === "admin" ? ["admin"] :
+    startupRole === "client" ? ["client"] : [];
 
   const S = {
-    view: startupRole === "client" ? "home" : "admin-home",
+    view: startupRole === "creator" || startupRole === "admin"
+      ? "admin-home"
+      : startupRole === "client"
+        ? "home"
+        : "role-loading",
     category: "Все",
     service: null,
     master: null,
     date: null,
     time: null,
     bookingConfirmed: false,
-    identityReady: true,
-    actualRole: cachedActualForUi,
+    identityReady: Boolean(startupRole),
+    actualRole: startupRole,
     roleMode: startupRole,
-    roleSwitch: cachedSwitch,
+    roleSwitch: startupSwitch,
     roleSheet: false,
     adminFilter: "Все",
     adminDate: null,
@@ -551,6 +534,35 @@
     }
   }
 
+  async function addAdminById(){
+    if(S.actualRole!=="creator")return;
+    const input=document.querySelector("#adminTelegramId");
+    const btn=document.querySelector("#addAdminByIdBtn");
+    const raw=String(input?.value||"").trim();
+
+    if(!/^\d{5,20}$/.test(raw)){
+      toast("Введите корректный Telegram ID");
+      input?.focus();
+      return;
+    }
+
+    if(btn)btn.disabled=true;
+    haptic("medium");
+    try{
+      const data=await accessApi("/admins",{
+        method:"POST",
+        body:JSON.stringify({telegram_user_id:Number(raw)})
+      });
+      if(input)input.value="";
+      await loadAdmins(true);
+      render();
+      toast("Администратор добавлен");
+    }catch(e){
+      toast(e.message || "Не удалось добавить администратора");
+      if(btn)btn.disabled=false;
+    }
+  }
+
   async function createAdminInvite(){
     if(S.actualRole!=="creator")return;
     const btn=document.querySelector("#createAdminInviteBtn");
@@ -603,47 +615,54 @@
   }
 
   async function loadIdentity(){
+    const keepCreatorClientPreview =
+      S.identityReady && S.actualRole==="creator" && S.roleMode==="client";
+
     try{
       const res = await fetch("/api/me",{
+        cache:"no-store",
         headers:{
           "X-Telegram-Init-Data": tg?.initData || ""
         }
       });
       const data = await res.json().catch(()=>({}));
       if(!res.ok) throw new Error(data.detail || "Не удалось определить роль");
-      S.actualRole = data?.user?.actualRole || "client";
-      S.roleSwitch = Array.isArray(data?.roleSwitch) ? data.roleSwitch : [S.actualRole];
-      try{
-        if(S.actualRole === "creator" || S.actualRole === "admin")
-          localStorage.setItem("medAestheticActualRole", S.actualRole);
-        else
-          localStorage.removeItem("medAestheticActualRole");
-      }catch(e){}
 
-      // Сервер только подтверждает права. Если staff уже открылся как staff,
-      // экран не прыгает. Если ссылка была подделана клиентом — безопасно
-      // возвращаем его в клиентскую часть после проверки.
-      if(S.actualRole === "client"){
-        S.roleMode = "client";
+      const actualRole = data?.user?.actualRole || "client";
+      S.actualRole = actualRole;
+      S.roleSwitch = Array.isArray(data?.roleSwitch) ? data.roleSwitch : [actualRole];
+
+      if(actualRole==="creator" && keepCreatorClientPreview){
+        S.roleMode="client";
+        if(String(S.view).startsWith("admin-") || S.view==="role-loading") S.view="home";
+      }else if(actualRole==="creator"){
+        S.roleMode="creator";
+        if(!String(S.view).startsWith("admin-")) S.view="admin-home";
+      }else if(actualRole==="admin"){
+        // Администратор всегда администратор, пока создатель не снимет права.
+        S.roleMode="admin";
+        if(!String(S.view).startsWith("admin-")) S.view="admin-home";
+      }else{
+        S.roleMode="client";
         if(!["home","services","service","masters","datetime","confirm","booking","history","profile","bonus"].includes(S.view))
-          S.view = "home";
-      }else if(!S.roleSwitch.includes(S.roleMode)){
-        S.roleMode = S.actualRole;
-        S.view = "admin-home";
-      }else if(S.roleMode !== "client" && !String(S.view).startsWith("admin-")){
-        S.view = "admin-home";
+          S.view="home";
       }
-    }catch(e){
-      console.error("Role load failed:",e);
-      // При ошибке проверки прав безопасно оставляем клиентский режим.
-      S.actualRole="client";
-      S.roleMode="client";
-      S.roleSwitch=["client"];
-      S.view="home";
-      try{ localStorage.removeItem("medAestheticActualRole"); }catch(_e){}
-    }finally{
+
       S.identityReady=true;
       render();
+    }catch(e){
+      console.error("Role load failed:",e);
+      // Не показываем заведомо неправильную роль из старого кэша.
+      // Если был персональный entry от бота — оставляем уже открытый интерфейс;
+      // если entry не было — остаёмся на нейтральном экране до следующей проверки.
+      if(!entryHint){
+        S.actualRole=null;
+        S.roleMode=null;
+        S.roleSwitch=[];
+        S.view="role-loading";
+        S.identityReady=false;
+        render();
+      }
     }
   }
 
@@ -952,13 +971,13 @@
   }
 
   function roleSheet(){
-    if(!S.roleSheet)return "";
+    if(!S.roleSheet || S.actualRole!=="creator")return "";
     const labels={creator:["♛","Создатель","Полный доступ и управление ролями"],admin:["◇","Администратор","Полный рабочий функционал администратора"],client:["♡","Покупатель","Полный клиентский сценарий для теста"]};
     return `<div class="role-sheet-backdrop" onclick="if(event.target===this)Beauty.closeRoleSheet()"><div class="role-sheet"><h3>♛ Переключить роль</h3><p>Вы получаете полноценный функционал выбранной роли. Ваши реальные права создателя не меняются.</p>${S.roleSwitch.map(role=>{const x=labels[role]||labels.client;return `<button class="role-choice ${S.roleMode===role?"active":""}" onclick="Beauty.switchRole('${role}')"><div><b>${x[0]} ${x[1]}</b><span>${x[2]}</span></div><strong>${S.roleMode===role?"✓":"›"}</strong></button>`}).join("")}</div></div>`;
   }
 
   function testModeBar(){
-    if(S.roleMode!=="client" || !["creator","admin"].includes(S.actualRole))return "";
+    if(S.roleMode!=="client" || S.actualRole!=="creator")return "";
     return `<div class="test-mode-bar"><span>${S.actualRole==="creator"?"♛":"◇"} Тест: клиент</span><button onclick="Beauty.switchRole('${S.actualRole}')">Вернуться в ${S.actualRole==="creator"?"создателя":"админку"}</button></div>`;
   }
 
@@ -1080,23 +1099,18 @@
     const admins=Array.isArray(S.admins)?S.admins:[];
     return `<main class="admin-page admin-access-page">${adminHeader()}
       <div class="admin-date-row">
-        <div><h1>Администраторы</h1><p>Доступ выдаётся через одноразовую Telegram-ссылку</p></div>
+        <div><h1>Администраторы</h1><p>Постоянная привязка по Telegram ID</p></div>
         <button class="admin-link" onclick="Beauty.go('admin-more')">Назад</button>
       </div>
 
       <div class="access-hero">
         <h2>Добавить администратора</h2>
-        <p>Создайте персональную ссылку и отправьте её нужному человеку. После перехода бот сам привяжет его Telegram ID и выдаст роль администратора.</p>
-        <button id="createAdminInviteBtn" class="access-primary" onclick="Beauty.createAdminInvite()">＋ Создать ссылку-приглашение</button>
-
-        ${S.adminInviteLink?`<div class="invite-card">
-          <div class="invite-label">Одноразовая ссылка администратора</div>
-          <div class="invite-link">${esc(S.adminInviteLink)}</div>
-          <div class="invite-actions">
-            <button onclick="Beauty.copyAdminInvite()">Копировать</button>
-            <button onclick="Beauty.shareAdminInvite()">Отправить в Telegram</button>
-          </div>
-        </div>`:""}
+        <p>Введите Telegram ID человека. После добавления роль сохранится в базе и при открытии MED AESTHETIC у него сразу будет открываться админка — до тех пор, пока вы не уберёте доступ.</p>
+        <div class="admin-id-form">
+          <input id="adminTelegramId" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="Telegram ID">
+          <button id="addAdminByIdBtn" class="access-primary" onclick="Beauty.addAdminById()">＋ Добавить</button>
+        </div>
+        <div class="admin-id-help">ID можно узнать у бота командой <b>/id</b>.</div>
       </div>
 
       <div class="admins-head">
@@ -1116,13 +1130,13 @@
                 <button class="admin-remove" onclick="Beauty.removeAdmin('${a.telegramUserId}')">Убрать</button>
               </div>`;
             }).join("")
-          : `<div class="admin-empty-mini">Пока нет назначенных администраторов. Создайте ссылку выше и отправьте её нужному человеку.</div>`
+          : `<div class="admin-empty-mini">Администраторов пока нет. Введите Telegram ID выше.</div>`
       }
     </main>${adminNav("admin-more")}${roleSheet()}`;
   }
 
   function adminMoreView(){
-    const creatorItem=S.actualRole==="creator"?`<button onclick="Beauty.openAdminAccess()"><span class="ico">♛</span><div><b>Администраторы</b><small>Добавление по ссылке и права доступа</small></div><span class="go">›</span></button>`:"";
+    const creatorItem=S.actualRole==="creator"?`<button onclick="Beauty.openAdminAccess()"><span class="ico">♛</span><div><b>Администраторы</b><small>Добавление по Telegram ID и права доступа</small></div><span class="go">›</span></button>`:"";
     return `<main class="admin-page admin-more-page">${adminHeader()}<div class="admin-date-row"><div><h1>Ещё</h1><p>Управление и автоматизация</p></div></div>
       <div class="admin-menu">
         <button onclick="Beauty.toast('Редактор услуг подключим следующим этапом')"><span class="ico">⌘</span><div><b>Услуги</b><small>Цены, длительность, доступность</small></div><span class="go">›</span></button>
@@ -1132,7 +1146,7 @@
         ${creatorItem}
         <button onclick="Beauty.toast('Настройки появятся следующим этапом')"><span class="ico">⚙</span><div><b>Настройки</b><small>Интерфейс и параметры заведения</small></div><span class="go">›</span></button>
       </div>
-      <div class="admin-client-switch"><div><b>Режим клиента</b><p>Полностью открыть приложение как покупатель</p></div><button class="switch-pill" onclick="Beauty.switchRole('client')"></button></div>
+      ${S.actualRole==="creator"?`<div class="admin-client-switch"><div><b>Режим клиента</b><p>Открыть клиентскую часть только для теста</p></div><button class="switch-pill" onclick="Beauty.switchRole('client')"></button></div>`:""}
     </main>${adminNav("admin-more")}${roleSheet()}`;
   }
 
@@ -1307,10 +1321,19 @@
     },{passive:true});
   }
 
+  function roleLoadingView(){
+    return `<main style="min-height:100vh;display:grid;place-items:center;background:#07050c;color:#f7f2ff;padding:24px">
+      <div style="text-align:center">
+        <div style="font-size:20px;font-weight:850;letter-spacing:.08em">MED <span style="color:#e4b75d">AESTHETIC</span></div>
+        <div style="margin-top:8px;font-size:11px;color:#8f8997">Открываем приложение…</div>
+      </div>
+    </main>`;
+  }
+
   function render(){
-    // Никаких экранов «определяем роль»: интерфейс показывается сразу.
     let html="";
-    if(S.view==="admin-home")html=adminHome();
+    if(S.view==="role-loading")html=roleLoadingView();
+    else if(S.view==="admin-home")html=adminHome();
     else if(S.view==="admin-bookings")html=adminBookingsView();
     else if(S.view==="admin-calendar")html=adminCalendarView();
     else if(S.view==="admin-clients")html=adminClientsView();
@@ -1342,6 +1365,7 @@
       await loadAdmins(true);
     },
     loadAdmins(){return loadAdmins(false)},
+    addAdminById,
     createAdminInvite,
     copyAdminInvite,
     shareAdminInvite,
@@ -1352,6 +1376,7 @@
     messageBookingClient,
     loadAdminBookings(){return loadAdminBookings(false)},
     switchRole(role){
+      if(S.actualRole==="admin")return;
       if(!S.roleSwitch.includes(role))return;
       S.roleMode=role;
       S.roleSheet=false;
@@ -1414,18 +1439,29 @@
 
   render();
 
-  // Staff role is cached between launches, so start the real booking request
-  // immediately instead of waiting for /api/me first. Identity still verifies access.
-  const startupBookingLoad = isStaffMode()
-    ? loadAdminBookings(true)
-    : loadBookings(true);
+  // Персональный entry от Telegram позволяет сразу рисовать правильный экран
+  // и параллельно подтверждать роль на сервере.
+  const startupBookingLoad =
+    startupRole==="creator" || startupRole==="admin"
+      ? loadAdminBookings(true)
+      : startupRole==="client"
+        ? loadBookings(true)
+        : Promise.resolve();
 
   Promise.allSettled([
     loadIdentity(),
     startupBookingLoad
   ]).then(()=>{
-    // Covers first launch after receiving admin rights, when there was no staff cache yet.
-    if(isStaffMode() && !adminBookingsLoaded) loadAdminBookings(true);
+    if(isStaffMode()){
+      if(!adminBookingsLoaded) loadAdminBookings(true);
+    }else if(S.roleMode==="client"){
+      loadBookings(true);
+    }
+  });
+
+  // Если права изменили, пока приложение было свёрнуто, проверяем роль при возврате.
+  document.addEventListener("visibilitychange",()=>{
+    if(document.visibilityState==="visible") loadIdentity();
   });
 
   document.addEventListener("visibilitychange",()=>{

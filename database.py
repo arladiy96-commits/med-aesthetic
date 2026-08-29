@@ -225,9 +225,9 @@ def resolve_effective_role(actual_role: str, requested_role: str | None) -> str:
         return actual_role
 
     if actual_role == "creator":
-        return requested_role
-    if actual_role == "admin" and requested_role in {"admin", "client"}:
-        return requested_role
+        return "client" if requested_role == "client" else "creator"
+    if actual_role == "admin":
+        return "admin"
     return "client"
 
 
@@ -312,6 +312,42 @@ def consume_admin_invite(raw_token: str, telegram_user_id: int) -> dict:
         )
 
     return {"ok": True, "role": new_role}
+
+
+
+def grant_admin(telegram_user_id: int) -> dict:
+    """Persistently grant admin role by Telegram user ID."""
+    creator_id = get_creator_telegram_id()
+    if creator_id == telegram_user_id:
+        return {"ok": False, "reason": "creator"}
+
+    with db() as conn:
+        row = conn.execute(
+            """
+            INSERT INTO app_users (telegram_user_id, role)
+            VALUES (%s, 'admin')
+            ON CONFLICT (telegram_user_id)
+            DO UPDATE SET role='admin', updated_at=NOW()
+            RETURNING telegram_user_id, first_name, last_name, username, role,
+                      created_at, updated_at, last_seen_at
+            """,
+            (telegram_user_id,),
+        ).fetchone()
+
+    return {"ok": True, "user": dict(row)}
+
+
+def list_role_users() -> list[dict]:
+    """Return known users for synchronising their personal Telegram menu button."""
+    with db() as conn:
+        rows = conn.execute(
+            """
+            SELECT telegram_user_id, role
+            FROM app_users
+            ORDER BY telegram_user_id
+            """
+        ).fetchall()
+    return [dict(r) for r in rows]
 
 
 def list_admins() -> list[dict]:

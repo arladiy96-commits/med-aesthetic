@@ -8,10 +8,11 @@ from pydantic import BaseModel, Field
 from psycopg.errors import UniqueViolation
 
 from auth import validate_telegram_init_data
-from bot import make_admin_invite_link, send_notification, send_notifications
+from bot import make_admin_invite_link, safe_set_role_menu_button, send_notification, send_notifications
 from database import (
     create_admin_invite,
     db,
+    grant_admin,
     list_admins,
     resolve_effective_role,
     revoke_admin,
@@ -32,6 +33,10 @@ class BookingCreate(BaseModel):
 
 class BookingStatusUpdate(BaseModel):
     status: Literal["pending", "confirmed", "completed", "cancelled", "no_show"]
+
+
+class AdminGrant(BaseModel):
+    telegram_user_id: int = Field(gt=0)
 
 
 def _booking_payload(row: dict, include_client: bool = False) -> dict:
@@ -191,8 +196,8 @@ def me(
             "effectiveRole": effective_role,
         },
         "roleSwitch": {
-            "creator": ["creator", "admin", "client"],
-            "admin": ["admin", "client"],
+            "creator": ["creator", "client"],
+            "admin": ["admin"],
             "client": ["client"],
         }[actual_role],
     }
@@ -228,6 +233,55 @@ def new_admin_invite(
     }
 
 
+@router.post("/admins")
+def add_admin(
+    payload: AdminGrant,
+    background_tasks: BackgroundTasks,
+    x_telegram_init_data: str | None = Header(
+        default=None, alias="X-Telegram-Init-Data"
+    ),
+):
+    _, app_user = _identity(x_telegram_init_data)
+    _require_creator(app_user)
+
+    result = grant_admin(int(payload.telegram_user_id))
+    if not result.get("ok"):
+        if result.get("reason") == "creator":
+            raise HTTPException(
+                status_code=400,
+                detail="Создателю уже доступны все права",
+            )
+        raise HTTPException(
+            status_code=400,
+            detail="Не удалось добавить администратора",
+        )
+
+    user = result["user"]
+    telegram_user_id = int(user["telegram_user_id"])
+
+    background_tasks.add_task(
+        safe_set_role_menu_button,
+        telegram_user_id,
+        "admin",
+    )
+    background_tasks.add_task(
+        send_notification,
+        telegram_user_id,
+        "✅ Вам выданы права администратора MED AESTHETIC.\n\n"
+        "Теперь приложение будет сразу открываться в админке.",
+    )
+
+    return {
+        "ok": True,
+        "admin": {
+            "telegramUserId": telegram_user_id,
+            "firstName": user.get("first_name"),
+            "lastName": user.get("last_name"),
+            "username": user.get("username"),
+        },
+    }
+
+
 @router.get("/admins")
 def admins(
     x_telegram_init_data: str | None = Header(
@@ -259,6 +313,7 @@ def admins(
 @router.delete("/admins/{telegram_user_id}")
 def remove_admin(
     telegram_user_id: int,
+    background_tasks: BackgroundTasks,
     x_telegram_init_data: str | None = Header(
         default=None, alias="X-Telegram-Init-Data"
     ),
@@ -271,6 +326,18 @@ def remove_admin(
             status_code=404,
             detail="Администратор не найден или его нельзя удалить",
         )
+
+    background_tasks.add_task(
+        safe_set_role_menu_button,
+        telegram_user_id,
+        "client",
+    )
+    background_tasks.add_task(
+        send_notification,
+        telegram_user_id,
+        "ℹ️ Права администратора MED AESTHETIC отключены.\n\n"
+        "Приложение теперь открывается в режиме покупателя.",
+    )
 
     return {"ok": True}
 

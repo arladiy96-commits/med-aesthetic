@@ -9,7 +9,7 @@ from functools import lru_cache
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 
-from database import consume_admin_invite, upsert_app_user
+from database import consume_admin_invite, get_app_user, list_role_users, upsert_app_user
 
 router = APIRouter()
 
@@ -69,6 +69,63 @@ def telegram_api(method: str, payload: dict | None = None) -> dict:
     return data
 
 
+
+def _app_url_for_role(role: str) -> str:
+    base_url = _base_url()
+    if not base_url:
+        return ""
+    entry = role if role in {"creator", "admin", "client"} else "client"
+    separator = "&" if "?" in base_url else "?"
+    return f"{base_url}{separator}entry={entry}"
+
+
+def set_role_menu_button(chat_id: int, role: str) -> None:
+    """Set a personal Mini App menu button with an authoritative startup role hint."""
+    url = _app_url_for_role(role)
+    if not url:
+        return
+
+    label = {
+        "creator": "Открыть MED AESTHETIC",
+        "admin": "Открыть админку",
+        "client": "Открыть MED AESTHETIC",
+    }.get(role, "Открыть MED AESTHETIC")
+
+    telegram_api(
+        "setChatMenuButton",
+        {
+            "chat_id": int(chat_id),
+            "menu_button": {
+                "type": "web_app",
+                "text": label,
+                "web_app": {"url": url},
+            },
+        },
+    )
+
+
+def safe_set_role_menu_button(chat_id: int, role: str) -> None:
+    try:
+        set_role_menu_button(int(chat_id), role)
+    except Exception as exc:
+        print(f"[telegram] menu button update for {chat_id} failed: {exc}")
+
+
+def sync_role_menu_buttons() -> None:
+    """Repair stale menu buttons after deploy/restart."""
+    try:
+        users = list_role_users()
+    except Exception as exc:
+        print(f"[telegram] role menu sync skipped: {exc}")
+        return
+
+    for user in users:
+        safe_set_role_menu_button(
+            int(user["telegram_user_id"]),
+            str(user.get("role") or "client"),
+        )
+
+
 @lru_cache(maxsize=1)
 def get_bot_username() -> str:
     data = telegram_api("getMe")
@@ -88,12 +145,20 @@ def _send_message(chat_id: int, text: str, with_app_button: bool = True) -> None
 
     base_url = _base_url()
     if with_app_button and base_url:
+        role = "client"
+        try:
+            app_user = get_app_user(int(chat_id))
+            if app_user and app_user.get("role") in {"creator", "admin", "client"}:
+                role = str(app_user["role"])
+        except Exception:
+            pass
+        app_url = _app_url_for_role(role) or base_url
         payload["reply_markup"] = {
             "inline_keyboard": [
                 [
                     {
                         "text": "Открыть MED AESTHETIC",
-                        "web_app": {"url": base_url},
+                        "web_app": {"url": app_url},
                     }
                 ]
             ]
@@ -140,6 +205,10 @@ def process_update(update: dict) -> None:
         telegram_user_id = int(sender["id"])
         chat_id = int(chat["id"])
         app_user = upsert_app_user(sender)
+        safe_set_role_menu_button(
+            telegram_user_id,
+            str(app_user.get("role") or "client"),
+        )
 
         if text == "/id" or text.startswith("/id@"):
             _send_message(
@@ -158,6 +227,10 @@ def process_update(update: dict) -> None:
                 result = consume_admin_invite(raw_token, telegram_user_id)
 
                 if result.get("ok"):
+                    safe_set_role_menu_button(
+                        telegram_user_id,
+                        str(result.get("role") or "admin"),
+                    )
                     if result.get("role") == "creator":
                         msg = (
                             "Приглашение проверено. Вы остались создателем — "
@@ -226,6 +299,7 @@ def setup_telegram_webhook() -> None:
                 ]
             },
         )
+        sync_role_menu_buttons()
         print(f"[telegram] webhook configured: {webhook_url}")
     except Exception as exc:
         print(f"[telegram] webhook setup failed: {exc}")
