@@ -25,8 +25,8 @@ router = APIRouter()
 class BookingCreate(BaseModel):
     service_id: int = Field(gt=0)
     service_name: str = Field(min_length=1, max_length=180)
-    master_id: Optional[int] = Field(default=None, gt=0)
-    master_name: Optional[str] = Field(default=None, max_length=120)
+    client_name: str = Field(min_length=2, max_length=120)
+    phone: str = Field(min_length=5, max_length=32)
     booking_date: date
     booking_time: time
 
@@ -54,12 +54,15 @@ def _booking_payload(row: dict, include_client: bool = False) -> dict:
     if include_client:
         first_name = row.get("first_name")
         username = row.get("username")
+        client_name = row.get("client_name")
+        phone = row.get("phone")
         result.update(
             {
                 "telegramUserId": int(row["telegram_user_id"]),
-                "clientFirstName": first_name,
+                "clientTelegramName": first_name,
                 "clientUsername": username,
-                "clientName": first_name or (f"@{username}" if username else "Клиент"),
+                "clientName": client_name or first_name or (f"@{username}" if username else "Клиент"),
+                "clientPhone": phone,
             }
         )
     return result
@@ -99,7 +102,14 @@ def _date_ru(value: date) -> str:
     return value.strftime("%d.%m.%Y")
 
 
-def _client_label(first_name: str | None, username: str | None, telegram_user_id: int) -> str:
+def _client_label(
+    client_name: str | None,
+    first_name: str | None,
+    username: str | None,
+    telegram_user_id: int,
+) -> str:
+    if client_name:
+        return client_name
     if first_name and username:
         return f"{first_name} (@{username})"
     if first_name:
@@ -115,15 +125,20 @@ def _new_booking_admin_text(
     telegram_user_id: int,
     first_name: str | None,
     username: str | None,
+    client_name: str,
+    phone: str,
     service_name: str,
     master_name: str | None,
     booking_date: date,
     booking_time: time,
 ) -> str:
-    client = _client_label(first_name, username, telegram_user_id)
+    client = _client_label(client_name, first_name, username, telegram_user_id)
+    telegram = f"@{username}" if username else f"ID {telegram_user_id}"
     return (
         "🆕 Новая заявка на запись MED AESTHETIC\n\n"
         f"Клиент: {client}\n"
+        f"Телефон: {phone}\n"
+        f"Telegram: {telegram}\n"
         f"Услуга: {service_name}\n"
         f"Мастер: {master_name or 'Людмила'}\n"
         f"Дата: {_date_ru(booking_date)}\n"
@@ -157,13 +172,16 @@ def _status_client_text(row: dict) -> str:
 
 def _client_cancelled_admin_text(row: dict) -> str:
     client = _client_label(
+        row.get("client_name"),
         row.get("first_name"),
         row.get("username"),
         int(row["telegram_user_id"]),
     )
+    phone = row.get("phone") or "не указан"
     return (
         "⚠️ Клиент отменил запись\n\n"
         f"Клиент: {client}\n"
+        f"Телефон: {phone}\n"
         f"Услуга: {row['service_name']}\n"
         f"Мастер: {row.get('master_name') or 'Людмила'}\n"
         f"Дата: {_date_ru(row['booking_date'])}\n"
@@ -381,7 +399,7 @@ def list_admin_bookings(
     with db() as conn:
         rows = conn.execute(
             """
-            SELECT id, telegram_user_id, first_name, username,
+            SELECT id, telegram_user_id, first_name, username, client_name, phone,
                    service_id, service_name, master_id, master_name,
                    booking_date, booking_time, status, created_at
             FROM beauty_bookings
@@ -418,7 +436,7 @@ def update_admin_booking(
             UPDATE beauty_bookings
             SET status=%s, updated_at=NOW()
             WHERE id=%s
-            RETURNING id, telegram_user_id, first_name, username,
+            RETURNING id, telegram_user_id, first_name, username, client_name, phone,
                       service_id, service_name, master_id, master_name,
                       booking_date, booking_time, status, created_at,
                       (SELECT previous_status FROM previous) AS previous_status
@@ -459,22 +477,22 @@ def create_booking(
             row = conn.execute(
                 """
                 INSERT INTO beauty_bookings (
-                    telegram_user_id, first_name, username,
+                    telegram_user_id, first_name, username, client_name, phone,
                     service_id, service_name,
                     master_id, master_name,
                     booking_date, booking_time, status
                 )
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,'pending')
+                VALUES (%s,%s,%s,%s,%s,%s,%s,1,'Людмила',%s,%s,'pending')
                 RETURNING id, created_at
                 """,
                 (
                     uid,
                     first_name,
                     username,
+                    payload.client_name.strip(),
+                    payload.phone.strip(),
                     payload.service_id,
                     payload.service_name,
-                    payload.master_id,
-                    payload.master_name,
                     payload.booking_date,
                     payload.booking_time,
                 ),
@@ -495,8 +513,10 @@ def create_booking(
                 telegram_user_id=uid,
                 first_name=first_name,
                 username=username,
+                client_name=payload.client_name.strip(),
+                phone=payload.phone.strip(),
                 service_name=payload.service_name,
-                master_name=payload.master_name,
+                master_name="Людмила",
                 booking_date=payload.booking_date,
                 booking_time=payload.booking_time,
             ),
@@ -508,8 +528,10 @@ def create_booking(
             "id": str(row["id"]),
             "serviceId": payload.service_id,
             "serviceName": payload.service_name,
-            "masterId": payload.master_id,
-            "masterName": payload.master_name,
+            "masterId": 1,
+            "masterName": "Людмила",
+            "clientName": payload.client_name.strip(),
+            "clientPhone": payload.phone.strip(),
             "date": payload.booking_date.isoformat(),
             "time": payload.booking_time.strftime("%H:%M"),
             "status": "pending",
@@ -537,7 +559,7 @@ def cancel_booking(
             WHERE id=%s
               AND telegram_user_id=%s
               AND status <> 'cancelled'
-            RETURNING id, telegram_user_id, first_name, username,
+            RETURNING id, telegram_user_id, first_name, username, client_name, phone,
                       service_id, service_name, master_id, master_name,
                       booking_date, booking_time, status, created_at
             """,

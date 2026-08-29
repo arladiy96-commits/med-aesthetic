@@ -93,6 +93,8 @@ def init_db() -> None:
                 telegram_user_id BIGINT NOT NULL,
                 first_name TEXT,
                 username TEXT,
+                client_name TEXT,
+                phone TEXT,
                 service_id INTEGER NOT NULL,
                 service_name TEXT NOT NULL,
                 master_id INTEGER,
@@ -104,6 +106,13 @@ def init_db() -> None:
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
             """
+        )
+
+        conn.execute(
+            "ALTER TABLE beauty_bookings ADD COLUMN IF NOT EXISTS client_name TEXT"
+        )
+        conn.execute(
+            "ALTER TABLE beauty_bookings ADD COLUMN IF NOT EXISTS phone TEXT"
         )
 
         conn.execute(

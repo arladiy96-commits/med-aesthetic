@@ -202,6 +202,17 @@
     master: null,
     date: null,
     time: null,
+    bookingName: (() => {
+      try{
+        const saved=localStorage.getItem("medAestheticBookingName");
+        if(saved)return saved;
+      }catch(e){}
+      const u=tg?.initDataUnsafe?.user;
+      return [u?.first_name,u?.last_name].filter(Boolean).join(" ");
+    })(),
+    bookingPhone: (() => {
+      try{return localStorage.getItem("medAestheticBookingPhone") || ""}catch(e){return ""}
+    })(),
     bookingConfirmed: false,
     identityReady: Boolean(startupRole),
     actualRole: startupRole,
@@ -819,7 +830,7 @@
         <div class="detail-price">${priceLabel(s)} <span>${durationLabel(s)}</span></div>
         <p class="detail-copy">${esc(s.desc)}</p>
         <div class="includes"><h3>Что входит</h3>${s.includes.map(x=>`<div>${esc(x)}</div>`).join("")}</div>
-        <div class="sticky-action"><button class="btn-primary" onclick="Beauty.startBooking(${s.id})">Выбрать мастера</button></div>
+        <div class="sticky-action"><button class="btn-primary" onclick="Beauty.startBooking(${s.id})">Выбрать дату и время</button></div>
       </div>
     </main>${nav("services")}`;
   }
@@ -850,17 +861,63 @@
   function datetimeView(){
     const ds=dates(), times=["10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00","19:00","20:00"];
     if(!S.date)S.date=ds[1].iso;
-    return `<main class="page page-booking">${topbar({back:"Beauty.go('masters')"})}
-      <h1 class="page-title">Выбор времени</h1><p class="page-sub">Свободные окна выбранного мастера.</p>
-      <div class="calendar-card"><div class="date-strip">${ds.map(d=>`<button class="date-btn ${S.date===d.iso?"active":""}" onclick="Beauty.pickDate('${d.iso}')"><span>${d.w}</span><b>${d.day}</b><small>${d.m}</small></button>`).join("")}</div>
-      <div class="time-title">Доступное время</div><div class="time-grid">${times.map(t=>`<button class="time-btn ${S.time===t?"active":""}" onclick="Beauty.pickTime('${t}')">${t}</button>`).join("")}</div></div>
-      <div class="summary"><h3>Ваш выбор</h3>
+    if(!S.master)S.master=masters[0];
+
+    return `<main class="page page-booking">${topbar({back:S.service?"Beauty.openService("+S.service.id+")":"Beauty.go('services')"})}
+      <h1 class="page-title">Выбор времени</h1>
+      <p class="page-sub">Выберите удобную дату и время для записи.</p>
+
+      <div class="calendar-card">
+        <div class="date-strip">${ds.map(d=>`<button class="date-btn ${S.date===d.iso?"active":""}" onclick="Beauty.pickDate('${d.iso}')"><span>${d.w}</span><b>${d.day}</b><small>${d.m}</small></button>`).join("")}</div>
+        <div class="time-title">Доступное время</div>
+        <div class="time-grid">${times.map(t=>`<button class="time-btn ${S.time===t?"active":""}" onclick="Beauty.pickTime('${t}')">${t}</button>`).join("")}</div>
+      </div>
+
+      <div class="summary">
+        <h3>Ваша запись</h3>
         <div class="summary-line"><span>Услуга</span><b>${esc(S.service?.name||"—")}</b></div>
-        <div class="summary-line"><span>Мастер</span><b>${esc(S.master?.name||"—")}</b></div>
+        <div class="summary-line"><span>Специалист</span><b>Людмила</b></div>
         <div class="summary-line"><span>Дата</span><b>${esc(S.date||"—")} ${esc(S.time||"")}</b></div>
         <div class="summary-line"><span>Стоимость</span><b>${S.service?priceLabel(S.service):"—"}</b></div>
       </div>
-      <div class="sticky-action"><button class="btn-primary" ${!S.time?"disabled style='opacity:.45'":""} onclick="Beauty.confirmBooking()">Записаться</button></div>
+
+      <section class="booking-contact-card">
+        <div class="booking-contact-head">
+          <h3>Контактные данные</h3>
+          <p>Укажите имя, по которому к вам обращаться, и номер телефона.</p>
+        </div>
+
+        <label class="booking-contact-field">
+          <span>Ваше имя</span>
+          <input
+            id="bookingClientName"
+            type="text"
+            maxlength="120"
+            autocomplete="name"
+            placeholder="Например, Алина"
+            value="${esc(S.bookingName||"")}"
+            oninput="Beauty.setBookingContact('name',this.value)"
+          >
+        </label>
+
+        <label class="booking-contact-field">
+          <span>Номер телефона</span>
+          <input
+            id="bookingClientPhone"
+            type="tel"
+            maxlength="24"
+            inputmode="tel"
+            autocomplete="tel"
+            placeholder="+7 777 123 45 67"
+            value="${esc(S.bookingPhone||"")}"
+            oninput="Beauty.setBookingContact('phone',this.value)"
+          >
+        </label>
+
+        <div class="booking-contact-note">Telegram также останется привязан к заявке — администратор сможет написать вам напрямую.</div>
+      </section>
+
+      <div class="sticky-action"><button class="btn-primary" ${!S.time?"disabled style='opacity:.45'":""} onclick="Beauty.confirmBooking()">Отправить заявку</button></div>
     </main>${nav("booking")}`;
   }
 
@@ -870,8 +927,10 @@
       <p>Запись ожидает подтверждения администратора.<br>После решения вам придёт уведомление в Telegram.</p></div>
       <div class="summary">
         <div class="summary-line"><span>Услуга</span><b>${esc(S.service.name)}</b></div>
-        <div class="summary-line"><span>Мастер</span><b>${esc(S.master.name)}</b></div>
+        <div class="summary-line"><span>Специалист</span><b>Людмила</b></div>
         <div class="summary-line"><span>Дата / время</span><b>${esc(S.date)} · ${esc(S.time)}</b></div>
+        <div class="summary-line"><span>Имя</span><b>${esc(S.bookingName||"—")}</b></div>
+        <div class="summary-line"><span>Телефон</span><b>${esc(S.bookingPhone||"—")}</b></div>
         <div class="summary-line"><span>Стоимость</span><b>${priceLabel(S.service)}</b></div>
       </div>
       <div class="sticky-action"><button class="btn-primary" onclick="Beauty.go('booking')">Мои записи</button></div>
@@ -1154,13 +1213,18 @@
     if(!S.adminBookingId)return "";
     const b=adminBookings.find(x=>String(x.id)===String(S.adminBookingId));
     if(!b)return "";
-    const client=b.clientName || (b.clientUsername?`@${b.clientUsername}`:"Клиент");
+    const client=b.clientName || b.clientTelegramName || (b.clientUsername?`@${b.clientUsername}`:"Клиент");
     const username=b.clientUsername ? `@${b.clientUsername}` : "Telegram ID "+String(b.telegramUserId||"—");
+    const phone=String(b.clientPhone||"").trim();
     const status=String(b.status||"confirmed");
     return `<div class="admin-booking-backdrop" onclick="if(event.target===this)Beauty.closeAdminBooking()">
       <section class="admin-booking-sheet">
         <div class="admin-booking-sheet-head"><div><small>Запись #${esc(b.id)}</small><h3>${esc(b.serviceName||"Услуга")}</h3></div><button onclick="Beauty.closeAdminBooking()" aria-label="Закрыть">×</button></div>
-        <div class="admin-booking-client"><b>${esc(client)}</b><span>${esc(username)}</span></div>
+        <div class="admin-booking-client">
+          <b>${esc(client)}</b>
+          ${phone?`<span>Телефон: ${esc(phone)}</span>`:""}
+          <span>Telegram: ${esc(username)}</span>
+        </div>
         <div class="admin-booking-details">
           <div><span>Дата</span><b>${esc(b.date||"—")}</b></div>
           <div><span>Время</span><b>${esc(b.time||"—")}</b></div>
@@ -1168,6 +1232,7 @@
           <div><span>Статус</span><b>${esc(bookingStatusRu(status))}</b></div>
         </div>
         <div class="admin-booking-actions">
+          ${phone?`<button class="booking-action contact" onclick="Beauty.callBookingClient('${b.id}')">Позвонить · ${esc(phone)}</button>`:""}
           ${b.clientUsername?`<button class="booking-action contact" onclick="Beauty.messageBookingClient('${b.id}')">Написать клиенту в Telegram</button>`:""}
           ${status==="pending"?`<button class="booking-action confirm" onclick="Beauty.updateAdminBookingStatus('${b.id}','confirmed')">Подтвердить запись</button>`:""}
           ${status==="pending"?`<button class="booking-action danger" onclick="Beauty.updateAdminBookingStatus('${b.id}','cancelled')">Отклонить заявку</button>`:""}
@@ -1219,6 +1284,18 @@
     }
     const url="https://t.me/"+encodeURIComponent(username);
     try{tg?.openTelegramLink?.(url)}catch(e){window.open(url,"_blank")}
+    haptic();
+  }
+
+  function callBookingClient(id){
+    const b=adminBookings.find(x=>String(x.id)===String(id));
+    const phone=String(b?.clientPhone||"").trim();
+    if(!phone){
+      toast("Номер телефона не указан");
+      return;
+    }
+    const dial=phone.replace(/[^+\d]/g,"");
+    window.location.href="tel:"+dial;
     haptic();
   }
 
@@ -1374,6 +1451,7 @@
     closeAdminBooking,
     updateAdminBookingStatus,
     messageBookingClient,
+    callBookingClient,
     loadAdminBookings(){return loadAdminBookings(false)},
     switchRole(role){
       if(S.actualRole==="admin")return;
@@ -1404,21 +1482,48 @@
       });
     },
     openService(id){S.service=services.find(x=>x.id===id);S.master=null;S.time=null;S.view="service";render();window.scrollTo(0,0);haptic()},
-    startBooking(id){S.service=services.find(x=>x.id===id);S.master=null;S.date=null;S.time=null;go("masters")},
+    startBooking(id){S.service=services.find(x=>x.id===id);S.master=masters[0];S.date=null;S.time=null;go("datetime")},
     openMaster(id){S.master=masters.find(x=>x.id===id);if(!S.service){S.service=services[0]}go("masters")},
     selectMaster(id){S.master=masters.find(x=>x.id===id);render();haptic()},
     pickDate(d){S.date=d;S.time=null;render();haptic()},
     pickTime(t){S.time=t;render();haptic()},
+    setBookingContact(kind,value){
+      if(kind==="name")S.bookingName=String(value||"");
+      if(kind==="phone")S.bookingPhone=String(value||"");
+    },
     async confirmBooking(){
-      if(!S.service||!S.master||!S.date||!S.time)return;
+      if(!S.service||!S.date||!S.time)return;
+
+      const name=String(S.bookingName||"").trim().replace(/\s+/g," ");
+      const phone=String(S.bookingPhone||"").trim();
+      const digits=phone.replace(/\D/g,"");
+
+      if(name.length<2){
+        toast("Укажите ваше имя");
+        document.querySelector("#bookingClientName")?.focus();
+        return;
+      }
+      if(digits.length<10 || digits.length>15){
+        toast("Укажите корректный номер телефона");
+        document.querySelector("#bookingClientPhone")?.focus();
+        return;
+      }
+
+      S.bookingName=name;
+      S.bookingPhone=phone;
+      try{
+        localStorage.setItem("medAestheticBookingName",name);
+        localStorage.setItem("medAestheticBookingPhone",phone);
+      }catch(e){}
+
       try{
         const data = await bookingApi("",{
           method:"POST",
           body:JSON.stringify({
             service_id:S.service.id,
             service_name:S.service.name,
-            master_id:S.master.id,
-            master_name:S.master.name,
+            client_name:name,
+            phone:phone,
             booking_date:S.date,
             booking_time:S.time
           })
