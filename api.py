@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from datetime import date, time
 from functools import lru_cache
+from threading import RLock
 from pathlib import Path
 import hashlib
 from typing import Literal, Optional
@@ -447,8 +448,18 @@ def remove_admin(
     return {"ok": True}
 
 
-@router.get("/services")
-def list_services():
+# ---------------------------------------------------------------------------
+# SERVICE CATALOG MEMORY CACHE
+# Neon remains the source of truth, but clients never wait for a fresh DB
+# connection just to render the catalog. The cache is warmed during app startup
+# and refreshed immediately after every admin service mutation.
+# ---------------------------------------------------------------------------
+_service_cache_lock = RLock()
+_service_cache_public: tuple[dict, ...] | None = None
+_service_cache_admin: tuple[dict, ...] | None = None
+
+
+def _read_service_rows_from_db() -> list[dict]:
     with db() as conn:
         rows = conn.execute(
             """
@@ -456,12 +467,56 @@ def list_services():
                    description, includes, is_active, sort_order
             FROM beauty_services
             WHERE deleted_at IS NULL
-              AND is_active = TRUE
             ORDER BY sort_order ASC, id ASC
             """
         ).fetchall()
+    return [dict(row) for row in rows]
 
-    return {"ok": True, "services": [_service_payload(r) for r in rows]}
+
+def warm_service_catalog_cache() -> dict:
+    """Load the full service catalog once and keep ready-to-send payloads in RAM."""
+    rows = _read_service_rows_from_db()
+    admin_payload = tuple(_service_payload(row) for row in rows)
+    public_payload = tuple(
+        item for row, item in zip(rows, admin_payload)
+        if bool(row.get("is_active", True))
+    )
+
+    global _service_cache_public, _service_cache_admin
+    with _service_cache_lock:
+        _service_cache_public = public_payload
+        _service_cache_admin = admin_payload
+
+    print(
+        f"[services-cache] warmed: public={len(public_payload)}, "
+        f"admin={len(admin_payload)}"
+    )
+    return {
+        "public": len(public_payload),
+        "admin": len(admin_payload),
+    }
+
+
+def _service_catalog_cached(admin: bool = False) -> list[dict]:
+    global _service_cache_public, _service_cache_admin
+
+    with _service_cache_lock:
+        cached = _service_cache_admin if admin else _service_cache_public
+
+    # Safety fallback only. Normal first request never reaches this because
+    # main.py warms the cache before the app starts accepting traffic.
+    if cached is None:
+        warm_service_catalog_cache()
+        with _service_cache_lock:
+            cached = _service_cache_admin if admin else _service_cache_public
+
+    # Return a new list wrapper; inner payload dicts are treated as immutable.
+    return list(cached or ())
+
+
+@router.get("/services")
+def list_services():
+    return {"ok": True, "services": _service_catalog_cached(admin=False)}
 
 
 @router.get("/admin/services")
@@ -473,18 +528,7 @@ def list_admin_services(
     _, app_user = _identity(x_telegram_init_data)
     _require_staff(app_user)
 
-    with db() as conn:
-        rows = conn.execute(
-            """
-            SELECT id, category, name, price, duration,
-                   description, includes, is_active, sort_order
-            FROM beauty_services
-            WHERE deleted_at IS NULL
-            ORDER BY sort_order ASC, id ASC
-            """
-        ).fetchall()
-
-    return {"ok": True, "services": [_service_payload(r) for r in rows]}
+    return {"ok": True, "services": _service_catalog_cached(admin=True)}
 
 
 @router.post("/admin/services")
@@ -524,6 +568,7 @@ def create_admin_service(
             ),
         ).fetchone()
 
+    warm_service_catalog_cache()
     return {"ok": True, "service": _service_payload(row)}
 
 
@@ -593,6 +638,7 @@ def update_admin_service(
     if not row:
         raise HTTPException(status_code=404, detail="Услуга не найдена")
 
+    warm_service_catalog_cache()
     return {"ok": True, "service": _service_payload(row)}
 
 
@@ -620,6 +666,7 @@ def delete_admin_service(
     if not row:
         raise HTTPException(status_code=404, detail="Услуга не найдена")
 
+    warm_service_catalog_cache()
     return {"ok": True}
 
 

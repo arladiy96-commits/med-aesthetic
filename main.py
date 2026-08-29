@@ -6,7 +6,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.gzip import GZipMiddleware
 
-from api import router as api_router
+from api import router as api_router, warm_service_catalog_cache
 from bot import (
     bot_webhook_enabled,
     router as telegram_router,
@@ -40,6 +40,9 @@ app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
 @app.on_event("startup")
 def startup() -> None:
     init_db()
+    # Build the catalog in RAM before accepting client traffic.
+    # This removes the Neon round-trip from every Mini App opening.
+    warm_service_catalog_cache()
     setup_telegram_webhook()
 
 
@@ -51,6 +54,10 @@ async def cache_policy(request, call_next):
     if path == "/":
         # index.html must always pick up the newest deployment.
         response.headers["Cache-Control"] = "no-cache, must-revalidate"
+    elif path in {"/api/services", "/api/admin/services"}:
+        # Metadata must always be current. Speed comes from the server RAM cache,
+        # not from a stale browser cache.
+        response.headers["Cache-Control"] = "no-store"
     elif path.startswith("/assets/"):
         # Static image assets almost never change and have their own filenames.
         response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
