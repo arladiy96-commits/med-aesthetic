@@ -453,7 +453,11 @@
           if(S.view==="service" && !fresh)S.view="services";
         }
 
-        if(["home","services","service"].includes(S.view))backgroundRender();
+        if(S.view==="home"){
+          updateHomeServiceRail();
+        }else if(["services","service"].includes(S.view)){
+          backgroundRender();
+        }
       }
     }catch(e){
       console.error("Service catalog load failed:",e);
@@ -873,32 +877,43 @@
     </button>`;
   }
 
+  function updateHomeServiceRail(){
+    if(S.view!=="home")return false;
+    const rail=document.querySelector("#homeServiceScroll");
+    if(!rail)return false;
+
+    rail.innerHTML=services.length
+      ? services.slice(0,4).map(serviceCard).join("")
+      : `<div class="empty">Доступных услуг пока нет.</div>`;
+    return true;
+  }
+
   /* ===== CLIENT HOME MODULE — edit home only inside this section + css/home.css ===== */
   function home(){
     return `<main class="page page-home">${topbar()}
       <div class="hero-carousel" aria-label="Баннеры">
         <div class="hero-slide slide-girl">
           <section class="hero hero-exact-card">
-            <img class="hero-exact-image" src="${HERO_EXACT_CARD}" alt="Красота в каждой детали" fetchpriority="high" decoding="async">
+            <img class="hero-exact-image" src="${HERO_EXACT_CARD}" alt="Красота в каждой детали" fetchpriority="high" decoding="async" width="1200" height="675">
             <button class="hero-exact-hit" onclick="Beauty.go('services')" aria-label="Записаться">Записаться</button>
           </section>
         </div>
         <div class="hero-slide slide-certificate">
           <section class="certificate-banner">
-            <img src="${CERTIFICATE_BANNER}" alt="Подарочный сертификат" loading="lazy" decoding="async">
+            <img src="${CERTIFICATE_BANNER}" alt="Подарочный сертификат" loading="lazy" decoding="async" width="1200" height="675">
             <button class="certificate-action" onclick="Beauty.openService(14)">Оформить сертификат</button>
           </section>
         </div>
         <div class="hero-slide slide-laser">
           <section class="laser-banner">
-            <img src="${LASER_BANNER}" alt="Лазерная эпиляция — скидка 20%" loading="lazy" decoding="async">
+            <img src="${LASER_BANNER}" alt="Лазерная эпиляция — скидка 20%" loading="lazy" decoding="async" width="1200" height="675">
             <button class="laser-hit" onclick="Beauty.openService(11)" aria-label="Подробнее о лазерной эпиляции">Подробнее</button>
           </section>
         </div>
       </div>
       <section class="section">
         <div class="section-head"><h2>Популярные услуги</h2><button onclick="Beauty.go('services')">Все</button></div>
-        <div class="service-scroll">${
+        <div class="service-scroll" id="homeServiceScroll">${
           !servicesLoaded
             ? `<div class="empty">Загружаем актуальные услуги…</div>`
             : services.length
@@ -1834,12 +1849,13 @@
       }
     };
 
-    const start=()=>{
-      measureCycle();
-      const first=firstOfCycle(middleCycle);
-      if(first) jumpInstant(centeredLeft(first));
-    };
-    requestAnimationFrame(()=>requestAnimationFrame(start));
+    // Never expose scrollLeft=0 to the user. Build and position the
+    // endless track in the same JS task, before the browser paints it.
+    carousel.style.visibility="hidden";
+    measureCycle();
+    const first=firstOfCycle(middleCycle);
+    if(first)jumpInstant(centeredLeft(first));
+    carousel.style.visibility="";
 
     let raf=0;
     carousel.addEventListener('scroll',()=>{
@@ -1850,15 +1866,22 @@
       });
     },{passive:true});
 
-    // Re-measure only if Telegram/iOS changes the viewport width.
+    // Telegram frequently emits resize while only the viewport HEIGHT changes.
+    // Horizontal recentering is needed only when the carousel WIDTH truly changes.
+    let lastCarouselWidth=carousel.clientWidth;
     window.addEventListener('resize',()=>{
+      const nextWidth=carousel.clientWidth;
+      if(Math.abs(nextWidth-lastCarouselWidth)<2)return;
+      lastCarouselWidth=nextWidth;
+
       const current=slides.reduce((best,slide)=>{
         const c=carousel.scrollLeft+carousel.clientWidth/2;
         const d=Math.abs((slide.offsetLeft+slide.offsetWidth/2)-c);
         return !best||d<best.d ? {slide,d} : best;
       },null);
+
       measureCycle();
-      if(current?.slide) jumpInstant(centeredLeft(current.slide));
+      if(current?.slide)jumpInstant(centeredLeft(current.slide));
     },{passive:true});
   }
 
