@@ -1207,7 +1207,8 @@ html.app-ready #app{
 .owner-section-head h2{font-size:16px!important}
 .owner-card{
   position:relative;
-  min-height:236px;
+  min-height:0;
+  height:auto;
   display:grid;
   grid-template-columns:56% 44%;
   overflow:hidden;
@@ -1229,7 +1230,7 @@ html.app-ready #app{
   position:relative;
   z-index:3;
   min-width:0;
-  padding:16px 8px 15px 16px;
+  padding:16px 8px 13px 16px;
   display:flex;
   flex-direction:column;
   align-items:flex-start;
@@ -1278,7 +1279,7 @@ html.app-ready #app{
 .owner-meta b{font-weight:750}
 .owner-meta i{font-style:normal;color:#675f6c}
 .owner-more{
-  margin-top:auto;
+  margin-top:11px;
   min-height:32px;
   padding:0 13px;
   border-radius:10px;
@@ -1314,7 +1315,7 @@ html.app-ready #app{
   filter:saturate(.88) contrast(1.04) brightness(.91);
 }
 @media(max-width:360px){
-  .owner-card{min-height:224px;grid-template-columns:56% 44%}
+  .owner-card{min-height:0;height:auto;grid-template-columns:56% 44%}
   .owner-copy{padding:14px 6px 13px 14px}
   .owner-name{font-size:26px}
   .owner-role{font-size:8.2px}
