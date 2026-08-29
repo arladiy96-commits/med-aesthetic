@@ -155,6 +155,20 @@ button:disabled.is-busy{
 }
 </style>
 
+
+<style id="booking-date-fixed-selection">
+.booking-selected-date{
+  margin:10px 2px 3px;
+  font-size:11px;
+  color:var(--muted);
+  white-space:nowrap;
+}
+.booking-selected-date b{
+  color:var(--gold2);
+  font-weight:800;
+}
+</style>
+
 </head>
 <body>
   <div id="app"></div>
@@ -1182,21 +1196,22 @@ button:disabled.is-busy{
       <p class="page-sub">Выберите удобную дату и время для записи.</p>
 
       <div class="calendar-card">
-        <div class="date-strip">${ds.map(d=>`<button class="date-btn ${S.date===d.iso?"active":""}" onclick="Beauty.pickDate('${d.iso}')"><span>${d.w}</span><b>${d.day}</b><small>${d.m}</small></button>`).join("")}</div>
+        <div class="date-strip" id="bookingDateStrip">${ds.map(d=>`<button class="date-btn ${S.date===d.iso?"active":""}" data-booking-date="${d.iso}" aria-pressed="${S.date===d.iso?"true":"false"}" onclick="Beauty.pickDate('${d.iso}',this)"><span>${d.w}</span><b>${d.day}</b><small>${d.m}</small></button>`).join("")}</div>
+        <div class="booking-selected-date" id="bookingSelectedDate">Выбрано: <b>${esc(bookingPrettyDate(S.date))}</b></div>
         <div class="time-title">Доступное время</div>
-        <div class="time-grid">${times.map(t=>`<button class="time-btn ${S.time===t?"active":""}" onclick="Beauty.pickTime('${t}')">${t}</button>`).join("")}</div>
+        <div class="time-grid" id="bookingTimeGrid">${times.map(t=>`<button class="time-btn ${S.time===t?"active":""}" data-booking-time="${t}" aria-pressed="${S.time===t?"true":"false"}" onclick="Beauty.pickTime('${t}',this)">${t}</button>`).join("")}</div>
       </div>
 
       <div class="summary">
         <h3>Ваш выбор</h3>
         <div class="summary-line"><span>Услуга</span><b>${esc(S.service?.name||"—")}</b></div>
         <div class="summary-line"><span>Специалист</span><b>Людмила</b></div>
-        <div class="summary-line"><span>Дата</span><b>${esc(S.date||"—")} ${esc(S.time||"")}</b></div>
+        <div class="summary-line"><span>Дата</span><b id="bookingSummaryDate">${esc(bookingPrettyDate(S.date))}${S.time?` · ${esc(S.time)}`:""}</b></div>
         <div class="summary-line"><span>Стоимость</span><b>${S.service?priceLabel(S.service):"—"}</b></div>
       </div>
 
       <div class="sticky-action">
-        <button class="btn-primary" ${!S.time?"disabled style='opacity:.45'":""} onclick="Beauty.openBookingContact()">ОК</button>
+        <button id="bookingDateOkBtn" class="btn-primary" ${!S.time?"disabled style='opacity:.45'":""} onclick="Beauty.openBookingContact()">ОК</button>
       </div>
     </main>${nav("booking")}`;
   }
@@ -2076,6 +2091,7 @@ button:disabled.is-busy{
     else html=isStaffMode()?adminHome():home();
     document.querySelector("#app").innerHTML=html + testModeBar() + (S.roleMode==="client" ? roleSheet() : "") + (isStaffMode() ? adminBookingSheet() : "") + (isStaffMode() ? adminServiceSheet() : "");
     if(S.view==="home") requestAnimationFrame(initHeroCarouselLoop);
+    if(S.view==="datetime") requestAnimationFrame(keepSelectedBookingDateVisible);
   }
 
 
@@ -2317,6 +2333,84 @@ button:disabled.is-busy{
     },{passive:true});
   }
 
+
+  function updateBookingDateUi(selectedDate){
+    const strip=document.querySelector("#bookingDateStrip");
+    if(strip){
+      strip.querySelectorAll("[data-booking-date]").forEach(btn=>{
+        const active=btn.dataset.bookingDate===selectedDate;
+        btn.classList.toggle("active",active);
+        btn.setAttribute("aria-pressed",active?"true":"false");
+      });
+    }
+
+    // New date means the previously selected time is no longer valid.
+    const timeGrid=document.querySelector("#bookingTimeGrid");
+    if(timeGrid){
+      timeGrid.querySelectorAll("[data-booking-time]").forEach(btn=>{
+        btn.classList.remove("active");
+        btn.setAttribute("aria-pressed","false");
+      });
+    }
+
+    const pretty=bookingPrettyDate(selectedDate);
+    const selectedLabel=document.querySelector("#bookingSelectedDate");
+    if(selectedLabel)selectedLabel.innerHTML=`Выбрано: <b>${esc(pretty)}</b>`;
+
+    const summary=document.querySelector("#bookingSummaryDate");
+    if(summary)summary.textContent=pretty;
+
+    const ok=document.querySelector("#bookingDateOkBtn");
+    if(ok){
+      ok.disabled=true;
+      ok.style.opacity=".45";
+    }
+  }
+
+  function updateBookingTimeUi(selectedTime){
+    const timeGrid=document.querySelector("#bookingTimeGrid");
+    if(timeGrid){
+      timeGrid.querySelectorAll("[data-booking-time]").forEach(btn=>{
+        const active=btn.dataset.bookingTime===selectedTime;
+        btn.classList.toggle("active",active);
+        btn.setAttribute("aria-pressed",active?"true":"false");
+      });
+    }
+
+    const summary=document.querySelector("#bookingSummaryDate");
+    if(summary){
+      summary.textContent=
+        `${bookingPrettyDate(S.date)}${selectedTime?` · ${selectedTime}`:""}`;
+    }
+
+    const ok=document.querySelector("#bookingDateOkBtn");
+    if(ok){
+      ok.disabled=!selectedTime;
+      ok.style.opacity=selectedTime?"":"0.45";
+    }
+  }
+
+  function keepSelectedBookingDateVisible(){
+    if(S.view!=="datetime" || !S.date)return;
+    const strip=document.querySelector("#bookingDateStrip");
+    const selected=strip?.querySelector(`[data-booking-date="${CSS.escape(S.date)}"]`);
+    if(!strip || !selected)return;
+
+    const left=selected.offsetLeft;
+    const right=left+selected.offsetWidth;
+    const viewLeft=strip.scrollLeft;
+    const viewRight=viewLeft+strip.clientWidth;
+
+    // Only move if the selected day is actually outside the visible strip.
+    // Clicking a visible date never changes the user's horizontal position.
+    if(left<viewLeft || right>viewRight){
+      strip.scrollTo({
+        left:Math.max(0,left-(strip.clientWidth-selected.offsetWidth)/2),
+        behavior:"auto"
+      });
+    }
+  }
+
   window.Beauty = {
     go,
     toast,
@@ -2402,8 +2496,19 @@ button:disabled.is-busy{
     },
     openMaster(id){S.master=masters.find(x=>x.id===id);if(!S.service){S.service=services[0]}go("masters")},
     selectMaster(id){S.master=masters.find(x=>x.id===id);render();haptic()},
-    pickDate(d){S.date=d;S.time=null;render();haptic()},
-    pickTime(t){S.time=t;render();haptic()},
+    pickDate(d,button=null){
+      S.date=d;
+      S.time=null;
+      updateBookingDateUi(d);
+      // Preserve the exact horizontal scroll position the client chose.
+      // The clicked date remains highlighted exactly where it was tapped.
+      haptic();
+    },
+    pickTime(t,button=null){
+      S.time=t;
+      updateBookingTimeUi(t);
+      haptic();
+    },
     openBookingContact(){
       if(!S.service||!S.date||!S.time)return;
       S.view="booking-contact";
