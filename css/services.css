@@ -413,3 +413,108 @@
   .page-services.services-catalog .lux-card-copy h3{font-size:13px}
   .page-services.services-catalog .lux-card-copy p{font-size:8.8px}
 }
+
+
+/* =========================================================
+   SERVICE DETAIL — full-bleed photo + Telegram-safe controls
+   Scoped only to an opened service.
+   ========================================================= */
+
+.page-services.service-detail-page{
+  padding-top:0!important;
+}
+
+/* The photo begins at the absolute top edge of the Mini App.
+   No 12px dark strip / uncovered area above it. */
+.page-services.service-detail-page .detail-cover{
+  height:310px!important;
+  margin:0 -14px 0!important;
+  position:relative!important;
+  overflow:hidden!important;
+  border-radius:0!important;
+  background:#07050c!important;
+}
+
+.page-services.service-detail-page .detail-cover img{
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  object-fit:cover!important;
+  object-position:center 34%!important;
+}
+
+/* Keep the same dark transition into the text block,
+   but never darken/cover the top of the photograph. */
+.page-services.service-detail-page .detail-cover:after{
+  content:""!important;
+  position:absolute!important;
+  z-index:2!important;
+  inset:0!important;
+  pointer-events:none!important;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(7,5,12,0) 0%,
+      rgba(7,5,12,0) 50%,
+      rgba(7,5,12,.18) 67%,
+      rgba(7,5,12,.82) 88%,
+      #07050c 100%
+    )!important;
+}
+
+/* Telegram's Close / menu controls live over the top of the WebView.
+   Put our controls clearly below that area instead of directly underneath it. */
+.page-services.service-detail-page .back-float,
+.page-services.service-detail-page .heart-float{
+  top:max(
+    78px,
+    calc(
+      max(
+        env(safe-area-inset-top, 0px),
+        var(--tg-safe-area-inset-top, 0px),
+        var(--tg-content-safe-area-inset-top, 0px)
+      ) + 54px
+    )
+  )!important;
+  z-index:5!important;
+  width:42px!important;
+  height:42px!important;
+  border-radius:14px!important;
+  background:rgba(13,10,18,.78)!important;
+  backdrop-filter:blur(16px)!important;
+  -webkit-backdrop-filter:blur(16px)!important;
+  box-shadow:
+    0 10px 26px rgba(0,0,0,.34),
+    inset 0 1px 0 rgba(255,255,255,.045)!important;
+}
+
+.page-services.service-detail-page .back-float{
+  left:14px!important;
+  border-color:rgba(164,96,255,.34)!important;
+  color:#f6f0fb!important;
+  font-size:29px!important;
+  line-height:1!important;
+  padding-bottom:4px!important;
+}
+
+.page-services.service-detail-page .heart-float{
+  right:14px!important;
+  border-color:rgba(228,183,93,.30)!important;
+  color:#e9c46f!important;
+}
+
+/* Text still overlaps the bottom fade, not the top of the image. */
+.page-services.service-detail-page .detail-box{
+  margin-top:-44px!important;
+  position:relative!important;
+  z-index:3!important;
+}
+
+/* Slightly taller photo on larger phones. */
+@media(min-width:430px){
+  .page-services.service-detail-page .detail-cover{
+    height:340px!important;
+  }
+}
+
