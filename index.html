@@ -71,6 +71,40 @@
 }
 </style>
 
+
+<style id="booking-keyboard-kz-fix">
+/* While the iOS keyboard is open, fixed bottom controls must not cover inputs. */
+.booking-keyboard-open .page-booking .sticky-action,
+.booking-keyboard-open .bottom-nav{
+  opacity:0!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+  transition:none!important;
+}
+
+.booking-keyboard-open .page-booking{
+  padding-bottom:34px!important;
+}
+
+.page-booking .booking-contact-field input{
+  scroll-margin-top:120px;
+  scroll-margin-bottom:36px;
+}
+
+#bookingClientPhone{
+  font-variant-numeric:tabular-nums;
+  letter-spacing:.025em;
+}
+
+/* iOS zooms pages when focused inputs are below 16px.
+   Prevent that zoom/jump on the contact screen. */
+@media (max-width:700px){
+  .page-booking .booking-contact-field input{
+    font-size:16px!important;
+  }
+}
+</style>
+
 </head>
 <body>
   <div id="app"></div>
@@ -239,9 +273,8 @@
       const u=tg?.initDataUnsafe?.user;
       return [u?.first_name,u?.last_name].filter(Boolean).join(" ");
     })(),
-    bookingPhone: (() => {
-      try{return localStorage.getItem("medAestheticBookingPhone") || ""}catch(e){return ""}
-    })(),
+    // Phone intentionally starts empty for every new booking flow.
+    bookingPhone: "",
     bookingConfirmed: false,
     identityReady: Boolean(startupRole),
     actualRole: startupRole,
@@ -1138,8 +1171,11 @@
             type="text"
             maxlength="120"
             autocomplete="name"
+            enterkeyhint="next"
             placeholder="Например, Алина"
             value="${esc(S.bookingName||"")}"
+            onfocus="Beauty.bookingFieldFocus(this)"
+            onblur="Beauty.bookingFieldBlur(this)"
             oninput="Beauty.setBookingContact('name',this.value)"
           >
         </label>
@@ -1149,12 +1185,16 @@
           <input
             id="bookingClientPhone"
             type="tel"
-            maxlength="24"
-            inputmode="tel"
+            maxlength="16"
+            inputmode="numeric"
+            pattern="[0-9]*"
             autocomplete="tel"
-            placeholder="+7 777 123 45 67"
+            enterkeyhint="done"
+            placeholder=""
             value="${esc(S.bookingPhone||"")}"
-            oninput="Beauty.setBookingContact('phone',this.value)"
+            onfocus="Beauty.focusBookingPhone(this)"
+            onblur="Beauty.bookingFieldBlur(this)"
+            oninput="Beauty.inputBookingPhone(this)"
           >
         </label>
 
@@ -1920,6 +1960,154 @@
     if(S.view==="home") requestAnimationFrame(initHeroCarouselLoop);
   }
 
+
+  let bookingKeyboardTarget=null;
+  let bookingKeyboardBlurTimer=0;
+
+  function formatKzPhone(raw){
+    let digits=String(raw||"").replace(/\D/g,"");
+
+    // +7 is a fixed prefix. Normalize pasted +7 / 8... numbers.
+    if(digits.startsWith("7") || digits.startsWith("8")){
+      digits=digits.slice(1);
+    }
+
+    // Exactly 10 digits are allowed after +7.
+    digits=digits.slice(0,10);
+
+    if(!digits)return "+7";
+
+    let out="+7";
+    if(digits.length>0)out+=" "+digits.slice(0,3);
+    if(digits.length>3)out+=" "+digits.slice(3,6);
+    if(digits.length>6)out+=" "+digits.slice(6,8);
+    if(digits.length>8)out+=" "+digits.slice(8,10);
+    return out;
+  }
+
+  function bookingPhoneIsComplete(value){
+    return /^\+7 \d{3} \d{3} \d{2} \d{2}$/.test(String(value||""));
+  }
+
+  function setBookingKeyboardMode(active){
+    document.documentElement.classList.toggle("booking-keyboard-open",Boolean(active));
+    document.body?.classList.toggle("booking-keyboard-open",Boolean(active));
+  }
+
+  function ensureBookingFieldVisible(field=bookingKeyboardTarget){
+    if(S.view!=="booking-contact" || !field || document.activeElement!==field)return;
+
+    const vv=window.visualViewport;
+    const viewportTop=(vv?.offsetTop||0);
+    const viewportBottom=viewportTop+(vv?.height||window.innerHeight);
+    const rect=field.getBoundingClientRect();
+    const safeTop=viewportTop+105;
+    const safeBottom=viewportBottom-28;
+
+    if(rect.bottom>safeBottom){
+      window.scrollBy({
+        top:rect.bottom-safeBottom+30,
+        behavior:"smooth"
+      });
+    }else if(rect.top<safeTop){
+      window.scrollBy({
+        top:rect.top-safeTop-12,
+        behavior:"smooth"
+      });
+    }
+  }
+
+  function bookingFieldFocus(field){
+    clearTimeout(bookingKeyboardBlurTimer);
+    bookingKeyboardTarget=field;
+    setBookingKeyboardMode(true);
+
+    requestAnimationFrame(()=>ensureBookingFieldVisible(field));
+    setTimeout(()=>ensureBookingFieldVisible(field),100);
+    setTimeout(()=>ensureBookingFieldVisible(field),240);
+  }
+
+  function bookingFieldBlur(){
+    clearTimeout(bookingKeyboardBlurTimer);
+    bookingKeyboardBlurTimer=setTimeout(()=>{
+      const active=document.activeElement;
+      const editing=
+        S.view==="booking-contact" &&
+        active &&
+        (active.id==="bookingClientName" || active.id==="bookingClientPhone");
+
+      if(!editing){
+        bookingKeyboardTarget=null;
+        setBookingKeyboardMode(false);
+      }
+    },90);
+  }
+
+  function focusBookingPhone(input){
+    bookingFieldFocus(input);
+
+    if(!String(input.value||"").trim()){
+      input.value="+7";
+      S.bookingPhone="+7";
+    }else{
+      input.value=formatKzPhone(input.value);
+      S.bookingPhone=input.value;
+    }
+
+    requestAnimationFrame(()=>{
+      try{
+        const n=input.value.length;
+        input.setSelectionRange(n,n);
+      }catch(e){}
+    });
+  }
+
+  function inputBookingPhone(input){
+    const formatted=formatKzPhone(input.value);
+    input.value=formatted;
+    S.bookingPhone=formatted;
+
+    try{
+      const n=input.value.length;
+      input.setSelectionRange(n,n);
+    }catch(e){}
+  }
+
+  function dismissBookingKeyboard(){
+    if(S.view!=="booking-contact")return;
+    const active=document.activeElement;
+
+    if(active && (active.id==="bookingClientName" || active.id==="bookingClientPhone")){
+      active.blur();
+    }
+
+    bookingKeyboardTarget=null;
+    setBookingKeyboardMode(false);
+  }
+
+  // Tap anywhere outside the active input = close keyboard.
+  document.addEventListener("pointerdown",(event)=>{
+    if(S.view!=="booking-contact")return;
+
+    const active=document.activeElement;
+    const editing=
+      active &&
+      (active.id==="bookingClientName" || active.id==="bookingClientPhone");
+
+    if(!editing)return;
+    if(event.target.closest("#bookingClientName,#bookingClientPhone"))return;
+
+    dismissBookingKeyboard();
+  },true);
+
+  if(window.visualViewport){
+    window.visualViewport.addEventListener("resize",()=>{
+      if(document.documentElement.classList.contains("booking-keyboard-open")){
+        requestAnimationFrame(()=>ensureBookingFieldVisible());
+      }
+    },{passive:true});
+  }
+
   window.Beauty = {
     go,
     toast,
@@ -1995,7 +2183,14 @@
       window.scrollTo(0,0);
       haptic();
     },
-    startBooking(id){S.service=services.find(x=>x.id===id);S.master=masters[0];S.date=null;S.time=null;go("datetime")},
+    startBooking(id){
+      S.service=services.find(x=>x.id===id);
+      S.master=masters[0];
+      S.date=null;
+      S.time=null;
+      S.bookingPhone="";
+      go("datetime");
+    },
     openMaster(id){S.master=masters.find(x=>x.id===id);if(!S.service){S.service=services[0]}go("masters")},
     selectMaster(id){S.master=masters.find(x=>x.id===id);render();haptic()},
     pickDate(d){S.date=d;S.time=null;render();haptic()},
@@ -2009,23 +2204,31 @@
     },
     setBookingContact(kind,value){
       if(kind==="name")S.bookingName=String(value||"");
-      if(kind==="phone")S.bookingPhone=String(value||"");
     },
+    bookingFieldFocus(field){bookingFieldFocus(field)},
+    bookingFieldBlur(){bookingFieldBlur()},
+    focusBookingPhone(input){focusBookingPhone(input)},
+    inputBookingPhone(input){inputBookingPhone(input)},
+    dismissBookingKeyboard(){dismissBookingKeyboard()},
     async confirmBooking(){
       if(!S.service||!S.date||!S.time)return;
 
       const name=String(S.bookingName||"").trim().replace(/\s+/g," ");
       const phone=String(S.bookingPhone||"").trim();
-      const digits=phone.replace(/\D/g,"");
 
       if(name.length<2){
         toast("Укажите ваше имя");
-        document.querySelector("#bookingClientName")?.focus();
+        const input=document.querySelector("#bookingClientName");
+        input?.focus();
+        if(input)bookingFieldFocus(input);
         return;
       }
-      if(digits.length<10 || digits.length>15){
-        toast("Укажите корректный номер телефона");
-        document.querySelector("#bookingClientPhone")?.focus();
+
+      if(!bookingPhoneIsComplete(phone)){
+        toast("Введите номер полностью: +7 XXX XXX XX XX");
+        const input=document.querySelector("#bookingClientPhone");
+        input?.focus();
+        if(input)focusBookingPhone(input);
         return;
       }
 
@@ -2033,8 +2236,10 @@
       S.bookingPhone=phone;
       try{
         localStorage.setItem("medAestheticBookingName",name);
-        localStorage.setItem("medAestheticBookingPhone",phone);
+        localStorage.removeItem("medAestheticBookingPhone");
       }catch(e){}
+
+      dismissBookingKeyboard();
 
       try{
         const data = await bookingApi("",{
