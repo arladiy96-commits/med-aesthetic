@@ -1317,11 +1317,151 @@
     </main>${nav("booking")}`;
   }
 
+  function bookingMetaIcon(type){
+    if(type==="calendar"){
+      return `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="15" rx="2.5"/><path d="M7.5 3.5v4M16.5 3.5v4M3.5 10h17"/></svg>`;
+    }
+    if(type==="person"){
+      return `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7.5" r="3.5"/><path d="M5.5 20c.5-4.1 2.8-6.2 6.5-6.2s6 2.1 6.5 6.2"/></svg>`;
+    }
+    return `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.8"/><path d="M7 9.5h10M8 14h2.5"/></svg>`;
+  }
+
+  function bookingPrettyDate(date){
+    if(!date)return "Дата не указана";
+    try{
+      return new Intl.DateTimeFormat("ru-RU",{
+        day:"numeric",
+        month:"long",
+        year:"numeric"
+      }).format(new Date(`${date}T12:00:00`)).replace(/\s*г\.$/,"");
+    }catch(e){
+      return String(date);
+    }
+  }
+
+  function bookingDisplayData(b){
+    const s=services.find(x=>Number(x.id)===Number(b.serviceId)) || null;
+    const m=masters.find(x=>Number(x.id)===Number(b.masterId)) || masters[0] || null;
+    const status=String(b.status||"confirmed");
+    const statusText=({
+      pending:"Ожидает подтверждения",
+      confirmed:"Подтверждена",
+      completed:"Завершено",
+      cancelled:"Отменено",
+      no_show:"Не состоялась"
+    })[status] || "Предстоит";
+
+    return {
+      s,
+      serviceName:b.serviceName || s?.name || "Услуга",
+      masterName:b.masterName || m?.name || "Людмила",
+      image:s?.img || "",
+      price:s ? priceLabel(s) : "—",
+      date:bookingPrettyDate(b.date),
+      time:String(b.time||"").slice(0,5),
+      status,
+      statusText
+    };
+  }
+
+  function bookingFeaturedCard(b){
+    const d=bookingDisplayData(b);
+    return `<article class="records-featured" onclick="Beauty.bookingInfo('${b.id}')">
+      <div class="records-nearest-chip">
+        <span>${bookingMetaIcon("calendar")}</span>
+        БЛИЖАЙШАЯ ЗАПИСЬ
+      </div>
+
+      <div class="records-featured-photo">
+        ${d.image?`<img src="${esc(d.image)}" alt="${esc(d.serviceName)}">`:`<div class="records-photo-empty">MED</div>`}
+      </div>
+
+      <div class="records-featured-copy">
+        <h2>${esc(d.serviceName)}</h2>
+
+        <div class="records-meta-row">
+          <span>${bookingMetaIcon("calendar")}</span>
+          <b>${esc(d.date)} · ${esc(d.time)}</b>
+        </div>
+        <div class="records-meta-row">
+          <span>${bookingMetaIcon("person")}</span>
+          <b>Мастер: ${esc(d.masterName)}</b>
+        </div>
+        <div class="records-meta-row">
+          <span>${bookingMetaIcon("price")}</span>
+          <b>${esc(d.price)}</b>
+        </div>
+      </div>
+
+      <span class="records-status ${d.status==="pending"?"pending":""}">${esc(d.statusText)}</span>
+
+      <button class="records-more" onclick="event.stopPropagation();Beauty.bookingInfo('${b.id}')">
+        Подробнее
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+      </button>
+    </article>`;
+  }
+
+  function bookingListCard(b){
+    const d=bookingDisplayData(b);
+    return `<button class="records-card" onclick="Beauty.bookingInfo('${b.id}')">
+      <div class="records-card-photo">
+        ${d.image?`<img src="${esc(d.image)}" alt="${esc(d.serviceName)}">`:`<div class="records-photo-empty">MED</div>`}
+      </div>
+
+      <div class="records-card-copy">
+        <h3>${esc(d.serviceName)}</h3>
+
+        <div class="records-card-line">
+          <span>${bookingMetaIcon("calendar")}</span>
+          <b>${esc(d.date)} · ${esc(d.time)}</b>
+        </div>
+        <div class="records-card-line">
+          <span>${bookingMetaIcon("person")}</span>
+          <b>Мастер: ${esc(d.masterName)}</b>
+        </div>
+        <div class="records-card-line">
+          <span>${bookingMetaIcon("price")}</span>
+          <b>${esc(d.price)}</b>
+        </div>
+      </div>
+
+      <span class="records-status compact ${d.status==="pending"?"pending":""}">${esc(d.statusText)}</span>
+      <span class="records-chevron" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg>
+      </span>
+    </button>`;
+  }
+
   function bookingView(){
-    const bookings=serverBookings.filter(b=>!["completed","cancelled","no_show"].includes(String(b.status||"")));
-    return `<main class="page page-booking">${topbar()}
-      <h1 class="page-title">Мои записи</h1><p class="page-sub">Предстоящие процедуры и управление записью.</p>
-      ${bookings.length?bookings.map(b=>bookingCard(b,false)).join(""):`<div class="empty">У вас пока нет предстоящих записей.<br><br><button class="btn-primary" onclick="Beauty.go('services')">Выбрать услугу</button></div>`}
+    const bookings=serverBookings
+      .filter(b=>!["completed","cancelled","no_show"].includes(String(b.status||"")))
+      .slice()
+      .sort((a,b)=>`${a.date||""}T${a.time||""}`.localeCompare(`${b.date||""}T${b.time||""}`));
+
+    const nearest=bookings[0]||null;
+    const rest=bookings.slice(1);
+
+    return `<main class="page page-booking booking-records-page">${topbar()}
+      <section class="records-heading">
+        <h1>Мои записи</h1>
+        <p>Все ваши записи и статусы в одном месте.</p>
+      </section>
+
+      ${nearest
+        ? `${bookingFeaturedCard(nearest)}
+           ${rest.length
+             ? `<div class="records-section-title"><b>Все записи</b><span></span></div>
+                <div class="records-list">${rest.map(bookingListCard).join("")}</div>`
+             : ""}`
+        : `<div class="records-empty">
+            <div class="records-empty-mark">◇</div>
+            <h2>Записей пока нет</h2>
+            <p>Выберите услугу и удобное время.</p>
+            <button class="btn-primary" onclick="Beauty.go('services')">Выбрать услугу</button>
+          </div>`
+      }
     </main>${nav("booking")}`;
   }
 
