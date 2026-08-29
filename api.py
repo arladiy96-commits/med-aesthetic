@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import date, time
-from typing import Optional
+from typing import Literal, Optional
 
 from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel, Field
@@ -30,6 +30,36 @@ class BookingCreate(BaseModel):
     booking_time: time
 
 
+class BookingStatusUpdate(BaseModel):
+    status: Literal["pending", "confirmed", "completed", "cancelled", "no_show"]
+
+
+def _booking_payload(row: dict, include_client: bool = False) -> dict:
+    result = {
+        "id": str(row["id"]),
+        "serviceId": row["service_id"],
+        "serviceName": row["service_name"],
+        "masterId": row["master_id"],
+        "masterName": row["master_name"],
+        "date": row["booking_date"].isoformat(),
+        "time": row["booking_time"].strftime("%H:%M"),
+        "status": row["status"],
+        "createdAt": row["created_at"].isoformat(),
+    }
+    if include_client:
+        first_name = row.get("first_name")
+        username = row.get("username")
+        result.update(
+            {
+                "telegramUserId": int(row["telegram_user_id"]),
+                "clientFirstName": first_name,
+                "clientUsername": username,
+                "clientName": first_name or (f"@{username}" if username else "Клиент"),
+            }
+        )
+    return result
+
+
 def _identity(init_data: str | None) -> tuple[dict, dict]:
     telegram_user = validate_telegram_init_data(init_data or "")
     app_user = upsert_app_user(telegram_user)
@@ -39,6 +69,11 @@ def _identity(init_data: str | None) -> tuple[dict, dict]:
 def _require_creator(app_user: dict) -> None:
     if app_user.get("role") != "creator":
         raise HTTPException(status_code=403, detail="Требуются права создателя")
+
+
+def _require_staff(app_user: dict) -> None:
+    if app_user.get("role") not in {"creator", "admin"}:
+        raise HTTPException(status_code=403, detail="Требуются права администратора")
 
 
 @router.get("/me")
@@ -165,7 +200,6 @@ def list_bookings(
                    booking_date, booking_time, status, created_at
             FROM beauty_bookings
             WHERE telegram_user_id = %s
-              AND status <> 'cancelled'
             ORDER BY booking_date ASC, booking_time ASC, id ASC
             """,
             (uid,),
@@ -173,20 +207,66 @@ def list_bookings(
 
     return {
         "ok": True,
-        "bookings": [
-            {
-                "id": str(r["id"]),
-                "serviceId": r["service_id"],
-                "serviceName": r["service_name"],
-                "masterId": r["master_id"],
-                "masterName": r["master_name"],
-                "date": r["booking_date"].isoformat(),
-                "time": r["booking_time"].strftime("%H:%M"),
-                "status": r["status"],
-                "createdAt": r["created_at"].isoformat(),
-            }
-            for r in rows
-        ],
+        "bookings": [_booking_payload(r) for r in rows],
+    }
+
+
+@router.get("/admin/bookings")
+def list_admin_bookings(
+    x_telegram_init_data: str | None = Header(
+        default=None, alias="X-Telegram-Init-Data"
+    ),
+):
+    _, app_user = _identity(x_telegram_init_data)
+    _require_staff(app_user)
+
+    with db() as conn:
+        rows = conn.execute(
+            """
+            SELECT id, telegram_user_id, first_name, username,
+                   service_id, service_name, master_id, master_name,
+                   booking_date, booking_time, status, created_at
+            FROM beauty_bookings
+            ORDER BY booking_date ASC, booking_time ASC, id ASC
+            """
+        ).fetchall()
+
+    return {
+        "ok": True,
+        "bookings": [_booking_payload(r, include_client=True) for r in rows],
+    }
+
+
+@router.patch("/admin/bookings/{booking_id}")
+def update_admin_booking(
+    booking_id: int,
+    payload: BookingStatusUpdate,
+    x_telegram_init_data: str | None = Header(
+        default=None, alias="X-Telegram-Init-Data"
+    ),
+):
+    _, app_user = _identity(x_telegram_init_data)
+    _require_staff(app_user)
+
+    with db() as conn:
+        row = conn.execute(
+            """
+            UPDATE beauty_bookings
+            SET status=%s, updated_at=NOW()
+            WHERE id=%s
+            RETURNING id, telegram_user_id, first_name, username,
+                      service_id, service_name, master_id, master_name,
+                      booking_date, booking_time, status, created_at
+            """,
+            (payload.status, booking_id),
+        ).fetchone()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Запись не найдена")
+
+    return {
+        "ok": True,
+        "booking": _booking_payload(row, include_client=True),
     }
 
 
