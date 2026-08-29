@@ -113,6 +113,48 @@
 }
 </style>
 
+
+<style id="instant-action-feedback">
+.action-busy-content{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  width:100%;
+  min-width:0;
+}
+
+.action-busy-spinner{
+  width:16px;
+  height:16px;
+  flex:0 0 16px;
+  border-radius:50%;
+  border:2px solid currentColor;
+  border-right-color:transparent;
+  animation:med-action-spin .68s linear infinite;
+}
+
+button.is-busy,
+button:disabled.is-busy{
+  cursor:default!important;
+  pointer-events:none!important;
+  opacity:.88!important;
+}
+
+.admin-booking-actions button:disabled:not(.is-busy){
+  opacity:.42!important;
+  pointer-events:none!important;
+}
+
+@keyframes med-action-spin{
+  to{transform:rotate(360deg)}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .action-busy-spinner{animation-duration:1.25s}
+}
+</style>
+
 </head>
 <body>
   <div id="app"></div>
@@ -1210,7 +1252,7 @@
       </section>
 
       <div class="sticky-action">
-        <button class="btn-primary" onclick="Beauty.confirmBooking()">Записаться</button>
+        <button id="bookingSubmitBtn" class="btn-primary" onclick="Beauty.confirmBooking(this)">Записаться</button>
       </div>
     </main>${nav("booking")}`;
   }
@@ -1761,11 +1803,11 @@
         <div class="admin-booking-actions">
           ${phone?`<button class="booking-action contact" onclick="Beauty.callBookingClient('${b.id}')">Позвонить · ${esc(phone)}</button>`:""}
           ${b.clientUsername?`<button class="booking-action contact" onclick="Beauty.messageBookingClient('${b.id}')">Написать клиенту в Telegram</button>`:""}
-          ${status==="pending"?`<button class="booking-action confirm" onclick="Beauty.updateAdminBookingStatus('${b.id}','confirmed')">Подтвердить запись</button>`:""}
-          ${status==="pending"?`<button class="booking-action danger" onclick="Beauty.updateAdminBookingStatus('${b.id}','cancelled')">Отклонить заявку</button>`:""}
-          ${status==="confirmed"?`<button class="booking-action done" onclick="Beauty.updateAdminBookingStatus('${b.id}','completed')">Отметить как завершённую</button>`:""}
-          ${status==="confirmed"?`<button class="booking-action neutral" onclick="Beauty.updateAdminBookingStatus('${b.id}','no_show')">Клиент не пришёл</button>`:""}
-          ${status==="confirmed"?`<button class="booking-action danger" onclick="Beauty.updateAdminBookingStatus('${b.id}','cancelled')">Отменить запись</button>`:""}
+          ${status==="pending"?`<button class="booking-action confirm" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','confirmed',this)">Подтвердить запись</button>`:""}
+          ${status==="pending"?`<button class="booking-action danger" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','cancelled',this)">Отклонить заявку</button>`:""}
+          ${status==="confirmed"?`<button class="booking-action done" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','completed',this)">Отметить как завершённую</button>`:""}
+          ${status==="confirmed"?`<button class="booking-action neutral" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','no_show',this)">Клиент не пришёл</button>`:""}
+          ${status==="confirmed"?`<button class="booking-action danger" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','cancelled',this)">Отменить запись</button>`:""}
         </div>
       </section>
     </div>`;
@@ -1782,22 +1824,90 @@
     render();
   }
 
-  async function updateAdminBookingStatus(id,status){
+  let bookingSubmitPending=false;
+  let adminBookingActionPending=false;
+
+  function busyButtonHtml(label){
+    return `<span class="action-busy-content"><span class="action-busy-spinner" aria-hidden="true"></span><span>${esc(label)}</span></span>`;
+  }
+
+  function setActionButtonBusy(button,label){
+    if(!button)return;
+    if(!button.dataset.originalHtml)button.dataset.originalHtml=button.innerHTML;
+    button.disabled=true;
+    button.classList.add("is-busy");
+    button.innerHTML=busyButtonHtml(label);
+  }
+
+  function restoreActionButton(button){
+    if(!button)return;
+    button.disabled=false;
+    button.classList.remove("is-busy");
+    if(button.dataset.originalHtml){
+      button.innerHTML=button.dataset.originalHtml;
+      delete button.dataset.originalHtml;
+    }
+  }
+
+  function adminStatusBusyLabel(status,button){
+    const original=String(button?.dataset?.originalHtml || button?.textContent || "").toLowerCase();
+
+    if(status==="confirmed")return "Подтверждаем…";
+    if(status==="completed")return "Завершаем…";
+    if(status==="no_show")return "Сохраняем…";
+    if(status==="cancelled" && original.includes("отклон"))return "Отклоняем…";
+    if(status==="cancelled")return "Отменяем…";
+    return "Сохраняем…";
+  }
+
+  async function updateAdminBookingStatus(id,status,button=null){
+    if(adminBookingActionPending)return;
+
+    adminBookingActionPending=true;
+    haptic("medium");
+
+    const statusButtons=[
+      ...document.querySelectorAll(".admin-booking-actions [data-admin-status-action]")
+    ];
+
+    statusButtons.forEach(btn=>{
+      if(!btn.dataset.originalHtml)btn.dataset.originalHtml=btn.innerHTML;
+      btn.disabled=true;
+    });
+
+    setActionButtonBusy(button,adminStatusBusyLabel(status,button));
+
     try{
       const data=await adminBookingApi("/"+encodeURIComponent(id),{
         method:"PATCH",
         body:JSON.stringify({status})
       });
+
       if(data.booking){
-        adminBookings=adminBookings.map(b=>String(b.id)===String(id)?data.booking:b);
-        adminBookingsLoaded = true;
+        adminBookings=adminBookings.map(
+          b=>String(b.id)===String(id)?data.booking:b
+        );
+        adminBookingsLoaded=true;
         saveAdminBookingsCache();
       }
+
       S.adminBookingId=null;
+      adminBookingActionPending=false;
       render();
       toast("Статус записи обновлён");
       haptic("medium");
     }catch(e){
+      adminBookingActionPending=false;
+
+      statusButtons.forEach(btn=>{
+        btn.disabled=false;
+        btn.classList.remove("is-busy");
+        if(btn.dataset.originalHtml){
+          btn.innerHTML=btn.dataset.originalHtml;
+          delete btn.dataset.originalHtml;
+        }
+      });
+
       toast(e.message || "Не удалось изменить запись");
     }
   }
@@ -2309,7 +2419,8 @@
     focusBookingPhone(input){focusBookingPhone(input)},
     inputBookingPhone(input){inputBookingPhone(input)},
     dismissBookingKeyboard(){dismissBookingKeyboard()},
-    async confirmBooking(){
+    async confirmBooking(button=null){
+      if(bookingSubmitPending)return;
       if(!S.service||!S.date||!S.time)return;
 
       const name=String(S.bookingName||"").trim().replace(/\s+/g," ");
@@ -2338,6 +2449,11 @@
         localStorage.removeItem("medAestheticBookingPhone");
       }catch(e){}
 
+      bookingSubmitPending=true;
+      const submitButton=button || document.querySelector("#bookingSubmitBtn");
+      setActionButtonBusy(submitButton,"Отправляем…");
+      haptic("medium");
+
       dismissBookingKeyboard();
 
       try{
@@ -2356,10 +2472,13 @@
         if(["creator","admin"].includes(S.actualRole)){
           loadAdminBookings(true);
         }
+        bookingSubmitPending=false;
         S.view="confirm";
         render();
         haptic("medium");
       }catch(e){
+        bookingSubmitPending=false;
+        restoreActionButton(submitButton);
         toast(e.message || "Не удалось создать запись");
       }
     },
