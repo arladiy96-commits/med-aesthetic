@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-import base64
 import json
 from datetime import date, time
+from functools import lru_cache
+from pathlib import Path
+import hashlib
 from typing import Literal, Optional
 
-from fastapi import APIRouter, BackgroundTasks, Header, HTTPException, Response
+from fastapi import APIRouter, BackgroundTasks, Header, HTTPException
 from pydantic import BaseModel, Field
 from psycopg.errors import UniqueViolation
 
@@ -20,7 +22,6 @@ from database import (
     revoke_admin,
     upsert_app_user,
 )
-from service_assets import service_asset_urls
 
 router = APIRouter()
 
@@ -62,18 +63,48 @@ class ServiceUpdate(BaseModel):
     is_active: Optional[bool] = None
 
 
+BASE_DIR = Path(__file__).resolve().parent
+SERVICE_IMAGE_DIR = BASE_DIR / "assets" / "services"
+
+
+@lru_cache(maxsize=256)
+def _static_service_images(service_id: int) -> dict[str, str]:
+    """Return permanent, cache-safe service image URLs.
+
+    The files live in GitHub under assets/services. A short content hash is
+    appended to the URL. If a file is ever replaced in a future deploy, its
+    URL changes automatically, so Telegram/WebView cannot flash an old cached
+    photo before the new one.
+    """
+    service_id = int(service_id)
+    thumb = SERVICE_IMAGE_DIR / f"service-{service_id}-thumb.webp"
+    full = SERVICE_IMAGE_DIR / f"service-{service_id}-full.webp"
+
+    def versioned(path: Path) -> str:
+        if not path.is_file():
+            return ""
+        digest = hashlib.sha1(path.read_bytes()).hexdigest()[:12]
+        return f"/assets/services/{path.name}?v={digest}"
+
+    thumb_url = versioned(thumb)
+    full_url = versioned(full)
+
+    # New services added from the admin panel intentionally have no editable
+    # photo. Until a permanent WebP is added to GitHub, use the existing
+    # lightweight beauty banner instead of a broken image URL.
+    fallback = "/assets/hero.webp"
+    return {
+        "thumb": thumb_url or full_url or fallback,
+        "full": full_url or thumb_url or fallback,
+    }
+
+
 def _service_payload(row: dict) -> dict:
     includes = row.get("includes") or []
     if not isinstance(includes, list):
         includes = []
 
-    updated_at = row.get("updated_at")
-    version = int(updated_at.timestamp()) if updated_at else 0
-    images = service_asset_urls(
-        int(row["id"]),
-        row.get("image_url"),
-        version,
-    )
+    images = _static_service_images(int(row["id"]))
 
     return {
         "id": int(row["id"]),
@@ -416,49 +447,13 @@ def remove_admin(
     return {"ok": True}
 
 
-@router.get("/services/{service_id}/image")
-def service_image(service_id: int):
-    with db() as conn:
-        row = conn.execute(
-            """
-            SELECT image_url
-            FROM beauty_services
-            WHERE id=%s AND deleted_at IS NULL
-            """,
-            (service_id,),
-        ).fetchone()
-
-    if not row or not row.get("image_url"):
-        raise HTTPException(status_code=404, detail="Фото не найдено")
-
-    value = str(row["image_url"])
-    if not value.startswith("data:image/") or ";base64," not in value:
-        raise HTTPException(status_code=404, detail="Локального фото нет")
-
-    header, encoded = value.split(",", 1)
-    media_type = header[5:].split(";", 1)[0] or "image/jpeg"
-
-    try:
-        content = base64.b64decode(encoded, validate=True)
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail="Повреждённое фото") from exc
-
-    return Response(
-        content=content,
-        media_type=media_type,
-        headers={
-            "Cache-Control": "public, max-age=31536000, immutable",
-        },
-    )
-
-
 @router.get("/services")
 def list_services():
     with db() as conn:
         rows = conn.execute(
             """
-            SELECT id, category, name, price, duration, image_url,
-                   description, includes, is_active, sort_order, updated_at
+            SELECT id, category, name, price, duration,
+                   description, includes, is_active, sort_order
             FROM beauty_services
             WHERE deleted_at IS NULL
               AND is_active = TRUE
@@ -481,8 +476,8 @@ def list_admin_services(
     with db() as conn:
         rows = conn.execute(
             """
-            SELECT id, category, name, price, duration, image_url,
-                   description, includes, is_active, sort_order, updated_at
+            SELECT id, category, name, price, duration,
+                   description, includes, is_active, sort_order
             FROM beauty_services
             WHERE deleted_at IS NULL
             ORDER BY sort_order ASC, id ASC
@@ -515,8 +510,8 @@ def create_admin_service(
                 %s,%s,%s,%s,%s,%s::jsonb,%s,
                 COALESCE((SELECT MAX(sort_order) + 1 FROM beauty_services), 1)
             )
-            RETURNING id, category, name, price, duration, image_url,
-                      description, includes, is_active, sort_order, updated_at
+            RETURNING id, category, name, price, duration,
+                      description, includes, is_active, sort_order
             """,
             (
                 payload.category.strip(),
@@ -589,8 +584,8 @@ def update_admin_service(
             UPDATE beauty_services
             SET {", ".join(sets)}, updated_at=NOW()
             WHERE id=%s AND deleted_at IS NULL
-            RETURNING id, category, name, price, duration, image_url,
-                      description, includes, is_active, sort_order, updated_at
+            RETURNING id, category, name, price, duration,
+                      description, includes, is_active, sort_order
             """,
             tuple(values),
         ).fetchone()

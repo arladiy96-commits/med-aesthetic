@@ -96,7 +96,6 @@ def init_db() -> None:
                 name TEXT NOT NULL,
                 price INTEGER,
                 duration INTEGER,
-                image_url TEXT,
                 description TEXT,
                 includes JSONB NOT NULL DEFAULT '[]'::jsonb,
                 is_active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -119,184 +118,265 @@ def init_db() -> None:
         conn.execute(
             """
             INSERT INTO beauty_services (
-                id, category, name, price, duration, image_url,
+                id, category, name, price, duration,
                 description, includes, is_active, sort_order
             )
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
+            VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
             ON CONFLICT (id) DO NOTHING
             """,
-            (1, 'Косметология', 'Чистка лица', None, None, 'https://images.unsplash.com/photo-1761718210089-ba3bb5ccb54f?auto=format&fit=crop&w=900&q=82',
-             'Профессиональное очищение кожи с подбором метода по её состоянию и чувствительности.', json.dumps(['Аппаратная чистка', 'Механическая чистка', 'Комбинированная чистка', 'Подбор варианта после консультации'], ensure_ascii=False),
-             True, 1),
+            (1, 'Косметология', 'Чистка лица механическая', 15000, 30, 'Механическая чистка лица — глубокое очищение кожи от загрязнений и комедонов вручную с использованием профессиональных инструментов.', '["Консультация", "Очищение кожи", "Механическая чистка", "Завершающий уход", "Рекомендации по уходу"]', True, 1),
         )
+
         conn.execute(
             """
             INSERT INTO beauty_services (
-                id, category, name, price, duration, image_url,
+                id, category, name, price, duration,
                 description, includes, is_active, sort_order
             )
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
+            VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
             ON CONFLICT (id) DO NOTHING
             """,
-            (2, 'Пирсинг', 'Детский прокол ушей', None, None, 'https://images.unsplash.com/photo-1723986071829-42d53407ae38?auto=format&fit=crop&w=900&q=82',
-             'Аккуратный прокол мочек ушей для детей с внимательным и спокойным подходом к процедуре.', json.dumps(['Подбор места прокола', 'Подготовка и обработка зоны', 'Прокол мочек ушей', 'Рекомендации по домашнему уходу'], ensure_ascii=False),
-             True, 2),
+            (2, 'Пирсинг', 'Детский прокол ушей', 4000, 20, 'Аккуратный прокол мочек ушей для детей с внимательным и спокойным подходом к процедуре.', '["Подбор места прокола", "Подготовка и обработка зоны", "Прокол мочек ушей", "Рекомендации по домашнему уходу"]', True, 2),
         )
+
         conn.execute(
             """
             INSERT INTO beauty_services (
-                id, category, name, price, duration, image_url,
+                id, category, name, price, duration,
                 description, includes, is_active, sort_order
             )
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
+            VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
             ON CONFLICT (id) DO NOTHING
             """,
-            (3, 'Косметология', 'Удаление кожных новообразований', None, None, 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=900&q=82',
-             'Удаление подходящих кожных новообразований после предварительной оценки специалистом.', json.dumps(['Предварительная консультация', 'Оценка зоны', 'Проведение процедуры при отсутствии противопоказаний', 'Рекомендации по уходу после процедуры'], ensure_ascii=False),
-             True, 3),
+            (3, 'Косметология', 'Удаление кожных новообразований', 25000, 40, 'Удаление подходящих кожных новообразований после предварительной оценки специалистом.', '["Предварительная консультация", "Оценка зоны", "Проведение процедуры при отсутствии противопоказаний", "Рекомендации по уходу после процедуры"]', True, 3),
         )
+
         conn.execute(
             """
             INSERT INTO beauty_services (
-                id, category, name, price, duration, image_url,
+                id, category, name, price, duration,
                 description, includes, is_active, sort_order
             )
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
+            VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
             ON CONFLICT (id) DO NOTHING
             """,
-            (4, 'Пирсинг', 'Пирсинг уха', None, None, 'https://images.unsplash.com/photo-1723986071829-42d53407ae38?auto=format&fit=crop&w=900&q=82',
-             'Проколы разных зон уха — от классической мочки до сложных композиций.', json.dumps(['Мочка и верхняя мочка', 'Хеликс и форвард-хеликс', 'Трагус, конч, дейс и rook', 'Индустриал'], ensure_ascii=False),
-             True, 4),
+            (4, 'Пирсинг', 'Пирсинг мочки', 6000, 20, 'Прокол мочки — классический и аккуратный прокол мягкой ткани уха с подбором подходящего украшения.', '["Консультация", "Разметка", "Прокол", "Установка украшения", "Рекомендации по уходу"]', True, 4),
         )
+
         conn.execute(
             """
             INSERT INTO beauty_services (
-                id, category, name, price, duration, image_url,
+                id, category, name, price, duration,
                 description, includes, is_active, sort_order
             )
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
+            VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
             ON CONFLICT (id) DO NOTHING
             """,
-            (5, 'Пирсинг', 'Пирсинг носа', None, None, 'https://www.covetear.com/cdn/shop/files/NOSE_IMAGES_1.png?v=1718343576&width=900',
-             'Подбор прокола под анатомию и желаемый образ — от аккуратной ноздри до более выразительных вариантов.', json.dumps(['Ноздря', 'Септум', 'Бридж', 'Рекомендации по уходу'], ensure_ascii=False),
-             True, 5),
+            (5, 'Пирсинг', 'Пирсинг ноздри (Nostril)', 5000, 15, 'Пирсинг ноздри — стильный акцент на лице с подбором украшения и профессиональным выполнением прокола.', '["Консультация", "Подбор украшения", "Проведение процедуры", "Рекомендации по уходу"]', True, 5),
         )
+
         conn.execute(
             """
             INSERT INTO beauty_services (
-                id, category, name, price, duration, image_url,
+                id, category, name, price, duration,
                 description, includes, is_active, sort_order
             )
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
+            VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
             ON CONFLICT (id) DO NOTHING
             """,
-            (6, 'Пирсинг', 'Пирсинг губ', None, None, 'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?auto=format&fit=crop&w=900&q=82',
-             'Разные варианты пирсинга губ с подбором расположения под черты лица и анатомию.', json.dumps(['Лабрет', 'Медуза', 'Монро', 'Вертикальный лабрет', 'Snake bites и другие парные варианты'], ensure_ascii=False),
-             True, 6),
+            (6, 'Пирсинг', 'Вертикальный лабрет', 8000, 20, 'Вертикальный лабрет — стильный и аккуратный прокол нижней губы. Подбор украшения с учётом анатомии и профессиональное выполнение процедуры.', '[]', True, 6),
         )
+
         conn.execute(
             """
             INSERT INTO beauty_services (
-                id, category, name, price, duration, image_url,
+                id, category, name, price, duration,
                 description, includes, is_active, sort_order
             )
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
+            VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
             ON CONFLICT (id) DO NOTHING
             """,
-            (7, 'Пирсинг', 'Пирсинг языка', None, None, 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=900&q=82',
-             'Классический прокол языка и отдельные варианты поверхностного пирсинга после оценки анатомии.', json.dumps(['Классический прокол языка', 'Оценка анатомии перед процедурой', 'Некоторые поверхностные варианты', 'Подробные рекомендации по уходу'], ensure_ascii=False),
-             True, 7),
+            (7, 'Пирсинг', 'Пирсинг языка', 7000, 15, 'Классический прокол языка и отдельные варианты поверхностного пирсинга после оценки анатомии.', '["Классический прокол языка", "Оценка анатомии перед процедурой", "Некоторые поверхностные варианты", "Подробные рекомендации по уходу"]', True, 7),
         )
+
         conn.execute(
             """
             INSERT INTO beauty_services (
-                id, category, name, price, duration, image_url,
+                id, category, name, price, duration,
                 description, includes, is_active, sort_order
             )
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
+            VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
             ON CONFLICT (id) DO NOTHING
             """,
-            (8, 'Пирсинг', 'Пирсинг брови', None, None, 'https://images.unsplash.com/photo-1555697594-6a6168782157?auto=format&fit=crop&w=900&q=82',
-             'Стандартный прокол брови с выбором подходящего расположения и украшения.', json.dumps(['Подбор точки прокола', 'Стандартный прокол брови', 'Установка украшения', 'Рекомендации по уходу'], ensure_ascii=False),
-             True, 8),
+            (8, 'Пирсинг', 'Пирсинг брови', 16000, 20, 'Стандартный прокол брови с выбором подходящего расположения и украшения.', '["Подбор точки прокола", "Стандартный прокол брови", "Установка украшения", "Рекомендации по уходу"]', True, 8),
         )
+
         conn.execute(
             """
             INSERT INTO beauty_services (
-                id, category, name, price, duration, image_url,
+                id, category, name, price, duration,
                 description, includes, is_active, sort_order
             )
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
+            VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
             ON CONFLICT (id) DO NOTHING
             """,
-            (9, 'Пирсинг', 'Пирсинг пупка', None, None, 'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=900&q=82',
-             'Классический пирсинг пупка и отдельные анатомические варианты при подходящем строении зоны.', json.dumps(['Оценка анатомии', 'Классический прокол', 'Некоторые анатомические варианты', 'Рекомендации по заживлению'], ensure_ascii=False),
-             True, 9),
+            (11, 'Аппаратные процедуры', 'Лазерная эпиляция', 18000, 30, 'Аппаратная процедура для длительного уменьшения роста нежелательных волос на выбранных зонах.', '["Подбор зоны обработки", "Настройка параметров под клиента", "Проведение процедуры", "Рекомендации между сеансами"]', True, 11),
         )
+
         conn.execute(
             """
             INSERT INTO beauty_services (
-                id, category, name, price, duration, image_url,
+                id, category, name, price, duration,
                 description, includes, is_active, sort_order
             )
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
+            VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
             ON CONFLICT (id) DO NOTHING
             """,
-            (10, 'Пирсинг', 'Пирсинг тела', None, None, 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=82',
-             'Пирсинг отдельных зон тела с обязательной предварительной оценкой анатомии и возможности безопасного размещения.', json.dumps(['Пирсинг сосков', 'Различные поверхностные проколы', 'Подбор расположения', 'Рекомендации по уходу'], ensure_ascii=False),
-             True, 10),
+            (12, 'Аппаратные процедуры', 'Курс аппаратной коррекции', 30000, 40, 'Курс процедур для работы с выбранными зонами тела по индивидуально подобранной программе.', '["Первичная консультация", "Подбор курса", "Аппаратная работа по выбранным зонам", "Контроль динамики в процессе курса"]', True, 12),
         )
+
         conn.execute(
             """
             INSERT INTO beauty_services (
-                id, category, name, price, duration, image_url,
+                id, category, name, price, duration,
                 description, includes, is_active, sort_order
             )
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
+            VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
             ON CONFLICT (id) DO NOTHING
             """,
-            (11, 'Аппаратные процедуры', 'Лазерная эпиляция', None, None, 'https://static.shumailas.com/wp-content/uploads/2025/07/Full-Body-Laser-Hair-Removal-1024x683.jpg',
-             'Аппаратная процедура для длительного уменьшения роста нежелательных волос на выбранных зонах.', json.dumps(['Подбор зоны обработки', 'Настройка параметров под клиента', 'Проведение процедуры', 'Рекомендации между сеансами'], ensure_ascii=False),
-             True, 11),
+            (13, 'Аппаратные процедуры', 'Токовая терапия', 30000, 30, 'Аппаратная процедура с использованием слабых электрических импульсов по индивидуально выбранному протоколу.', '["Оценка состояния кожи", "Подбор режима процедуры", "Проведение токовой терапии", "Рекомендации по дальнейшему уходу"]', True, 13),
         )
+
         conn.execute(
             """
             INSERT INTO beauty_services (
-                id, category, name, price, duration, image_url,
+                id, category, name, price, duration,
                 description, includes, is_active, sort_order
             )
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
+            VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
             ON CONFLICT (id) DO NOTHING
             """,
-            (12, 'Аппаратные процедуры', 'Курс аппаратной коррекции', None, None, 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&w=900&q=82',
-             'Курс процедур для работы с выбранными зонами тела по индивидуально подобранной программе.', json.dumps(['Первичная консультация', 'Подбор курса', 'Аппаратная работа по выбранным зонам', 'Контроль динамики в процессе курса'], ensure_ascii=False),
-             True, 12),
+            (14, 'Сертификаты', 'Подарочные сертификаты', None, None, 'Красивый способ подарить близкому человеку процедуру или возможность самостоятельно выбрать услугу.', '["Подбор номинала", "Возможность подарить на выбранную услугу", "Оформление сертификата", "Уточнение условий использования при записи"]', True, 14),
         )
+
         conn.execute(
             """
             INSERT INTO beauty_services (
-                id, category, name, price, duration, image_url,
+                id, category, name, price, duration,
                 description, includes, is_active, sort_order
             )
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
+            VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
             ON CONFLICT (id) DO NOTHING
             """,
-            (13, 'Аппаратные процедуры', 'Токовая терапия', None, None, 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=900&q=82',
-             'Аппаратная процедура с использованием слабых электрических импульсов по индивидуально выбранному протоколу.', json.dumps(['Оценка состояния кожи', 'Подбор режима процедуры', 'Проведение токовой терапии', 'Рекомендации по дальнейшему уходу'], ensure_ascii=False),
-             True, 13),
+            (15, 'Пирсинг', 'Пирсинг пупка', 10000, 15, 'Пирсинг пупка — аккуратное украшение тела, подчёркивающее линию живота. Индивидуальный подбор украшения и профессиональное выполнение процедуры.', '["Консультация", "Проведение услуги", "Рекомендации по уходу"]', True, 15),
         )
+
         conn.execute(
             """
             INSERT INTO beauty_services (
-                id, category, name, price, duration, image_url,
+                id, category, name, price, duration,
                 description, includes, is_active, sort_order
             )
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
+            VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
             ON CONFLICT (id) DO NOTHING
             """,
-            (14, 'Сертификаты', 'Подарочные сертификаты', None, None, 'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=900&q=82',
-             'Красивый способ подарить близкому человеку процедуру или возможность самостоятельно выбрать услугу.', json.dumps(['Подбор номинала', 'Возможность подарить на выбранную услугу', 'Оформление сертификата', 'Уточнение условий использования при записи'], ensure_ascii=False),
-             True, 14),
+            (16, 'Косметология', 'Чистка лица аппаратная', 30000, 30, 'Аппаратная чистка лица — бережное очищение кожи с помощью профессионального косметологического аппарата, удаление загрязнений и улучшение состояния кожи.', '["Консультация", "Очищение кожи", "Аппаратная чистка", "Завершающий уход", "Рекомендации по уходу"]', True, 16),
+        )
+
+        conn.execute(
+            """
+            INSERT INTO beauty_services (
+                id, category, name, price, duration,
+                description, includes, is_active, sort_order
+            )
+            VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
+            ON CONFLICT (id) DO NOTHING
+            """,
+            (17, 'Пирсинг', 'Пирсинг сосков', 25000, 20, 'Пирсинг сосков — стильный интимный прокол с подбором украшения с учётом анатомии и профессиональным выполнением процедуры.', '["Консультация", "Разметка", "Прокол", "Установка украшения", "Рекомендации по уходу"]', True, 17),
+        )
+
+        conn.execute(
+            """
+            INSERT INTO beauty_services (
+                id, category, name, price, duration,
+                description, includes, is_active, sort_order
+            )
+            VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
+            ON CONFLICT (id) DO NOTHING
+            """,
+            (18, 'Пирсинг', 'Индустриал', 16000, 15, 'Индустриал — эффектный прокол хряща уха с установкой одной прямой штанги, соединяющей два прокола.', '["Консультация", "Разметка", "Прокол", "Установка украшения", "Рекомендации по уходу"]', True, 18),
+        )
+
+        conn.execute(
+            """
+            INSERT INTO beauty_services (
+                id, category, name, price, duration,
+                description, includes, is_active, sort_order
+            )
+            VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
+            ON CONFLICT (id) DO NOTHING
+            """,
+            (19, 'Пирсинг', 'Септум', 15000, 15, 'Септум — стильный прокол носовой перегородки с установкой аккуратного кольца или другого подходящего украшения.', '["Консультация", "Разметка", "Прокол", "Установка украшения", "Рекомендации по уходу"]', True, 19),
+        )
+
+        conn.execute(
+            """
+            INSERT INTO beauty_services (
+                id, category, name, price, duration,
+                description, includes, is_active, sort_order
+            )
+            VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
+            ON CONFLICT (id) DO NOTHING
+            """,
+            (20, 'Пирсинг', 'Бридж', 10000, 20, 'Бридж — горизонтальный прокол кожи в области переносицы между глазами с установкой аккуратного украшения.', '["Консультация", "Разметка", "Прокол", "Установка украшения", "Рекомендации по уходу"]', True, 20),
+        )
+
+        conn.execute(
+            """
+            INSERT INTO beauty_services (
+                id, category, name, price, duration,
+                description, includes, is_active, sort_order
+            )
+            VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
+            ON CONFLICT (id) DO NOTHING
+            """,
+            (21, 'Пирсинг', 'Лабрет', 8000, 10, 'Лабрет — классический прокол под нижней губой с установкой аккуратного украшения.', '["Консультация", "Разметка", "Прокол", "Установка украшения", "Рекомендации по уходу"]', True, 21),
+        )
+
+        conn.execute(
+            """
+            INSERT INTO beauty_services (
+                id, category, name, price, duration,
+                description, includes, is_active, sort_order
+            )
+            VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
+            ON CONFLICT (id) DO NOTHING
+            """,
+            (22, 'Пирсинг', 'Медуза', 8000, 15, 'Медуза — стильный прокол по центру над верхней губой, в области фильтрума, с установкой аккуратного украшения.', '["Консультация", "Разметка", "Прокол", "Установка украшения", "Рекомендации по уходу"]', True, 22),
+        )
+
+        conn.execute(
+            """
+            INSERT INTO beauty_services (
+                id, category, name, price, duration,
+                description, includes, is_active, sort_order
+            )
+            VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
+            ON CONFLICT (id) DO NOTHING
+            """,
+            (23, 'Пирсинг', 'Монро', 10000, 15, 'Монро — изящный прокол над верхней губой сбоку, имитирующий аккуратную «родинку».', '["Консультация", "Разметка", "Прокол", "Установка украшения", "Рекомендации по уходу"]', True, 23),
+        )
+
+        conn.execute(
+            """
+            INSERT INTO beauty_services (
+                id, category, name, price, duration,
+                description, includes, is_active, sort_order
+            )
+            VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s)
+            ON CONFLICT (id) DO NOTHING
+            """,
+            (24, 'Пирсинг', 'Трагус', 15000, 20, 'Трагус — аккуратный прокол небольшого хрящевого выступа перед слуховым проходом.', '["Консультация", "Разметка", "Прокол", "Установка украшения", "Рекомендации по уходу"]', True, 24),
         )
 
         conn.execute(
