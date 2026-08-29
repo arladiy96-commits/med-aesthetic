@@ -485,7 +485,19 @@
   const durationLabel = s => Number.isFinite(Number(s?.duration)) ? `${Number(s.duration)} мин` : "Время индивидуально";
   const esc = s => String(s ?? "").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]));
   let serverBookings = [];
-  let adminBookings = [];
+  let adminBookings = (() => {
+    try{
+      const cached = JSON.parse(localStorage.getItem("medAestheticAdminBookingsCache") || "[]");
+      return Array.isArray(cached) ? cached : [];
+    }catch(e){ return []; }
+  })();
+  let adminBookingsLoaded = adminBookings.length > 0;
+
+  function saveAdminBookingsCache(){
+    try{
+      localStorage.setItem("medAestheticAdminBookingsCache", JSON.stringify(adminBookings));
+    }catch(e){}
+  }
 
   async function bookingApi(path="", options={}){
     const headers = {
@@ -506,7 +518,7 @@
       "X-Telegram-Init-Data": tg?.initData || "",
       ...(options.headers || {})
     };
-    const res = await fetch("/api/admin/bookings" + path, {...options, headers});
+    const res = await fetch("/api/admin/bookings" + path, {...options, headers, cache:"no-store"});
     const data = await res.json().catch(()=>({}));
     if(!res.ok) throw new Error(data.detail || data.error || "Ошибка сервера");
     return data;
@@ -651,6 +663,8 @@
     try{
       const data = await adminBookingApi();
       adminBookings = Array.isArray(data.bookings) ? data.bookings : [];
+      adminBookingsLoaded = true;
+      saveAdminBookingsCache();
       if(String(S.view).startsWith("admin-")) render();
     }catch(e){
       console.error("Admin booking load failed:", e);
@@ -953,7 +967,7 @@
     const d=new Date();d.setDate(d.getDate()+days);return d.toISOString().slice(0,10);
   }
   function bookingStatusRu(status){
-    return ({pending:"Ожидает",confirmed:"Подтверждена",completed:"Завершена",cancelled:"Отменена",no_show:"Не пришёл"})[status] || "Запись";
+    return ({pending:"Ожидает подтверждения",confirmed:"Подтверждена",completed:"Завершена",cancelled:"Отменена",no_show:"Не пришёл"})[status] || "Запись";
   }
   function isActiveAdminBooking(b){ return ["pending","confirmed"].includes(String(b.status||"confirmed")); }
   function sortedAdminBookings(){
@@ -1001,13 +1015,17 @@
     const total=active.length;
     const clients=new Set(adminBookings.map(b=>String(b.telegramUserId||"")).filter(Boolean)).size;
     const attention=adminBookings.filter(b=>String(b.status||"")==="pending").length;
+    const metricTotal=adminBookingsLoaded?String(total):"—";
+    const metricToday=adminBookingsLoaded?String(today.length):"—";
+    const metricClients=adminBookingsLoaded?String(clients):"—";
+    const metricAttention=adminBookingsLoaded?String(attention):"—";
     return `<main class="admin-page admin-dashboard-page">${adminHeader()}
       <div class="admin-date-row"><div><h1>Сегодня</h1><p>${esc(niceToday())}</p></div><button class="admin-link" onclick="Beauty.go('admin-calendar')">Открыть календарь ›</button></div>
       <div class="admin-metrics">
-        ${adminMetric(String(total),"Записи",Math.min(100,total*13),total?"активные":"пока нет")}
-        ${adminMetric(String(today.length),"Сегодня",Math.min(100,today.length*20),today.length?"по плану":"свободно")}
-        ${adminMetric(String(clients),"Клиенты",Math.min(100,clients*12),clients?"в базе":"пока нет")}
-        ${adminMetric(String(attention),"Требует внимания",Math.min(100,attention*25),attention?"проверьте":"всё спокойно")}
+        ${adminMetric(metricTotal,"Записи",Math.min(100,total*13),adminBookingsLoaded?(total?"активные":"пока нет"):"загрузка")}
+        ${adminMetric(metricToday,"Сегодня",Math.min(100,today.length*20),adminBookingsLoaded?(today.length?"по плану":"свободно"):"загрузка")}
+        ${adminMetric(metricClients,"Клиенты",Math.min(100,clients*12),adminBookingsLoaded?(clients?"в базе":"пока нет"):"загрузка")}
+        ${adminMetric(metricAttention,"Требует внимания",Math.min(100,attention*25),adminBookingsLoaded?(attention?"проверьте":"всё спокойно"):"загрузка")}
       </div>
       <section class="admin-section"><div class="admin-section-title"><h2>Ближайшая запись</h2><button onclick="Beauty.go('admin-bookings')">Все записи</button></div>
         ${nearest?`<div class="admin-next" role="button" onclick="Beauty.openAdminBooking('${nearest.id}')"><div class="admin-time">${esc(nearest.time||"—")}</div><div><h3>${esc(nearest.serviceName||"Услуга")}</h3><p>${esc(nearest.clientName||"Клиент")}</p><p>${esc(nearest.date||"")}</p></div><span class="admin-status">${esc(bookingStatusRu(nearest.status||"confirmed"))}</span></div>`:`<div class="admin-empty">Ближайших записей пока нет. Как только клиент запишется, запись появится здесь автоматически.</div>`}
@@ -1166,6 +1184,8 @@
       });
       if(data.booking){
         adminBookings=adminBookings.map(b=>String(b.id)===String(id)?data.booking:b);
+        adminBookingsLoaded = true;
+        saveAdminBookingsCache();
       }
       S.adminBookingId=null;
       render();
@@ -1379,6 +1399,9 @@
           })
         });
         if(data.booking) serverBookings.unshift(data.booking);
+        if(["creator","admin"].includes(S.actualRole)){
+          loadAdminBookings(true);
+        }
         S.view="confirm";
         render();
         haptic("medium");
@@ -1390,11 +1413,20 @@
   };
 
   render();
-  (async()=>{
-    await loadIdentity();
-    if(isStaffMode()) await loadAdminBookings(true);
-    else await loadBookings(true);
-  })();
+
+  // Staff role is cached between launches, so start the real booking request
+  // immediately instead of waiting for /api/me first. Identity still verifies access.
+  const startupBookingLoad = isStaffMode()
+    ? loadAdminBookings(true)
+    : loadBookings(true);
+
+  Promise.allSettled([
+    loadIdentity(),
+    startupBookingLoad
+  ]).then(()=>{
+    // Covers first launch after receiving admin rights, when there was no staff cache yet.
+    if(isStaffMode() && !adminBookingsLoaded) loadAdminBookings(true);
+  });
 
   document.addEventListener("visibilitychange",()=>{
     if(document.visibilityState!=="visible")return;
@@ -1405,7 +1437,11 @@
   setInterval(()=>{
     if(document.visibilityState!=="visible")return;
     if(isStaffMode())loadAdminBookings(true);
-    else if(["booking","history"].includes(S.view))loadBookings(true);
+  },3000);
+
+  setInterval(()=>{
+    if(document.visibilityState!=="visible")return;
+    if(!isStaffMode() && ["booking","history"].includes(S.view))loadBookings(true);
   },15000);
 })();
   </script>
