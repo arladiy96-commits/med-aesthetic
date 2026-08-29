@@ -655,7 +655,7 @@
         if(!String(S.view).startsWith("admin-")) S.view="admin-home";
       }else{
         S.roleMode="client";
-        if(!["home","services","service","masters","datetime","confirm","booking","history","profile","bonus"].includes(S.view))
+        if(!["home","services","service","masters","datetime","booking-contact","confirm","booking","history","profile","bonus"].includes(S.view))
           S.view="home";
       }
 
@@ -874,19 +874,32 @@
       </div>
 
       <div class="summary">
-        <h3>Ваша запись</h3>
+        <h3>Ваш выбор</h3>
         <div class="summary-line"><span>Услуга</span><b>${esc(S.service?.name||"—")}</b></div>
         <div class="summary-line"><span>Специалист</span><b>Людмила</b></div>
         <div class="summary-line"><span>Дата</span><b>${esc(S.date||"—")} ${esc(S.time||"")}</b></div>
         <div class="summary-line"><span>Стоимость</span><b>${S.service?priceLabel(S.service):"—"}</b></div>
       </div>
 
-      <section class="booking-contact-card">
-        <div class="booking-contact-head">
-          <h3>Контактные данные</h3>
-          <p>Укажите имя, по которому к вам обращаться, и номер телефона.</p>
-        </div>
+      <div class="sticky-action">
+        <button class="btn-primary" ${!S.time?"disabled style='opacity:.45'":""} onclick="Beauty.openBookingContact()">ОК</button>
+      </div>
+    </main>${nav("booking")}`;
+  }
 
+  function bookingContactView(){
+    if(!S.master)S.master=masters[0];
+
+    return `<main class="page page-booking">${topbar({back:"Beauty.go('datetime')"})}
+      <h1 class="page-title">Контактные данные</h1>
+      <p class="page-sub">Оставьте имя и номер телефона для связи по вашей записи.</p>
+
+      <div class="summary">
+        <div class="summary-line"><span>Услуга</span><b>${esc(S.service?.name||"—")}</b></div>
+        <div class="summary-line"><span>Дата / время</span><b>${esc(S.date||"—")} · ${esc(S.time||"—")}</b></div>
+      </div>
+
+      <section class="booking-contact-card">
         <label class="booking-contact-field">
           <span>Ваше имя</span>
           <input
@@ -917,7 +930,9 @@
         <div class="booking-contact-note">Telegram также останется привязан к заявке — администратор сможет написать вам напрямую.</div>
       </section>
 
-      <div class="sticky-action"><button class="btn-primary" ${!S.time?"disabled style='opacity:.45'":""} onclick="Beauty.confirmBooking()">Отправить заявку</button></div>
+      <div class="sticky-action">
+        <button class="btn-primary" onclick="Beauty.confirmBooking()">Записаться</button>
+      </div>
     </main>${nav("booking")}`;
   }
 
@@ -1421,6 +1436,7 @@
     else if(S.view==="service")html=serviceDetail();
     else if(S.view==="masters")html=mastersView();
     else if(S.view==="datetime")html=datetimeView();
+    else if(S.view==="booking-contact")html=bookingContactView();
     else if(S.view==="confirm")html=confirmView();
     else if(S.view==="booking")html=bookingView();
     else if(S.view==="history")html=historyView();
@@ -1487,6 +1503,13 @@
     selectMaster(id){S.master=masters.find(x=>x.id===id);render();haptic()},
     pickDate(d){S.date=d;S.time=null;render();haptic()},
     pickTime(t){S.time=t;render();haptic()},
+    openBookingContact(){
+      if(!S.service||!S.date||!S.time)return;
+      S.view="booking-contact";
+      render();
+      window.scrollTo(0,0);
+      haptic();
+    },
     setBookingContact(kind,value){
       if(kind==="name")S.bookingName=String(value||"");
       if(kind==="phone")S.bookingPhone=String(value||"");
