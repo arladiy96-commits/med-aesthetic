@@ -3,6 +3,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from api import router as api_router
 from bot import (
@@ -25,6 +26,10 @@ app = FastAPI(
 app.include_router(api_router, prefix="/api")
 app.include_router(telegram_router)
 
+# Serve the modular CSS files used by index.html.
+CSS_DIR = BASE_DIR / "css"
+app.mount("/css", StaticFiles(directory=CSS_DIR), name="css")
+
 
 @app.on_event("startup")
 def startup() -> None:
@@ -35,7 +40,7 @@ def startup() -> None:
 @app.middleware("http")
 async def no_cache_for_app(request, call_next):
     response = await call_next(request)
-    if request.url.path == "/":
+    if request.url.path == "/" or request.url.path.startswith("/css/"):
         response.headers["Cache-Control"] = (
             "no-store, no-cache, must-revalidate, max-age=0"
         )
