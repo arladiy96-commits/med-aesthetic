@@ -1838,12 +1838,6 @@ html.app-ready #app{
           </section>
         </div>
       </div>
-      <div class="quick-grid">
-        <button class="quick" onclick="Beauty.openCategory('Косметология')"><div class="qicon">✦</div><span>Косметология</span></button>
-        <button class="quick" onclick="Beauty.openCategory('Пирсинг')"><div class="qicon">◇</div><span>Пирсинг</span></button>
-        <button class="quick" onclick="Beauty.openCategory('Аппаратные процедуры')"><div class="qicon">⌁</div><span>Аппаратные</span></button>
-        <button class="quick" onclick="Beauty.openCategory('Сертификаты')"><div class="qicon">♢</div><span>Сертификаты</span></button>
-      </div>
       <section class="section">
         <div class="section-head"><h2>Популярные услуги</h2><button onclick="Beauty.go('services')">Все</button></div>
         <div class="service-scroll">${[services[0],services[1],services[10],services[3]].map(serviceCard).join("")}</div>
