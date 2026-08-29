@@ -169,6 +169,15 @@ button:disabled.is-busy{
 }
 </style>
 
+
+<style id="services-scroll-return-fix">
+/* #app is the real vertical scroller. Prevent browser scroll anchoring
+   from overriding the exact position we restore after rebuilding Services. */
+#app.services-restoring-scroll{
+  overflow-anchor:none!important;
+}
+</style>
+
 </head>
 <body>
   <div id="app"></div>
@@ -927,11 +936,23 @@ button:disabled.is-busy{
     try{ tg?.HapticFeedback?.impactOccurred?.(kind); }catch(e){}
   }
 
+  function appScroller(){
+    return document.querySelector("#app");
+  }
+
   function currentPageScrollY(){
-    return Math.max(
-      0,
-      window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0
-    );
+    const app=appScroller();
+    return Math.max(0,Number(app?.scrollTop)||0);
+  }
+
+  function setAppScrollTop(top,behavior="auto"){
+    const app=appScroller();
+    if(!app)return;
+    app.scrollTo({
+      top:Math.max(0,Number(top)||0),
+      left:0,
+      behavior
+    });
   }
 
   function rememberServicesPosition(serviceId){
@@ -965,17 +986,16 @@ button:disabled.is-busy{
     const state=servicesReturnState;
     if(!state || S.view!=="services")return;
 
+    const app=appScroller();
+    app?.classList.add("services-restoring-scroll");
+
     const restore=()=>{
       if(S.view!=="services")return;
 
       applyServiceSearchValue(state.search);
 
       // First restore the exact document position.
-      window.scrollTo({
-        top:Math.max(0,Number(state.scrollY)||0),
-        left:0,
-        behavior:"auto"
-      });
+      setAppScrollTop(state.scrollY,"auto");
 
       // Then compensate for any tiny layout difference so the chosen card
       // returns to the same vertical place on the screen.
@@ -986,11 +1006,14 @@ button:disabled.is-busy{
       if(card && Number.isFinite(Number(state.cardTop))){
         const delta=card.getBoundingClientRect().top-Number(state.cardTop);
         if(Math.abs(delta)>1){
-          window.scrollBy({
-            top:delta,
-            left:0,
-            behavior:"auto"
-          });
+          const app=appScroller();
+          if(app){
+            app.scrollBy({
+              top:delta,
+              left:0,
+              behavior:"auto"
+            });
+          }
         }
       }
     };
@@ -1000,7 +1023,10 @@ button:disabled.is-busy{
     requestAnimationFrame(()=>{
       restore();
       setTimeout(restore,70);
-      setTimeout(restore,220);
+      setTimeout(()=>{
+        restore();
+        appScroller()?.classList.remove("services-restoring-scroll");
+      },260);
     });
   }
 
@@ -1013,7 +1039,7 @@ button:disabled.is-busy{
     if(servicesReturnState){
       restoreServicesPosition();
     }else{
-      window.scrollTo({top:0,left:0,behavior:"auto"});
+      setAppScrollTop(0,"auto");
     }
 
     haptic();
@@ -1028,7 +1054,7 @@ button:disabled.is-busy{
     S.view=view;
     S.bookingConfirmed=false;
     S.adminBookingId=null;
-    window.scrollTo({top:0,behavior:"smooth"});
+    setAppScrollTop(0,"auto");
     render();
 
     // Live booking data is requested only on screens that display it.
@@ -2547,7 +2573,7 @@ button:disabled.is-busy{
       S.view=role==="client"?"home":"admin-home";
       render();
       if(role==="client")loadBookings(true);else loadAdminBookings(true);
-      window.scrollTo(0,0);
+      setAppScrollTop(0,"auto");
       haptic("medium");
     },
     setAdminFilter(v){S.adminFilter=v;render();haptic()},
@@ -2556,7 +2582,7 @@ button:disabled.is-busy{
       S.category=c;
       S.view="services";
       render();
-      document.querySelector("#app")?.scrollTo?.({top:0,behavior:"smooth"});
+      setAppScrollTop(0,"auto");
       haptic();
     },
     setCategory(c){S.category=c;render()},
@@ -2590,7 +2616,7 @@ button:disabled.is-busy{
       S.time=null;
       S.view="service";
       render();
-      window.scrollTo(0,0);
+      setAppScrollTop(0,"auto");
       haptic();
     },
     startBooking(id){
@@ -2620,7 +2646,7 @@ button:disabled.is-busy{
       if(!S.service||!S.date||!S.time)return;
       S.view="booking-contact";
       render();
-      window.scrollTo(0,0);
+      setAppScrollTop(0,"auto");
       haptic();
     },
     setBookingContact(kind,value){
