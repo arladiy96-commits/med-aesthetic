@@ -117,7 +117,7 @@ def _new_booking_admin_text(
 ) -> str:
     client = _client_label(first_name, username, telegram_user_id)
     return (
-        "🆕 Новая запись MED AESTHETIC\n\n"
+        "🆕 Новая заявка на запись MED AESTHETIC\n\n"
         f"Клиент: {client}\n"
         f"Услуга: {service_name}\n"
         f"Мастер: {master_name or 'Людмила'}\n"
@@ -127,31 +127,19 @@ def _new_booking_admin_text(
     )
 
 
-def _booking_created_client_text(
-    *,
-    service_name: str,
-    master_name: str | None,
-    booking_date: date,
-    booking_time: time,
-) -> str:
-    return (
-        "✅ Запись создана\n\n"
-        f"{service_name}\n"
-        f"Мастер: {master_name or 'Людмила'}\n"
-        f"{_date_ru(booking_date)} в {booking_time.strftime('%H:%M')}\n\n"
-        "Если статус записи изменится, я сообщу здесь."
-    )
-
-
 def _status_client_text(row: dict) -> str:
     status = str(row["status"])
-    title = {
-        "pending": "⏳ Запись ожидает подтверждения",
-        "confirmed": "✅ Запись подтверждена",
-        "completed": "✨ Визит завершён",
-        "cancelled": "❌ Запись отменена",
-        "no_show": "ℹ️ Визит отмечен как несостоявшийся",
-    }.get(status, "ℹ️ Статус записи изменён")
+    previous_status = str(row.get("previous_status") or "")
+    if status == "cancelled" and previous_status == "pending":
+        title = "❌ Заявка на запись не подтверждена"
+    else:
+        title = {
+            "pending": "⏳ Запись ожидает подтверждения",
+            "confirmed": "✅ Ваша запись подтверждена",
+            "completed": "✨ Визит завершён",
+            "cancelled": "❌ Запись отменена",
+            "no_show": "ℹ️ Визит отмечен как несостоявшийся",
+        }.get(status, "ℹ️ Статус записи изменён")
 
     return (
         f"{title}\n\n"
@@ -355,14 +343,20 @@ def update_admin_booking(
     with db() as conn:
         row = conn.execute(
             """
+            WITH previous AS (
+                SELECT status AS previous_status
+                FROM beauty_bookings
+                WHERE id=%s
+            )
             UPDATE beauty_bookings
             SET status=%s, updated_at=NOW()
             WHERE id=%s
             RETURNING id, telegram_user_id, first_name, username,
                       service_id, service_name, master_id, master_name,
-                      booking_date, booking_time, status, created_at
+                      booking_date, booking_time, status, created_at,
+                      (SELECT previous_status FROM previous) AS previous_status
             """,
-            (payload.status, booking_id),
+            (booking_id, payload.status, booking_id),
         ).fetchone()
 
     if not row:
@@ -403,7 +397,7 @@ def create_booking(
                     master_id, master_name,
                     booking_date, booking_time, status
                 )
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,'confirmed')
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,'pending')
                 RETURNING id, created_at
                 """,
                 (
@@ -441,17 +435,6 @@ def create_booking(
             ),
         )
 
-    background_tasks.add_task(
-        send_notification,
-        uid,
-        _booking_created_client_text(
-            service_name=payload.service_name,
-            master_name=payload.master_name,
-            booking_date=payload.booking_date,
-            booking_time=payload.booking_time,
-        ),
-    )
-
     return {
         "ok": True,
         "booking": {
@@ -462,7 +445,7 @@ def create_booking(
             "masterName": payload.master_name,
             "date": payload.booking_date.isoformat(),
             "time": payload.booking_time.strftime("%H:%M"),
-            "status": "confirmed",
+            "status": "pending",
             "createdAt": row["created_at"].isoformat(),
         },
     }

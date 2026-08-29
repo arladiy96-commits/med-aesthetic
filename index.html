@@ -833,8 +833,8 @@
 
   function confirmView(){
     return `<main class="page page-booking">${topbar()}
-      <div class="confirm-wrap"><div class="confirm-icon">✓</div><h1>Запись подтверждена</h1>
-      <p>Детали сохранены в разделе «Мои записи».<br>Напоминание о визите появится позже после подключения backend.</p></div>
+      <div class="confirm-wrap"><div class="confirm-icon">⌛</div><h1>Заявка отправлена</h1>
+      <p>Запись ожидает подтверждения администратора.<br>После решения вам придёт уведомление в Telegram.</p></div>
       <div class="summary">
         <div class="summary-line"><span>Услуга</span><b>${esc(S.service.name)}</b></div>
         <div class="summary-line"><span>Мастер</span><b>${esc(S.master.name)}</b></div>
@@ -859,7 +859,7 @@
     const serviceName=b.serviceName||s.name;
     const masterName=b.masterName||m.name;
     const status=String(b.status||"confirmed");
-    const statusText=({pending:"Ожидает",confirmed:"Предстоит",completed:"Завершено",cancelled:"Отменено",no_show:"Не состоялась"})[status] || "Предстоит";
+    const statusText=({pending:"Ожидает подтверждения",confirmed:"Подтверждена",completed:"Завершено",cancelled:"Отменено",no_show:"Не состоялась"})[status] || "Предстоит";
     const doneClass=["completed","cancelled","no_show"].includes(status) || done;
     return `<button class="booking-card" onclick="Beauty.bookingInfo('${b.id}')"><img src="${s.img}" alt=""><div><h3>${esc(serviceName)}</h3><p>${esc(b.date)} · ${esc(b.time)}</p><p>Мастер: ${esc(masterName)} · ${priceLabel(s)}</p></div><span class="status-pill ${doneClass?"done":""}">${esc(statusText)}</span></button>`;
   }
@@ -1137,10 +1137,11 @@
         </div>
         <div class="admin-booking-actions">
           ${b.clientUsername?`<button class="booking-action contact" onclick="Beauty.messageBookingClient('${b.id}')">Написать клиенту в Telegram</button>`:""}
-          ${status!=="confirmed"?`<button class="booking-action confirm" onclick="Beauty.updateAdminBookingStatus('${b.id}','confirmed')">Подтвердить запись</button>`:""}
-          ${status!=="completed"?`<button class="booking-action done" onclick="Beauty.updateAdminBookingStatus('${b.id}','completed')">Отметить как завершённую</button>`:""}
-          ${status!=="no_show"?`<button class="booking-action neutral" onclick="Beauty.updateAdminBookingStatus('${b.id}','no_show')">Клиент не пришёл</button>`:""}
-          ${status!=="cancelled"?`<button class="booking-action danger" onclick="Beauty.updateAdminBookingStatus('${b.id}','cancelled')">Отменить запись</button>`:""}
+          ${status==="pending"?`<button class="booking-action confirm" onclick="Beauty.updateAdminBookingStatus('${b.id}','confirmed')">Подтвердить запись</button>`:""}
+          ${status==="pending"?`<button class="booking-action danger" onclick="Beauty.updateAdminBookingStatus('${b.id}','cancelled')">Отклонить заявку</button>`:""}
+          ${status==="confirmed"?`<button class="booking-action done" onclick="Beauty.updateAdminBookingStatus('${b.id}','completed')">Отметить как завершённую</button>`:""}
+          ${status==="confirmed"?`<button class="booking-action neutral" onclick="Beauty.updateAdminBookingStatus('${b.id}','no_show')">Клиент не пришёл</button>`:""}
+          ${status==="confirmed"?`<button class="booking-action danger" onclick="Beauty.updateAdminBookingStatus('${b.id}','cancelled')">Отменить запись</button>`:""}
         </div>
       </section>
     </div>`;
