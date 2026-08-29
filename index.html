@@ -8,6 +8,11 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>MED AESTHETIC v24</title>
+  <!-- Priority service thumbnails: start with the first screen, before API/JS rendering. -->
+  <link rel="preload" as="image" href="/assets/services/service-1-thumb.webp?v=0601e3c57a32" fetchpriority="high">
+  <link rel="preload" as="image" href="/assets/services/service-2-thumb.webp?v=9f86c2fd6a61" fetchpriority="high">
+  <link rel="preload" as="image" href="/assets/services/service-3-thumb.webp?v=ddf7f21c8f0d" fetchpriority="high">
+  <link rel="preload" as="image" href="/assets/services/service-4-thumb.webp?v=9368267b5483" fetchpriority="high">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
   /* v16: let Telegram open the Mini App naturally from the bottom first.
@@ -291,6 +296,51 @@
   let services = [];
   let servicesLoaded = false;
 
+  const HOME_PRIORITY_SERVICE_IDS = new Set([1,2,3,4]);
+  const warmedServiceThumbUrls = new Set();
+  const serviceThumbWarmers = [];
+
+  function warmRemainingServiceThumbs(list){
+    const queue=(Array.isArray(list)?list:[])
+      .filter(s=>s?.img && !HOME_PRIORITY_SERVICE_IDS.has(Number(s.id)))
+      .map(s=>String(s.img))
+      .filter(url=>{
+        if(warmedServiceThumbUrls.has(url))return false;
+        warmedServiceThumbUrls.add(url);
+        return true;
+      });
+
+    let cursor=0;
+    let active=0;
+    const concurrency=3;
+
+    const pump=()=>{
+      while(active<concurrency && cursor<queue.length){
+        const url=queue[cursor++];
+        active++;
+
+        const img=new Image();
+        img.decoding="async";
+        try{img.fetchPriority="low"}catch(e){}
+
+        const done=()=>{
+          active--;
+          pump();
+        };
+
+        img.onload=done;
+        img.onerror=done;
+        img.src=url;
+
+        // Keep references while requests are in flight.
+        serviceThumbWarmers.push(img);
+      }
+    };
+
+    // Give the four visible cards a tiny head start, then fill the cache below.
+    setTimeout(pump,80);
+  }
+
 
   const fmt = n => new Intl.NumberFormat("ru-RU").format(n) + " ₸";
   const priceLabel = s => Number.isFinite(Number(s?.price)) ? fmt(Number(s.price)) : "Цена по записи";
@@ -388,6 +438,10 @@
       const changed=signature!==lastServicesSignature;
 
       servicesLoaded=true;
+
+      if(firstLoad){
+        warmRemainingServiceThumbs(next);
+      }
 
       if(changed || firstLoad){
         services=next;
@@ -814,7 +868,7 @@
 
   function serviceCard(s){
     return `<button class="service-card" onclick="Beauty.openService(${s.id})">
-      <img src="${s.img}" alt="${esc(s.name)}" loading="lazy" decoding="async">
+      <img src="${s.img}" alt="${esc(s.name)}" loading="eager" fetchpriority="high" decoding="async">
       <div class="body"><b>${esc(s.name)}</b><div class="meta"><span class="price">${priceLabel(s)}</span><span>${durationLabel(s)}</span></div></div>
     </button>`;
   }
@@ -891,7 +945,7 @@
   function serviceFeaturedCard(s){
     if(!s)return "";
     return `<article class="lux-service-feature" data-service-search="${esc((s.name+" "+s.cat+" "+(s.desc||"")).toLowerCase())}" onclick="Beauty.openService(${s.id})">
-      <img class="lux-feature-image" src="${esc(s.img||"")}" alt="${esc(s.name)}" decoding="async">
+      <img class="lux-feature-image" src="${esc(s.img||"")}" alt="${esc(s.name)}" loading="eager" fetchpriority="high" decoding="async">
       <div class="lux-feature-shade"></div>
       <div class="lux-feature-copy">
         <h2>${esc(s.name)}</h2>
@@ -1992,9 +2046,7 @@
   const startupDataLoad =
     startupRole==="creator" || startupRole==="admin"
       ? loadAdminBookings(true)
-      : startupRole==="client"
-        ? loadServices(true)
-        : Promise.resolve();
+      : loadServices(true);
 
   Promise.allSettled([
     loadIdentity(),
