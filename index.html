@@ -80,6 +80,16 @@
   visibility:hidden!important;
   pointer-events:none!important;
   transition:none!important;
+  animation:none!important;
+  transform:none!important;
+}
+
+/* The booking action itself never animates its geometry.
+   It is shown only after the keyboard viewport is fully stable. */
+.page-booking .sticky-action{
+  transition:none!important;
+  animation:none!important;
+  will-change:auto!important;
 }
 
 .booking-keyboard-open .page-booking{
@@ -1963,6 +1973,10 @@
 
   let bookingKeyboardTarget=null;
   let bookingKeyboardBlurTimer=0;
+  let bookingKeyboardReleaseTimer=0;
+  let bookingKeyboardReleaseStartedAt=0;
+  let bookingKeyboardLastViewportHeight=0;
+  let bookingKeyboardStableTicks=0;
 
   function formatKzPhone(raw){
     let digits=String(raw||"").replace(/\D/g,"");
@@ -1990,8 +2004,69 @@
   }
 
   function setBookingKeyboardMode(active){
-    document.documentElement.classList.toggle("booking-keyboard-open",Boolean(active));
-    document.body?.classList.toggle("booking-keyboard-open",Boolean(active));
+    if(active){
+      clearTimeout(bookingKeyboardReleaseTimer);
+      bookingKeyboardReleaseStartedAt=0;
+      bookingKeyboardStableTicks=0;
+      document.documentElement.classList.add("booking-keyboard-open");
+      document.body?.classList.add("booking-keyboard-open");
+      return;
+    }
+
+    document.documentElement.classList.remove("booking-keyboard-open");
+    document.body?.classList.remove("booking-keyboard-open");
+  }
+
+  function releaseBookingKeyboardModeWhenStable(){
+    clearTimeout(bookingKeyboardReleaseTimer);
+
+    if(!document.documentElement.classList.contains("booking-keyboard-open")){
+      return;
+    }
+
+    bookingKeyboardReleaseStartedAt=performance.now();
+    bookingKeyboardLastViewportHeight=
+      Math.round(window.visualViewport?.height || window.innerHeight);
+    bookingKeyboardStableTicks=0;
+
+    const check=()=>{
+      const active=document.activeElement;
+      const stillEditing=
+        S.view==="booking-contact" &&
+        active &&
+        (active.id==="bookingClientName" || active.id==="bookingClientPhone");
+
+      // User focused another field while the first keyboard was closing.
+      if(stillEditing){
+        bookingKeyboardReleaseStartedAt=0;
+        bookingKeyboardStableTicks=0;
+        return;
+      }
+
+      const currentHeight=
+        Math.round(window.visualViewport?.height || window.innerHeight);
+
+      if(Math.abs(currentHeight-bookingKeyboardLastViewportHeight)<=1){
+        bookingKeyboardStableTicks++;
+      }else{
+        bookingKeyboardStableTicks=0;
+        bookingKeyboardLastViewportHeight=currentHeight;
+      }
+
+      const elapsed=performance.now()-bookingKeyboardReleaseStartedAt;
+
+      // Three stable checks (~180ms) means the iOS/Telegram viewport animation
+      // has completed. 650ms is a safety ceiling for unusual devices.
+      if(bookingKeyboardStableTicks>=3 || elapsed>=650){
+        bookingKeyboardTarget=null;
+        setBookingKeyboardMode(false);
+        return;
+      }
+
+      bookingKeyboardReleaseTimer=setTimeout(check,60);
+    };
+
+    bookingKeyboardReleaseTimer=setTimeout(check,60);
   }
 
   function ensureBookingFieldVisible(field=bookingKeyboardTarget){
@@ -2019,6 +2094,7 @@
 
   function bookingFieldFocus(field){
     clearTimeout(bookingKeyboardBlurTimer);
+    clearTimeout(bookingKeyboardReleaseTimer);
     bookingKeyboardTarget=field;
     setBookingKeyboardMode(true);
 
@@ -2037,10 +2113,11 @@
         (active.id==="bookingClientName" || active.id==="bookingClientPhone");
 
       if(!editing){
-        bookingKeyboardTarget=null;
-        setBookingKeyboardMode(false);
+        // Keep fixed bottom UI hidden until visualViewport has COMPLETELY
+        // returned to its final height. This prevents the visible action jump.
+        releaseBookingKeyboardModeWhenStable();
       }
-    },90);
+    },70);
   }
 
   function focusBookingPhone(input){
@@ -2079,10 +2156,12 @@
 
     if(active && (active.id==="bookingClientName" || active.id==="bookingClientPhone")){
       active.blur();
+      // blur handler keeps the fixed controls hidden until the keyboard
+      // closing animation is completely finished.
+      return;
     }
 
-    bookingKeyboardTarget=null;
-    setBookingKeyboardMode(false);
+    releaseBookingKeyboardModeWhenStable();
   }
 
   // Tap anywhere outside the active input = close keyboard.
