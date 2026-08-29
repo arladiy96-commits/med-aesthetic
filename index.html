@@ -1209,8 +1209,7 @@ html.app-ready #app{
   position:relative;
   min-height:0;
   height:auto;
-  display:grid;
-  grid-template-columns:56% 44%;
+  display:block;
   overflow:hidden;
   border:1px solid rgba(228,183,93,.26);
   border-radius:22px;
@@ -1229,6 +1228,7 @@ html.app-ready #app{
 .owner-copy{
   position:relative;
   z-index:3;
+  width:56%;
   min-width:0;
   padding:16px 8px 13px 16px;
   display:flex;
@@ -1292,8 +1292,12 @@ html.app-ready #app{
 }
 .owner-more:active{transform:translateY(1px) scale(.99)}
 .owner-photo-wrap{
-  position:relative;
+  position:absolute;
   z-index:1;
+  top:0;
+  right:0;
+  bottom:0;
+  width:44%;
   min-width:0;
   overflow:hidden;
 }
@@ -1315,8 +1319,9 @@ html.app-ready #app{
   filter:saturate(.88) contrast(1.04) brightness(.91);
 }
 @media(max-width:360px){
-  .owner-card{min-height:0;height:auto;grid-template-columns:56% 44%}
-  .owner-copy{padding:14px 6px 13px 14px}
+  .owner-card{min-height:0;height:auto}
+  .owner-copy{width:56%;padding:14px 6px 13px 14px}
+  .owner-photo-wrap{width:44%}
   .owner-name{font-size:26px}
   .owner-role{font-size:8.2px}
   .owner-text{font-size:8px;line-height:1.45;margin-top:9px}
