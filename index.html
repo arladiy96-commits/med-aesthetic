@@ -1177,6 +1177,24 @@ html.app-ready #app{
   }
 }
 
+
+
+/* v35 — bottom client navigation stays fixed in exactly the same viewport position */
+html.app-ready #app{
+  transform:none!important;
+  will-change:auto!important;
+}
+.bottom-nav{
+  position:fixed!important;
+  z-index:60!important;
+  left:50%!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:0!important;
+  width:min(620px,100vw)!important;
+  margin:0!important;
+  transform:translate3d(-50%,0,0)!important;
+}
 </style>
 </head>
 <body>
