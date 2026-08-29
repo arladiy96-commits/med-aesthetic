@@ -452,6 +452,7 @@ button:disabled.is-busy{
   })();
   let adminBookingsLoaded = adminBookings.length > 0;
   let adminServices = [];
+  let servicesReturnState = null;
   let lastServicesSignature = "";
   let lastBookingsSignature = "";
   let lastAdminBookingsSignature = dataSignature(adminBookings);
@@ -926,7 +927,104 @@ button:disabled.is-busy{
     try{ tg?.HapticFeedback?.impactOccurred?.(kind); }catch(e){}
   }
 
+  function currentPageScrollY(){
+    return Math.max(
+      0,
+      window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0
+    );
+  }
+
+  function rememberServicesPosition(serviceId){
+    if(S.view!=="services")return;
+
+    const card=document.querySelector(
+      `[data-service-id="${CSS.escape(String(serviceId))}"]`
+    );
+
+    servicesReturnState={
+      serviceId:String(serviceId),
+      scrollY:currentPageScrollY(),
+      cardTop:card ? card.getBoundingClientRect().top : null,
+      search:String(document.querySelector("#serviceSearch")?.value||""),
+      category:S.category
+    };
+  }
+
+  function applyServiceSearchValue(query){
+    const q=String(query||"").trim().toLowerCase();
+    const input=document.querySelector("#serviceSearch");
+    if(input)input.value=query||"";
+
+    document.querySelectorAll("#serviceList [data-service-search]").forEach(el=>{
+      el.hidden=Boolean(q) &&
+        !String(el.dataset.serviceSearch||"").includes(q);
+    });
+  }
+
+  function restoreServicesPosition(){
+    const state=servicesReturnState;
+    if(!state || S.view!=="services")return;
+
+    const restore=()=>{
+      if(S.view!=="services")return;
+
+      applyServiceSearchValue(state.search);
+
+      // First restore the exact document position.
+      window.scrollTo({
+        top:Math.max(0,Number(state.scrollY)||0),
+        left:0,
+        behavior:"auto"
+      });
+
+      // Then compensate for any tiny layout difference so the chosen card
+      // returns to the same vertical place on the screen.
+      const card=document.querySelector(
+        `[data-service-id="${CSS.escape(String(state.serviceId))}"]`
+      );
+
+      if(card && Number.isFinite(Number(state.cardTop))){
+        const delta=card.getBoundingClientRect().top-Number(state.cardTop);
+        if(Math.abs(delta)>1){
+          window.scrollBy({
+            top:delta,
+            left:0,
+            behavior:"auto"
+          });
+        }
+      }
+    };
+
+    // Immediate next paint + two small corrections cover delayed image decode
+    // without producing a visible animated scroll.
+    requestAnimationFrame(()=>{
+      restore();
+      setTimeout(restore,70);
+      setTimeout(restore,220);
+    });
+  }
+
+  function backToServices(){
+    S.view="services";
+    S.bookingConfirmed=false;
+    S.adminBookingId=null;
+    render();
+
+    if(servicesReturnState){
+      restoreServicesPosition();
+    }else{
+      window.scrollTo({top:0,left:0,behavior:"auto"});
+    }
+
+    haptic();
+  }
+
   function go(view){
+    if(view==="services" && S.view==="service" && servicesReturnState){
+      backToServices();
+      return;
+    }
+
     S.view=view;
     S.bookingConfirmed=false;
     S.adminBookingId=null;
@@ -1056,7 +1154,7 @@ button:disabled.is-busy{
 
   function serviceFeaturedCard(s){
     if(!s)return "";
-    return `<article class="lux-service-feature" data-service-search="${esc((s.name+" "+s.cat+" "+(s.desc||"")).toLowerCase())}" onclick="Beauty.openService(${s.id})">
+    return `<article class="lux-service-feature" data-service-id="${s.id}" data-service-search="${esc((s.name+" "+s.cat+" "+(s.desc||"")).toLowerCase())}" onclick="Beauty.openService(${s.id})">
       <img class="lux-feature-image" src="${esc(s.img||"")}" alt="${esc(s.name)}" loading="eager" fetchpriority="high" decoding="async">
       <div class="lux-feature-shade"></div>
       <div class="lux-feature-copy">
@@ -1078,7 +1176,7 @@ button:disabled.is-busy{
   }
 
   function serviceGridCard(s){
-    return `<button class="lux-service-card" data-service-search="${esc((s.name+" "+s.cat+" "+(s.desc||"")).toLowerCase())}" onclick="Beauty.openService(${s.id})">
+    return `<button class="lux-service-card" data-service-id="${s.id}" data-service-search="${esc((s.name+" "+s.cat+" "+(s.desc||"")).toLowerCase())}" onclick="Beauty.openService(${s.id})">
       <div class="lux-card-photo">
         <img src="${esc(s.img||"")}" alt="${esc(s.name)}" loading="lazy" decoding="async">
         <span class="lux-card-icon">${serviceCatalogIcon(s.cat)}</span>
@@ -1150,7 +1248,7 @@ button:disabled.is-busy{
     const s=S.service || services[0];
     return `<main class="page page-services service-detail-page">
       <div class="detail-cover"><img src="${s.fullImg||s.img}" alt="" fetchpriority="high" decoding="async">
-        <button class="icon-btn back-float" onclick="Beauty.go('services')">‹</button>
+        <button class="icon-btn back-float" onclick="Beauty.backToServices()">‹</button>
         <button class="icon-btn heart-float gold" onclick="Beauty.toast('Добавлено в избранное')">♡</button>
       </div>
       <div class="detail-box">
@@ -2468,8 +2566,17 @@ button:disabled.is-busy{
         el.hidden=Boolean(q) && !String(el.dataset.serviceSearch||"").includes(q);
       });
     },
+    backToServices(){backToServices()},
     openService(id){
       const found=services.find(x=>Number(x.id)===Number(id));
+
+      if(S.view==="services"){
+        rememberServicesPosition(id);
+      }else if(S.view==="home"){
+        // Opening from Home should keep the existing behavior: Back -> top of Services.
+        servicesReturnState=null;
+      }
+
       if(!found){
         S.view="services";
         render();
