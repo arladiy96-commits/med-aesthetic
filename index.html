@@ -74,26 +74,24 @@
 
 <style id="booking-keyboard-kz-fix">
 /* While the iOS keyboard is open, fixed bottom controls must not cover inputs. */
+/* Remove the ENTIRE fixed bottom UI from rendering while iOS changes
+   visualViewport. display:none means there is no fixed layer available to jump. */
 .booking-keyboard-open .page-booking .sticky-action,
 .booking-keyboard-open .bottom-nav{
-  opacity:0!important;
-  visibility:hidden!important;
-  pointer-events:none!important;
-  transition:none!important;
-  animation:none!important;
-  transform:none!important;
+  display:none!important;
 }
 
-/* The booking action itself never animates its geometry.
-   It is shown only after the keyboard viewport is fully stable. */
-.page-booking .sticky-action{
+/* Bottom fixed UI never animates its geometry. */
+.page-booking .sticky-action,
+.bottom-nav{
   transition:none!important;
   animation:none!important;
   will-change:auto!important;
 }
 
+/* Keep page geometry constant. Do not change padding when keyboard opens. */
 .booking-keyboard-open .page-booking{
-  padding-bottom:34px!important;
+  padding-bottom:calc(190px + env(safe-area-inset-bottom))!important;
 }
 
 .page-booking .booking-contact-field input{
@@ -1974,9 +1972,7 @@
   let bookingKeyboardTarget=null;
   let bookingKeyboardBlurTimer=0;
   let bookingKeyboardReleaseTimer=0;
-  let bookingKeyboardReleaseStartedAt=0;
-  let bookingKeyboardLastViewportHeight=0;
-  let bookingKeyboardStableTicks=0;
+  let bookingKeyboardFullViewportHeight=0;
 
   function formatKzPhone(raw){
     let digits=String(raw||"").replace(/\D/g,"");
@@ -2003,11 +1999,27 @@
     return /^\+7 \d{3} \d{3} \d{2} \d{2}$/.test(String(value||""));
   }
 
+  function currentVisualViewportHeight(){
+    return Math.round(window.visualViewport?.height || window.innerHeight);
+  }
+
+  function rememberFullBookingViewport(){
+    const h=currentVisualViewportHeight();
+    // Only increase the remembered normal viewport. The software keyboard
+    // makes visualViewport smaller, never larger.
+    if(h>bookingKeyboardFullViewportHeight){
+      bookingKeyboardFullViewportHeight=h;
+    }
+  }
+
   function setBookingKeyboardMode(active){
     if(active){
       clearTimeout(bookingKeyboardReleaseTimer);
-      bookingKeyboardReleaseStartedAt=0;
-      bookingKeyboardStableTicks=0;
+
+      // Focus fires before iOS has finished shrinking visualViewport, so this
+      // is the reliable "keyboard closed" height we need to return to later.
+      rememberFullBookingViewport();
+
       document.documentElement.classList.add("booking-keyboard-open");
       document.body?.classList.add("booking-keyboard-open");
       return;
@@ -2017,17 +2029,15 @@
     document.body?.classList.remove("booking-keyboard-open");
   }
 
-  function releaseBookingKeyboardModeWhenStable(){
+  function releaseBookingKeyboardModeWhenClosed(){
     clearTimeout(bookingKeyboardReleaseTimer);
 
     if(!document.documentElement.classList.contains("booking-keyboard-open")){
       return;
     }
 
-    bookingKeyboardReleaseStartedAt=performance.now();
-    bookingKeyboardLastViewportHeight=
-      Math.round(window.visualViewport?.height || window.innerHeight);
-    bookingKeyboardStableTicks=0;
+    const targetHeight=bookingKeyboardFullViewportHeight || window.innerHeight;
+    const started=performance.now();
 
     const check=()=>{
       const active=document.activeElement;
@@ -2036,37 +2046,38 @@
         active &&
         (active.id==="bookingClientName" || active.id==="bookingClientPhone");
 
-      // User focused another field while the first keyboard was closing.
-      if(stillEditing){
-        bookingKeyboardReleaseStartedAt=0;
-        bookingKeyboardStableTicks=0;
+      if(stillEditing)return;
+
+      const vv=window.visualViewport;
+      const current=currentVisualViewportHeight();
+      const offsetTop=Math.round(vv?.offsetTop||0);
+
+      // Do not restore fixed UI merely because the keyboard animation paused.
+      // Restore only when the visual viewport has ACTUALLY returned to its
+      // original full-height state.
+      const backToFullHeight=current >= targetHeight-8;
+      const backToTop=Math.abs(offsetTop)<=2;
+
+      if(backToFullHeight && backToTop){
+        bookingKeyboardTarget=null;
+        rememberFullBookingViewport();
+        setBookingKeyboardMode(false);
         return;
       }
 
-      const currentHeight=
-        Math.round(window.visualViewport?.height || window.innerHeight);
-
-      if(Math.abs(currentHeight-bookingKeyboardLastViewportHeight)<=1){
-        bookingKeyboardStableTicks++;
-      }else{
-        bookingKeyboardStableTicks=0;
-        bookingKeyboardLastViewportHeight=currentHeight;
-      }
-
-      const elapsed=performance.now()-bookingKeyboardReleaseStartedAt;
-
-      // Three stable checks (~180ms) means the iOS/Telegram viewport animation
-      // has completed. 650ms is a safety ceiling for unusual devices.
-      if(bookingKeyboardStableTicks>=3 || elapsed>=650){
+      // iOS keyboard close is normally ~250-450ms. Keep the bottom controls
+      // absent for a generous 1.5s safety window rather than showing them
+      // during any viewport movement.
+      if(performance.now()-started>=1500){
         bookingKeyboardTarget=null;
         setBookingKeyboardMode(false);
         return;
       }
 
-      bookingKeyboardReleaseTimer=setTimeout(check,60);
+      bookingKeyboardReleaseTimer=setTimeout(check,40);
     };
 
-    bookingKeyboardReleaseTimer=setTimeout(check,60);
+    bookingKeyboardReleaseTimer=setTimeout(check,40);
   }
 
   function ensureBookingFieldVisible(field=bookingKeyboardTarget){
@@ -2096,6 +2107,7 @@
     clearTimeout(bookingKeyboardBlurTimer);
     clearTimeout(bookingKeyboardReleaseTimer);
     bookingKeyboardTarget=field;
+    rememberFullBookingViewport();
     setBookingKeyboardMode(true);
 
     requestAnimationFrame(()=>ensureBookingFieldVisible(field));
@@ -2115,7 +2127,7 @@
       if(!editing){
         // Keep fixed bottom UI hidden until visualViewport has COMPLETELY
         // returned to its final height. This prevents the visible action jump.
-        releaseBookingKeyboardModeWhenStable();
+        releaseBookingKeyboardModeWhenClosed();
       }
     },70);
   }
@@ -2161,7 +2173,7 @@
       return;
     }
 
-    releaseBookingKeyboardModeWhenStable();
+    releaseBookingKeyboardModeWhenClosed();
   }
 
   // Tap anywhere outside the active input = close keyboard.
@@ -2179,10 +2191,18 @@
     dismissBookingKeyboard();
   },true);
 
+  // Capture the keyboard-closed viewport once the Mini App has settled.
+  requestAnimationFrame(()=>requestAnimationFrame(rememberFullBookingViewport));
+  setTimeout(rememberFullBookingViewport,350);
+
   if(window.visualViewport){
     window.visualViewport.addEventListener("resize",()=>{
       if(document.documentElement.classList.contains("booking-keyboard-open")){
         requestAnimationFrame(()=>ensureBookingFieldVisible());
+      }else{
+        // Telegram fullscreen/browser chrome changes can legitimately increase
+        // the normal viewport height; keep that new baseline.
+        rememberFullBookingViewport();
       }
     },{passive:true});
   }
