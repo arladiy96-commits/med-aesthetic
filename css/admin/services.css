@@ -1,0 +1,123 @@
+
+/* MED AESTHETIC — admin services editor */
+.admin-services-page{padding-bottom:110px}
+.admin-services-summary{
+  display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:0 14px 14px
+}
+.admin-services-summary>div{
+  min-height:68px;padding:12px 13px;border:1px solid rgba(255,255,255,.07);
+  border-radius:17px;background:linear-gradient(180deg,#12101a,#0c0911);
+  box-shadow:0 14px 34px rgba(0,0,0,.22)
+}
+.admin-services-summary strong{display:block;font-size:20px;color:#f4d48e;line-height:1}
+.admin-services-summary span{display:block;margin-top:7px;font-size:8px;color:#7f7887}
+.admin-services-list{display:grid;gap:11px;padding:0 14px 18px}
+.admin-service-card{
+  overflow:hidden;border:1px solid rgba(255,255,255,.07);border-radius:19px;
+  background:linear-gradient(180deg,#12101a,#0b0910);
+  box-shadow:0 15px 34px rgba(0,0,0,.24)
+}
+.admin-service-card.disabled{opacity:.72}
+.admin-service-photo{position:relative;height:126px;background:#0a0810;overflow:hidden}
+.admin-service-photo img{width:100%;height:100%;object-fit:cover}
+.admin-service-no-photo{height:100%;display:grid;place-items:center;color:#6f6878;font-size:26px}
+.admin-service-state{
+  position:absolute;right:9px;top:9px;padding:5px 8px;border-radius:999px;
+  font-size:7px;font-weight:800;backdrop-filter:blur(12px)
+}
+.admin-service-state.on{background:rgba(20,91,60,.72);color:#8ff0b2;border:1px solid rgba(112,216,154,.26)}
+.admin-service-state.off{background:rgba(55,48,62,.80);color:#aaa1b2;border:1px solid rgba(255,255,255,.08)}
+.admin-service-body{padding:12px}
+.admin-service-body>small{font-size:7.5px;color:#9c72ff;font-weight:750}
+.admin-service-body h3{margin:4px 0 6px;font-size:13px;color:#f7f2ff}
+.admin-service-body p{
+  margin:0;color:#8f8997;font-size:8.3px;line-height:1.45;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden
+}
+.admin-service-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.admin-service-meta span{
+  padding:5px 7px;border-radius:9px;background:#0a0810;border:1px solid rgba(255,255,255,.06);
+  color:#bbb2c3;font-size:7.5px
+}
+.admin-service-buttons{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}
+.admin-service-buttons button{
+  min-height:36px;border-radius:11px;border:1px solid rgba(149,112,255,.26);
+  background:rgba(118,81,232,.10);color:#c8afff;font-size:8.5px;font-weight:750
+}
+.admin-service-buttons button.hide{border-color:rgba(255,255,255,.08);background:#0c0a10;color:#aaa2b2}
+.admin-service-buttons button.show{border-color:rgba(112,216,154,.22);background:rgba(112,216,154,.07);color:#8ce8ab}
+
+.admin-service-backdrop{
+  position:fixed;z-index:120;inset:0;background:rgba(2,1,5,.72);
+  backdrop-filter:blur(10px);display:flex;align-items:flex-end;justify-content:center
+}
+.admin-service-sheet{
+  width:min(100%,620px);max-height:92vh;overflow:auto;
+  padding:14px 14px calc(20px + env(safe-area-inset-bottom));
+  border-radius:24px 24px 0 0;border:1px solid rgba(255,255,255,.09);
+  background:linear-gradient(180deg,#15111d 0%,#09070d 100%);
+  box-shadow:0 -24px 70px rgba(0,0,0,.55)
+}
+.admin-service-sheet-head{
+  position:sticky;top:-14px;z-index:2;display:flex;align-items:center;justify-content:space-between;
+  padding:14px 0 11px;background:linear-gradient(180deg,#15111d 70%,rgba(21,17,29,0))
+}
+.admin-service-sheet-head small{display:block;font-size:7.5px;color:#8f8997}
+.admin-service-sheet-head h3{margin:3px 0 0;font-size:15px;color:#f7f2ff}
+.admin-service-sheet-head>button{
+  width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.08);
+  background:#0b0910;color:#d8d0df;font-size:19px
+}
+.service-photo-editor{margin-top:3px}
+.service-photo-preview{
+  position:relative;height:154px;overflow:hidden;border-radius:17px;
+  border:1px solid rgba(255,255,255,.08);background:#0a0810
+}
+.service-photo-preview img{width:100%;height:100%;object-fit:cover}
+.service-photo-placeholder{height:100%;display:grid;place-items:center;color:#655e6d;font-size:10px}
+.service-photo-actions{display:flex;gap:8px;margin-top:8px}
+.service-photo-actions button,.service-photo-pick{
+  flex:1;min-height:37px;display:grid;place-items:center;border-radius:11px;
+  border:1px solid rgba(149,112,255,.25);background:rgba(118,81,232,.10);
+  color:#c9b2ff;font-size:8.5px;font-weight:750
+}
+.service-photo-pick input{display:none}
+.service-photo-actions button{border-color:rgba(255,255,255,.08);background:#0c0a10;color:#918999}
+.service-edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:13px}
+.service-edit-grid label,.service-edit-wide{display:block}
+.service-edit-grid span,.service-edit-wide>span{
+  display:block;margin:0 0 5px 2px;color:#918999;font-size:7.5px;font-weight:700
+}
+.service-edit-grid input,.service-edit-wide textarea{
+  width:100%;border:1px solid rgba(255,255,255,.08);border-radius:12px;
+  background:#0a0810;color:#f7f2ff;outline:none;font:inherit
+}
+.service-edit-grid input{height:43px;padding:0 11px;font-size:9px}
+.service-edit-wide{margin-top:10px}
+.service-edit-wide textarea{padding:11px;resize:vertical;font-size:9px;line-height:1.45}
+.service-edit-grid input:focus,.service-edit-wide textarea:focus{
+  border-color:rgba(156,114,255,.48);box-shadow:0 0 0 3px rgba(156,114,255,.06)
+}
+.service-active-row{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin-top:12px;padding:11px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.07);
+  background:#0b0910
+}
+.service-active-row b{display:block;font-size:9px;color:#eee8f5}
+.service-active-row small{display:block;margin-top:3px;color:#756e7c;font-size:7.5px}
+.service-active-row input{width:20px;height:20px;accent-color:#8f68f5}
+.service-sheet-actions{display:grid;gap:8px;margin-top:14px}
+.service-sheet-actions button{
+  min-height:46px;border-radius:14px;font-size:10px;font-weight:800
+}
+.service-sheet-actions .save{
+  border:1px solid rgba(156,114,255,.42);
+  background:linear-gradient(135deg,#6f4cde,#9570ff);color:white;
+  box-shadow:0 12px 28px rgba(109,44,255,.18)
+}
+.service-sheet-actions .delete{
+  border:1px solid rgba(255,111,133,.18);background:rgba(255,111,133,.06);color:#ff8798
+}
+@media(max-width:390px){
+  .service-edit-grid{grid-template-columns:1fr}
+}
