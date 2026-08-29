@@ -576,7 +576,7 @@
       if(!silent)toast(e.message||"Не удалось загрузить услуги");
     }finally{
       S.adminServicesLoading=false;
-      if(S.view==="admin-services")render();
+      if(S.view==="admin-services")backgroundRender();
     }
   }
 
@@ -751,7 +751,7 @@
       if(!silent)toast(e.message || "Не удалось загрузить администраторов");
     }finally{
       S.adminsLoading=false;
-      if(S.view==="admin-access")render();
+      if(S.view==="admin-access")backgroundRender();
     }
   }
 
@@ -838,6 +838,10 @@
   async function loadIdentity(){
     const keepCreatorClientPreview =
       S.identityReady && S.actualRole==="creator" && S.roleMode==="client";
+    const beforeRole=S.actualRole;
+    const beforeMode=S.roleMode;
+    const beforeView=S.view;
+    const wasIdentityReady=S.identityReady;
 
     try{
       const res = await fetch("/api/me",{
@@ -870,7 +874,12 @@
       }
 
       S.identityReady=true;
-      render();
+      const identityChanged=
+        !wasIdentityReady ||
+        beforeRole!==S.actualRole ||
+        beforeMode!==S.roleMode ||
+        beforeView!==S.view;
+      if(identityChanged)backgroundRender();
     }catch(e){
       console.error("Role load failed:",e);
       // Не показываем заведомо неправильную роль из старого кэша.
@@ -905,12 +914,42 @@
       adminBookings = Array.isArray(data.bookings) ? data.bookings : [];
       adminBookingsLoaded = true;
       saveAdminBookingsCache();
-      if(String(S.view).startsWith("admin-")) render();
+      if(["admin-home","admin-bookings","admin-calendar"].includes(S.view)) backgroundRender();
     }catch(e){
       console.error("Admin booking load failed:", e);
       if(!silent && String(S.view).startsWith("admin-")) toast(e.message || "Не удалось загрузить записи клиентов");
     }
   }
+
+  let deferredBackgroundRender=false;
+
+  function formFieldIsActive(){
+    const el=document.activeElement;
+    if(!el)return false;
+    return Boolean(
+      el.matches?.("input,textarea,select") ||
+      el.isContentEditable
+    );
+  }
+
+  function backgroundRender(){
+    if(formFieldIsActive()){
+      deferredBackgroundRender=true;
+      return;
+    }
+    deferredBackgroundRender=false;
+    render();
+  }
+
+  document.addEventListener("focusout",()=>{
+    if(!deferredBackgroundRender)return;
+    setTimeout(()=>{
+      if(!formFieldIsActive() && deferredBackgroundRender){
+        deferredBackgroundRender=false;
+        render();
+      }
+    },180);
+  },true);
 
   function toast(text){
     const el=document.querySelector("#toast");
@@ -2011,7 +2050,10 @@
 
   setInterval(()=>{
     if(document.visibilityState!=="visible")return;
-    if(isStaffMode())loadAdminBookings(true);
+    if(!isStaffMode())return;
+    // Keep the important booking data fresh, but form screens are never repainted
+    // by this background request. This prevents Telegram/iOS keyboard dismissal.
+    loadAdminBookings(true);
   },3000);
 
   setInterval(()=>{
