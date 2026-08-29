@@ -26,1310 +26,22 @@
     window.__medAestheticFullscreenRequested = false;
   })();
   </script>
-  <style id="med-aesthetic-v11-css">
-/* MED AESTHETIC CLIENT v11 — JRMA root-path compatible */
-*{box-sizing:border-box}
-:root{
-  --bg:#07050c;
-  --bg2:#0d0717;
-  --card:#12101a;
-  --card2:#17121f;
-  --line:rgba(222,173,80,.20);
-  --line2:rgba(255,255,255,.07);
-  --gold:#e4b75d;
-  --gold2:#f4d48e;
-  --violet:#6d2cff;
-  --violet2:#a460ff;
-  --text:#f7f2ff;
-  --muted:#8f8997;
-  --good:#70d89a;
-  --danger:#ff6f85;
-  --shadow:0 18px 46px rgba(0,0,0,.42);
-}
-html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Manrope,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-body{
-  background:
-    radial-gradient(700px 380px at 85% -80px,rgba(113,32,191,.22),transparent 62%),
-    radial-gradient(540px 350px at -20% 25%,rgba(107,44,255,.09),transparent 60%),
-    linear-gradient(180deg,#08060e 0%,#07050c 100%);
-  overflow-x:hidden;
-}
-button,input{font:inherit}
-button{color:inherit}
-img{display:block;width:100%;object-fit:cover}
-#app{max-width:620px;margin:0 auto;min-height:100vh;padding-bottom:calc(96px + env(safe-area-inset-bottom))}
-.page{padding:0 14px 22px}
-.safe-top{height:max(8px,env(safe-area-inset-top))}
-.topbar{
-  position:sticky;top:0;z-index:40;margin:0 -14px;padding:10px 14px 11px;
-  background:linear-gradient(180deg,rgba(8,6,14,.97),rgba(8,6,14,.89));
-  backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.045)
-}
-.toprow{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.brand{font-family:"Cormorant Garamond",serif;font-size:24px;font-weight:700;letter-spacing:.8px;color:var(--gold2)}
-.brand span{color:#fff}
-.icon-btn{
-  border:1px solid var(--line2);background:#11101a;width:40px;height:40px;border-radius:13px;
-  display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.03)
-}
-.icon-btn.gold{border-color:rgba(228,183,93,.28);color:var(--gold)}
-.hero{
-  position:relative;
-  overflow:visible;
-  min-height:276px;
-  margin-top:18px;
-  isolation:isolate;
-}
-.hero-frame{
-  position:absolute;
-  inset:0;
-  overflow:hidden;
-  border:1px solid rgba(222,174,87,.34);
-  border-radius:25px;
-  background:
-    radial-gradient(260px 210px at 83% 38%,rgba(101,43,154,.30),transparent 70%),
-    linear-gradient(135deg,#0c0911 0%,#130d1b 52%,#1a1026 100%);
-  box-shadow:
-    0 22px 45px rgba(0,0,0,.34),
-    inset 0 1px 0 rgba(255,255,255,.025);
-}
-.hero-bg{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  object-position:63% 34%;
-  opacity:.58;
-  filter:saturate(.76) contrast(1.06) brightness(.82);
-}
-.hero-frame:after{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:
-    linear-gradient(90deg,
-      rgba(6,5,10,.98) 0%,
-      rgba(7,5,11,.94) 32%,
-      rgba(8,5,12,.72) 53%,
-      rgba(9,6,14,.20) 75%,
-      rgba(10,6,16,.06) 100%),
-    linear-gradient(180deg,rgba(8,5,13,.03),rgba(8,5,13,.24));
-  pointer-events:none;
-}
-.hero-orb{
-  position:absolute;
-  right:1%;
-  top:-15%;
-  width:58%;
-  height:74%;
-  border-radius:50%;
-  background:rgba(111,49,190,.20);
-  filter:blur(42px);
-  z-index:1;
-  pointer-events:none;
-}
-.hero-model-pop{
-  position:absolute;
-  z-index:3;
-  right:-2.5%;
-  top:-28px;
-  width:58%;
-  height:calc(100% + 32px);
-  object-fit:cover;
-  object-position:61% 29%;
-  opacity:1;
-  filter:saturate(.86) contrast(1.08) drop-shadow(-12px 14px 18px rgba(0,0,0,.34));
-  -webkit-mask-image:radial-gradient(ellipse 68% 77% at 61% 47%,#000 0 58%,rgba(0,0,0,.94) 65%,transparent 86%);
-  mask-image:radial-gradient(ellipse 68% 77% at 61% 47%,#000 0 58%,rgba(0,0,0,.94) 65%,transparent 86%);
-  pointer-events:none;
-}
-.hero-content{
-  position:relative;
-  z-index:4;
-  width:56%;
-  padding:24px 0 20px 20px;
-}
-.hero-mark{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  height:18px;
-  margin:0 0 10px;
-  color:#e7bb5d;
-}
-.hero-mark .spark{
-  font-size:17px;
-  line-height:1;
-  text-shadow:0 0 16px rgba(231,187,93,.24);
-}
-.hero-mark .line{
-  width:43px;
-  height:1px;
-  background:linear-gradient(90deg,rgba(231,187,93,.70),rgba(231,187,93,.05));
-}
-.hero h1{
-  font-family:"Cormorant Garamond",serif;
-  font-size:34px;
-  line-height:.94;
-  font-weight:700;
-  letter-spacing:-.35px;
-  margin:0 0 13px;
-  color:#f5f0f7;
-  text-shadow:0 2px 12px rgba(0,0,0,.34);
-}
-.hero p{
-  max-width:220px;
-  margin:0 0 15px;
-  color:#c8c0ce;
-  font-size:10.4px;
-  line-height:1.48;
-  letter-spacing:.02px;
-}
-.btn-primary{
-  min-height:43px;
-  min-width:145px;
-  padding:0 18px;
-  border-radius:13px;
-  border:1px solid rgba(255,222,137,.78);
-  background:linear-gradient(135deg,#dfa63b 0%,#efc45c 47%,#f6da86 100%);
-  color:#211405;
-  font-size:13px;
-  font-weight:850;
-  box-shadow:0 10px 25px rgba(220,166,55,.22),inset 0 1px 0 rgba(255,255,255,.28);
-}
-.btn-primary:active{transform:translateY(1px) scale(.99)}
-@media (max-width:360px){
-  .hero{min-height:262px}
-  .hero-content{width:58%;padding-left:17px;padding-top:22px}
-  .hero h1{font-size:31px}
-  .hero p{font-size:9.7px}
-  .hero-model-pop{right:-5%;width:61%;top:-24px}
-}
-
-.btn-primary:active,.quick:active,.service-card:active,.master-pill:active,.booking-card:active{transform:scale(.985)}
-.section{margin-top:23px}
-.section-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:11px}
-.section-head h2{font-size:15px;margin:0;font-weight:800}
-.section-head button{border:0;background:none;color:var(--gold);font-size:10px;padding:4px}
-.quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
-.quick{
-  border:1px solid var(--line2);background:linear-gradient(180deg,#15121d,#0f0d15);
-  border-radius:16px;padding:12px 5px 10px;text-align:center;min-height:74px
-}
-.quick .qicon{font-size:20px;color:var(--gold);height:26px}
-.quick span{display:block;color:#bbb4c2;font-size:9px;margin-top:4px}
-.service-scroll{display:grid;grid-auto-flow:column;grid-auto-columns:42%;gap:10px;overflow-x:auto;padding:1px 1px 6px;scrollbar-width:none}
-.service-scroll::-webkit-scrollbar,.masters::-webkit-scrollbar,.chips::-webkit-scrollbar{display:none}
-.service-card{
-  border:1px solid rgba(228,183,93,.22);background:linear-gradient(180deg,#17121f,#0f0d15);
-  padding:0;border-radius:18px;overflow:hidden;text-align:left;box-shadow:0 9px 25px rgba(0,0,0,.16)
-}
-.service-card img{height:112px;background:#1b1424}
-.service-card .body{padding:10px}
-.service-card b{font-size:11px;display:block;line-height:1.25}
-.service-card .meta{display:flex;justify-content:space-between;align-items:center;margin-top:7px;color:var(--muted);font-size:9px}
-.service-card .price{color:var(--gold2);font-weight:800}
-.masters{display:grid;grid-auto-flow:column;grid-auto-columns:74px;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
-.master-pill{border:0;background:none;padding:0;text-align:center}
-.master-pill img{width:58px;height:58px;margin:auto;border-radius:50%;border:1px solid rgba(228,183,93,.42);padding:2px;background:#17121f}
-.master-pill b{display:block;font-size:9.5px;margin-top:6px}
-.master-pill span{display:block;font-size:7.8px;color:var(--muted);margin-top:2px}
-.promo{
-  margin-top:14px;border:1px solid rgba(136,70,255,.26);background:
-  radial-gradient(300px 130px at 15% 20%,rgba(120,49,226,.2),transparent 62%),
-  linear-gradient(135deg,#161022,#0f0c16);
-  border-radius:19px;padding:14px;display:flex;justify-content:space-between;align-items:center
-}
-.promo strong{font-family:"Cormorant Garamond",serif;font-size:19px;color:var(--gold2)}
-.promo p{margin:3px 0 0;font-size:9px;color:var(--muted)}
-.promo .gift{font-size:28px}
-.page-title{font-family:"Cormorant Garamond",serif;font-size:30px;margin:20px 0 4px}
-.page-sub{color:var(--muted);font-size:11px;margin:0 0 15px}
-.chips{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;margin:4px -14px 12px;padding:0 14px}
-.chip{flex:0 0 auto;border:1px solid var(--line2);background:#111019;color:#aaa4b2;border-radius:999px;padding:8px 12px;font-size:9px}
-.chip.active{border-color:rgba(228,183,93,.52);background:rgba(228,183,93,.11);color:var(--gold2)}
-.service-list{display:grid;gap:10px}
-.service-row{
-  display:grid;grid-template-columns:84px 1fr auto;gap:11px;align-items:center;
-  border:1px solid var(--line2);background:linear-gradient(180deg,#15131b,#0f0e14);
-  border-radius:17px;padding:8px;text-align:left
-}
-.service-row img{width:84px;height:74px;border-radius:12px}
-.service-row h3{font-size:12px;margin:0 0 5px}
-.service-row p{font-size:8.8px;color:var(--muted);line-height:1.4;margin:0}
-.service-row .row-meta{font-size:9px;margin-top:7px;color:var(--gold2);font-weight:800}
-.chev{color:var(--gold);font-size:18px;padding-right:5px}
-.detail-cover{height:270px;margin:12px -14px 0;position:relative;overflow:hidden}
-.detail-cover img{height:100%}
-.detail-cover:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 54%,#07050c)}
-.back-float{position:absolute;z-index:4;left:14px;top:14px}
-.heart-float{position:absolute;z-index:4;right:14px;top:14px}
-.detail-box{margin-top:-38px;position:relative;z-index:3}
-.detail-box h1{font-family:"Cormorant Garamond",serif;font-size:30px;margin:0 0 5px}
-.detail-price{display:flex;align-items:center;justify-content:space-between;color:var(--gold2);font-weight:800;font-size:14px}
-.detail-price span{font-size:10px;color:var(--muted);font-weight:600}
-.detail-copy{font-size:10px;line-height:1.6;color:#b9b3c1;margin-top:15px}
-.includes{border-top:1px solid var(--line2);margin-top:15px;padding-top:14px}
-.includes h3{font-size:12px;margin:0 0 9px}
-.includes div{font-size:10px;color:#c7c0cd;margin:7px 0}
-.includes div:before{content:"✓";color:var(--gold);margin-right:8px}
-.sticky-action{
-  position:sticky;bottom:84px;z-index:20;margin:18px 0 0;padding:10px 0;
-  background:linear-gradient(180deg,transparent,rgba(7,5,12,.93) 30%)
-}
-.sticky-action .btn-primary{width:100%}
-.master-list{display:grid;gap:10px}
-.master-card{
-  display:grid;grid-template-columns:62px 1fr auto;gap:11px;align-items:center;border:1px solid var(--line2);
-  background:#121018;border-radius:18px;padding:10px
-}
-.master-card.selected{border-color:rgba(228,183,93,.55);box-shadow:0 0 0 1px rgba(228,183,93,.08)}
-.master-card img{width:62px;height:62px;border-radius:16px}
-.master-card h3{font-size:12px;margin:0 0 3px}
-.master-card p{font-size:8.7px;color:var(--muted);margin:2px 0}
-.rating{color:var(--gold2);font-size:9px;margin-top:5px}
-.select-btn{border:1px solid rgba(228,183,93,.35);background:rgba(228,183,93,.08);color:var(--gold2);border-radius:10px;padding:8px 10px;font-size:9px}
-.calendar-card{border:1px solid var(--line2);background:#111019;border-radius:20px;padding:13px;margin-top:12px}
-.date-strip{display:grid;grid-auto-flow:column;grid-auto-columns:57px;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:3px}
-.date-btn{border:1px solid var(--line2);background:#0d0c12;border-radius:14px;padding:9px 4px;color:#918b98;text-align:center}
-.date-btn span{display:block;font-size:8px;text-transform:uppercase}
-.date-btn b{display:block;font-size:16px;margin:3px 0}
-.date-btn small{font-size:7px}
-.date-btn.active{border-color:var(--gold);background:linear-gradient(180deg,#d7aa53,#a8792e);color:#160e05}
-.time-title{font-size:12px;font-weight:800;margin:18px 0 10px}
-.time-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.time-btn{border:1px solid rgba(228,183,93,.27);background:#100e16;border-radius:12px;padding:11px 5px;color:var(--gold2);font-size:10px}
-.time-btn.active{background:linear-gradient(135deg,#d7a950,#f0ce82);color:#1b1208;font-weight:800}
-.summary{
-  border:1px solid rgba(228,183,93,.22);background:linear-gradient(180deg,#15111d,#0e0c13);
-  border-radius:19px;padding:14px;margin-top:17px
-}
-.summary h3{font-size:11px;margin:0 0 10px;color:var(--gold2)}
-.summary-line{display:flex;justify-content:space-between;gap:20px;font-size:9px;color:var(--muted);margin:7px 0}
-.summary-line b{color:#eee9f2;text-align:right;font-weight:700}
-.confirm-wrap{text-align:center;padding:48px 5px 10px}
-.confirm-icon{
-  width:94px;height:94px;border-radius:50%;margin:0 auto 18px;display:grid;place-items:center;font-size:43px;
-  color:#1b1207;background:linear-gradient(135deg,#e1b55e,#f6db9d);box-shadow:0 0 55px rgba(228,183,93,.18)
-}
-.confirm-wrap h1{font-family:"Cormorant Garamond",serif;font-size:32px;margin:0 0 8px}
-.confirm-wrap p{font-size:10px;color:var(--muted);line-height:1.55}
-.booking-card{
-  border:1px solid var(--line2);background:linear-gradient(180deg,#15121d,#0f0d14);
-  border-radius:18px;padding:12px;display:grid;grid-template-columns:60px 1fr auto;gap:11px;align-items:center;margin-bottom:10px;text-align:left
-}
-.booking-card img{width:60px;height:60px;border-radius:14px}
-.booking-card h3{font-size:11px;margin:0 0 4px}
-.booking-card p{font-size:8.6px;color:var(--muted);margin:2px 0}
-.status-pill{font-size:7.5px;border-radius:999px;padding:5px 7px;background:rgba(228,183,93,.10);color:var(--gold2);white-space:nowrap}
-.status-pill.done{background:rgba(112,216,154,.09);color:var(--good)}
-.empty{border:1px dashed rgba(255,255,255,.12);border-radius:20px;padding:35px 20px;text-align:center;color:var(--muted);font-size:10px}
-.profile-head{display:flex;align-items:center;gap:13px;margin-top:20px}
-.profile-avatar{width:68px;height:68px;border-radius:22px;border:1px solid rgba(228,183,93,.35);object-fit:cover}
-.profile-head h2{font-size:17px;margin:0 0 3px}
-.profile-head p{font-size:9px;color:var(--muted);margin:0}
-.menu-list{border:1px solid var(--line2);border-radius:20px;overflow:hidden;margin-top:17px;background:#111019}
-.menu-item{display:flex;align-items:center;gap:11px;padding:14px;border-bottom:1px solid var(--line2);background:none;width:100%;text-align:left}
-.menu-item:last-child{border-bottom:0}
-.menu-item .mi{width:28px;text-align:center;color:var(--gold)}
-.menu-item b{font-size:10px;flex:1}
-.menu-item span{font-size:9px;color:var(--muted)}
-.bonus-card{
-  border:1px solid rgba(228,183,93,.26);background:
-  radial-gradient(300px 160px at 85% 0%,rgba(109,44,255,.22),transparent 70%),
-  linear-gradient(140deg,#1a1027,#0e0b14);
-  border-radius:24px;padding:20px;margin-top:16px
-}
-.bonus-card small{color:#aaa2b2;font-size:9px}
-.bonus-card strong{display:block;font-family:"Cormorant Garamond",serif;font-size:44px;color:var(--gold2);line-height:1.05;margin-top:4px}
-.bonus-status{display:flex;justify-content:space-between;border-top:1px solid var(--line2);margin-top:16px;padding-top:13px;font-size:9px}
-.bottom-nav{
-  position:fixed;z-index:60;left:50%;transform:translateX(-50%);bottom:0;width:min(620px,100%);
-  padding:8px 10px calc(8px + env(safe-area-inset-bottom));
-  background:linear-gradient(180deg,rgba(7,5,12,.80),rgba(7,5,12,.98) 20%);
-  backdrop-filter:blur(18px)
-}
-.nav-inner{border:1px solid var(--line2);background:rgba(17,15,23,.94);border-radius:24px;padding:8px 5px 7px;display:grid;grid-template-columns:repeat(5,1fr);box-shadow:0 -8px 30px rgba(0,0,0,.18)}
-.nav-btn{border:0;background:none;color:#77727f;padding:3px 2px;min-width:0}
-.nav-btn .nav-icon{font-size:18px;height:23px}
-.nav-btn span{display:block;font-size:7.5px;white-space:nowrap}
-.nav-btn.active{color:var(--gold2)}
-.toast{
-  position:fixed;z-index:100;left:50%;bottom:105px;transform:translate(-50%,15px);opacity:0;
-  background:#eee7f6;color:#130e18;padding:10px 14px;border-radius:999px;font-size:9px;font-weight:800;
-  pointer-events:none;transition:.22s;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis
-}
-.toast.show{opacity:1;transform:translate(-50%,0)}
-.badge{display:inline-flex;align-items:center;gap:5px;color:var(--gold2);font-size:8px;margin-top:4px}
-.search-box{display:flex;gap:8px;border:1px solid var(--line2);background:#111019;border-radius:15px;padding:10px 12px;margin:12px 0}
-.search-box input{border:0;outline:0;background:transparent;color:#fff;width:100%;font-size:10px}
-.search-box input::placeholder{color:#6f6976}
-@media(min-width:520px){
-  #app{border-left:1px solid rgba(255,255,255,.04);border-right:1px solid rgba(255,255,255,.04)}
-  .service-scroll{grid-auto-columns:31%}
-}
-
-
-/* v5 — Telegram fullscreen + fixed Mini App shell */
-html,body{
-  width:100%;
-  height:100%;
-  min-height:100%;
-  overflow:hidden!important;
-  overscroll-behavior:none!important;
-}
-body{
-  position:fixed!important;
-  inset:0!important;
-  width:100%!important;
-  height:var(--beauty-vh,100dvh)!important;
-  max-height:var(--beauty-vh,100dvh)!important;
-  touch-action:manipulation;
-}
-#app{
-  position:fixed!important;
-  inset:0!important;
-  width:100%!important;
-  max-width:620px!important;
-  height:var(--beauty-vh,100dvh)!important;
-  max-height:var(--beauty-vh,100dvh)!important;
-  margin:0 auto!important;
-  overflow-x:hidden!important;
-  overflow-y:auto!important;
-  overscroll-behavior-y:contain!important;
-  -webkit-overflow-scrolling:touch;
-  padding-bottom:calc(96px + max(env(safe-area-inset-bottom,0px),var(--tg-safe-bottom,0px)))!important;
-}
-.safe-top{
-  height:max(8px,env(safe-area-inset-top,0px),var(--tg-safe-top,0px))!important;
-}
-.bottom-nav{
-  padding-bottom:calc(8px + max(env(safe-area-inset-bottom,0px),var(--tg-safe-bottom,0px)))!important;
-}
-/* Stop Safari/Telegram rubber-band on the outer document. */
-html,body{touch-action:none}
-#app, #app *{touch-action:auto}
-
-
-.brand-wrap{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  line-height:1;
-  transform:translateY(2px);
-}
-.brand-sub{
-  margin-top:4px;
-  font-size:7px;
-  line-height:1;
-  letter-spacing:1.6px;
-  text-transform:lowercase;
-  color:#8f8997;
-  white-space:nowrap;
-}
-/* Move the whole app header a little lower under Telegram's fullscreen controls. */
-.safe-top{
-  height:calc(max(8px,env(safe-area-inset-top,0px),var(--tg-safe-top,0px)) + 10px)!important;
-}
-.topbar{
-  padding-top:12px!important;
-}
-
-
-/* v7 — enlarged top brand area, centered below Telegram system controls */
-.safe-top{
-  height:0!important;
-  min-height:0!important;
-}
-
-.topbar{
-  position:sticky!important;
-  top:0!important;
-  z-index:40!important;
-  margin:0 -14px!important;
-
-  /* The tile itself now covers the whole upper system-control area. */
-  min-height:calc(max(
-    env(safe-area-inset-top,0px),
-    var(--tg-safe-top,0px),
-    44px
-  ) + 72px)!important;
-
-  padding:
-    calc(max(
-      env(safe-area-inset-top,0px),
-      var(--tg-safe-top,0px),
-      44px
-    ) + 8px)
-    14px
-    12px!important;
-
-  display:flex!important;
-  align-items:center!important;
-
-  background:
-    linear-gradient(180deg,rgba(8,6,14,.995),rgba(8,6,14,.94))!important;
-  border-bottom:1px solid rgba(255,255,255,.055)!important;
-  backdrop-filter:blur(18px)!important;
-  -webkit-backdrop-filter:blur(18px)!important;
-}
-
-.toprow{
-  position:relative!important;
-  width:100%!important;
-  min-height:52px!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:space-between!important;
-}
-
-.brand-wrap{
-  position:absolute!important;
-  left:50%!important;
-  top:50%!important;
-  transform:translate(-50%,-50%)!important;
-  width:max-content!important;
-  max-width:calc(100% - 112px)!important;
-  display:flex!important;
-  flex-direction:column!important;
-  align-items:center!important;
-  justify-content:center!important;
-  text-align:center!important;
-  line-height:1!important;
-}
-
-.brand{
-  text-align:center!important;
-  white-space:nowrap!important;
-}
-
-.brand-sub{
-  text-align:center!important;
-  white-space:nowrap!important;
-}
-
-
-/* v8 — brand is pinned to the lower part of the top tile, safely below Telegram controls */
-.topbar{
-  min-height:210px!important;
-  padding:0 14px 14px!important;
-  display:block!important;
-}
-
-.toprow{
-  position:relative!important;
-  width:100%!important;
-  height:196px!important;
-  min-height:196px!important;
-}
-
-/* Keep our own left/right controls away from Telegram's top overlay */
-.toprow > .icon-btn{
-  position:absolute!important;
-  top:118px!important;
-}
-.toprow > .icon-btn:first-child{left:0!important;}
-.toprow > .icon-btn:last-child{right:0!important;}
-
-/* Main title sits in its own clear zone below the system buttons */
-.brand-wrap{
-  position:absolute!important;
-  left:50%!important;
-  top:auto!important;
-  bottom:18px!important;
-  transform:translateX(-50%)!important;
-  width:calc(100% - 120px)!important;
-  max-width:none!important;
-  text-align:center!important;
-}
-
-.brand{
-  width:100%!important;
-  text-align:center!important;
-  font-size:28px!important;
-  line-height:1.05!important;
-}
-
-.brand-sub{
-  margin-top:7px!important;
-  text-align:center!important;
-  font-size:7.5px!important;
-  letter-spacing:2px!important;
-}
-
-
-/* v9 — compact top area: below Telegram controls without wasting vertical space */
-.topbar{
-  min-height:160px!important;
-  height:160px!important;
-  padding:0 14px 10px!important;
-}
-
-.toprow{
-  height:150px!important;
-  min-height:150px!important;
-}
-
-/* Our own buttons sit on the same lower row as the brand, below Telegram controls. */
-.toprow > .icon-btn{
-  top:92px!important;
-}
-
-/* Raise the brand compared with v8, while keeping it safely below Telegram overlay. */
-.brand-wrap{
-  bottom:10px!important;
-}
-
-.brand{
-  font-size:26px!important;
-}
-
-.brand-sub{
-  margin-top:6px!important;
-  font-size:7px!important;
-  letter-spacing:1.8px!important;
-}
-
-
-
-/* v14 — clean Telegram opening: no side/cropped first frame */
-html{
-  background:#07050c!important;
-}
-body{
-  background:
-    radial-gradient(700px 380px at 85% -80px,rgba(113,32,191,.22),transparent 62%),
-    radial-gradient(540px 350px at -20% 25%,rgba(107,44,255,.09),transparent 60%),
-    linear-gradient(180deg,#08060e 0%,#07050c 100%)!important;
-}
-html:not(.app-ready) #app{
-  opacity:0!important;
-  visibility:hidden!important;
-  transform:translate3d(0,18px,0)!important;
-}
-html.app-ready #app{
-  opacity:1!important;
-  visibility:visible!important;
-  transform:translate3d(0,0,0)!important;
-  transition:opacity .10s ease-out, transform .16s cubic-bezier(.18,.82,.22,1)!important;
-}
-#app{
-  will-change:opacity,transform;
-}
-@media (prefers-reduced-motion:reduce){
-  html.app-ready #app{transition:none!important}
-}
-
-/* v13 — Admin workspace, concept 5: automation-first */
-:root{
-  --admin-accent:#8f62ff;
-  --admin-accent2:#b493ff;
-  --admin-cyan:#55d6c2;
-  --admin-warn:#f0b55b;
-  --admin-panel:#111019;
-  --admin-panel2:#15131e;
-}
-.admin-page{padding:0 14px 28px}
-.admin-safe{height:calc(max(env(safe-area-inset-top,0px),var(--tg-safe-top,0px),44px) + 16px)}
-.admin-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
-.admin-brand{min-width:0}
-.admin-brand-title{font-family:"Cormorant Garamond",serif;color:#fff;font-size:25px;font-weight:700;letter-spacing:.4px;line-height:1}
-.admin-brand-title span{color:var(--admin-accent2)}
-.admin-role{font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:6px}
-.admin-head-actions{display:flex;align-items:center;gap:8px}
-.admin-round{width:40px;height:40px;border-radius:14px;border:1px solid rgba(143,98,255,.24);background:linear-gradient(180deg,#171421,#100e16);display:grid;place-items:center;color:var(--admin-accent2);font-size:17px;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
-.admin-avatar{width:40px;height:40px;border-radius:14px;object-fit:cover;border:1px solid rgba(180,147,255,.35);background:#17131f}
-.admin-date-row{display:flex;justify-content:space-between;align-items:end;gap:12px;margin:2px 0 13px}
-.admin-date-row h1{font-size:22px;margin:0;line-height:1.05}.admin-date-row p{margin:6px 0 0;font-size:9px;color:var(--muted)}
-.admin-link{border:0;background:none;color:var(--admin-accent2);font-size:9px;padding:7px 0}
-.admin-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:11px 0 18px}
-.admin-metric{min-width:0;border:1px solid rgba(255,255,255,.07);background:linear-gradient(180deg,#15131e,#0e0d14);border-radius:18px;padding:10px 6px;text-align:center}
-.admin-ring{--p:64;width:48px;height:48px;margin:0 auto 7px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--admin-accent) calc(var(--p)*1%),rgba(255,255,255,.07) 0);position:relative;box-shadow:0 0 22px rgba(143,98,255,.08)}
-.admin-ring:after{content:"";position:absolute;inset:5px;border-radius:50%;background:#111019;border:1px solid rgba(255,255,255,.04)}
-.admin-ring b{position:relative;z-index:1;font-size:11px}.admin-metric span{display:block;color:var(--muted);font-size:7.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.admin-metric small{display:block;color:var(--good);font-size:7px;margin-top:3px}
-.admin-section{margin-top:19px}.admin-section-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}.admin-section-title h2{font-size:13px;margin:0}.admin-section-title span,.admin-section-title button{font-size:8px;color:var(--muted);border:0;background:none}
-.admin-next{border:1px solid rgba(143,98,255,.22);background:radial-gradient(260px 100px at 100% 0%,rgba(143,98,255,.16),transparent 70%),linear-gradient(180deg,#15131e,#100e17);border-radius:20px;padding:13px;display:grid;grid-template-columns:50px 1fr auto;align-items:center;gap:11px}
-.admin-time{height:50px;border-radius:15px;background:rgba(143,98,255,.12);color:var(--admin-accent2);display:grid;place-items:center;font-size:14px;font-weight:800;border:1px solid rgba(143,98,255,.2)}
-.admin-next h3{font-size:11px;margin:0 0 4px}.admin-next p{font-size:8px;color:var(--muted);margin:2px 0;line-height:1.35}.admin-status{font-size:7px;padding:5px 7px;border-radius:999px;color:var(--good);background:rgba(112,216,154,.09)}
-.admin-empty{border:1px dashed rgba(255,255,255,.10);background:rgba(255,255,255,.015);border-radius:18px;padding:20px;text-align:center;color:var(--muted);font-size:9px;line-height:1.5}
-.admin-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.admin-action{border:1px solid rgba(255,255,255,.07);background:#121019;border-radius:17px;padding:11px 5px 9px;text-align:center;min-height:78px}.admin-action i{font-style:normal;width:32px;height:32px;border-radius:11px;display:grid;place-items:center;margin:0 auto 7px;background:rgba(143,98,255,.11);color:var(--admin-accent2);font-size:15px}.admin-action b{display:block;font-size:7.6px;line-height:1.25}
-.automation-card{border:1px solid rgba(85,214,194,.16);background:linear-gradient(180deg,rgba(85,214,194,.055),rgba(17,16,25,.95));border-radius:20px;padding:5px 13px}.auto-row{display:grid;grid-template-columns:34px 1fr auto;gap:9px;align-items:center;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.055)}.auto-row:last-child{border-bottom:0}.auto-ico{width:32px;height:32px;border-radius:11px;background:rgba(85,214,194,.10);color:var(--admin-cyan);display:grid;place-items:center}.auto-row b{font-size:9.3px}.auto-row p{margin:2px 0 0;color:var(--muted);font-size:7.5px}.auto-state{font-size:7px;color:var(--admin-cyan);background:rgba(85,214,194,.09);padding:5px 7px;border-radius:999px}
-.admin-list{display:grid;gap:8px}.admin-book-row{border:1px solid rgba(255,255,255,.07);background:#121019;border-radius:16px;padding:10px;display:grid;grid-template-columns:48px 1fr auto;gap:10px;align-items:center;text-align:left}.admin-book-row .t{font-size:11px;font-weight:800;color:var(--admin-accent2)}.admin-book-row h3{font-size:9.5px;margin:0 0 3px}.admin-book-row p{font-size:7.7px;color:var(--muted);margin:1px 0}.admin-book-row .dots{color:#6e6877;font-size:18px}
-.admin-filter{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;margin:8px 0 13px}.admin-filter button{flex:0 0 auto;border:1px solid rgba(255,255,255,.07);background:#111019;color:var(--muted);border-radius:999px;padding:8px 11px;font-size:8px}.admin-filter button.active{color:#fff;border-color:rgba(143,98,255,.36);background:rgba(143,98,255,.13)}
-.admin-calendar{border:1px solid rgba(255,255,255,.07);background:#111019;border-radius:20px;padding:12px}.admin-week{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:12px}.admin-day{border:0;background:#0e0d14;color:var(--muted);border-radius:12px;padding:7px 2px;text-align:center}.admin-day span{display:block;font-size:6.8px}.admin-day b{display:block;font-size:12px;margin-top:3px}.admin-day.active{background:linear-gradient(160deg,#7550e8,#9b72ff);color:#fff}.admin-timeline{display:grid;gap:7px}.admin-slot{display:grid;grid-template-columns:42px 1fr;gap:8px;align-items:stretch}.admin-slot-time{font-size:8px;color:var(--muted);padding-top:10px}.admin-slot-card{border-left:3px solid var(--admin-accent);background:rgba(143,98,255,.11);border-radius:10px;padding:8px 10px}.admin-slot-card b{display:block;font-size:8.5px}.admin-slot-card span{display:block;font-size:7px;color:var(--muted);margin-top:2px}.admin-slot-free{border:1px dashed rgba(255,255,255,.09);background:transparent;color:#67616e;border-radius:10px;padding:9px;font-size:7.5px;text-align:center}
-.admin-kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.admin-kpi{border:1px solid rgba(255,255,255,.07);background:#121019;border-radius:16px;padding:12px}.admin-kpi small{font-size:7.4px;color:var(--muted)}.admin-kpi strong{display:block;font-size:18px;margin-top:4px;color:#fff}
-.admin-menu{border:1px solid rgba(255,255,255,.07);border-radius:20px;overflow:hidden;background:#111019}.admin-menu button{width:100%;border:0;border-bottom:1px solid rgba(255,255,255,.055);background:none;color:#fff;padding:14px 12px;display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;text-align:left}.admin-menu button:last-child{border-bottom:0}.admin-menu .ico{width:30px;height:30px;border-radius:10px;background:rgba(143,98,255,.10);color:var(--admin-accent2);display:grid;place-items:center}.admin-menu b{font-size:9.5px}.admin-menu small{font-size:7.2px;color:var(--muted);display:block;margin-top:2px}.admin-menu .go{color:#746f7c;font-size:15px}
-.admin-client-switch{margin-top:14px;border:1px solid rgba(240,181,91,.20);background:rgba(240,181,91,.055);border-radius:18px;padding:13px;display:flex;align-items:center;justify-content:space-between;gap:12px}.admin-client-switch b{font-size:9.5px}.admin-client-switch p{font-size:7.5px;color:var(--muted);margin:3px 0 0}.switch-pill{width:44px;height:25px;border:0;border-radius:999px;background:#272331;padding:3px;position:relative}.switch-pill:after{content:"";display:block;width:19px;height:19px;border-radius:50%;background:#7a7382;transition:.2s}.switch-pill.on{background:var(--admin-accent)}.switch-pill.on:after{transform:translateX(19px);background:#fff}
-.admin-bottom .nav-inner{border-color:rgba(143,98,255,.12)}.admin-bottom .nav-btn.active{color:var(--admin-accent2)}
-.role-sheet-backdrop{position:fixed;z-index:120;inset:0;background:rgba(0,0,0,.62);backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center;padding:14px}.role-sheet{width:min(590px,100%);border:1px solid rgba(143,98,255,.25);background:linear-gradient(180deg,#181420,#0e0c13);border-radius:26px;padding:17px 14px calc(17px + env(safe-area-inset-bottom));box-shadow:0 -30px 70px rgba(0,0,0,.55)}.role-sheet h3{margin:0 0 4px;font-size:14px}.role-sheet p{margin:0 0 12px;color:var(--muted);font-size:8px}.role-choice{width:100%;border:1px solid rgba(255,255,255,.06);background:#111019;color:#fff;border-radius:15px;padding:12px;display:flex;align-items:center;justify-content:space-between;margin-top:7px;text-align:left}.role-choice b{font-size:10px}.role-choice span{font-size:8px;color:var(--muted)}.role-choice.active{border-color:rgba(143,98,255,.40);background:rgba(143,98,255,.10)}
-.test-mode-bar{position:fixed;z-index:75;left:50%;top:calc(max(env(safe-area-inset-top,0px),var(--tg-safe-top,0px),44px) + 6px);transform:translateX(-50%);width:min(440px,calc(100% - 96px));border:1px solid rgba(143,98,255,.28);background:rgba(20,16,29,.94);backdrop-filter:blur(14px);border-radius:999px;padding:7px 10px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:7.8px;box-shadow:0 8px 28px rgba(0,0,0,.3)}.test-mode-bar button{border:0;background:none;color:var(--admin-accent2);font-size:7.8px;font-weight:800}
-
-  
-/* v17 — creator crown + administrator invitations */
-.creator-crown{
-  width:40px;height:40px;border-radius:13px;border:1px solid rgba(235,190,92,.42);
-  background:
-    radial-gradient(circle at 35% 25%,rgba(255,226,151,.18),transparent 42%),
-    linear-gradient(180deg,#18131f,#100d16);
-  color:#f0ca78;display:grid;place-items:center;font-size:19px;
-  box-shadow:0 8px 24px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.05);
-}
-.creator-crown:active{transform:scale(.96)}
-.role-sheet h3{display:flex;align-items:center;gap:7px}
-.role-choice b{letter-spacing:.1px}
-
-.access-hero{
-  margin:4px 0 14px;border:1px solid rgba(151,105,255,.24);
-  border-radius:22px;padding:16px;background:
-  radial-gradient(260px 120px at 90% 0%,rgba(127,71,255,.18),transparent 60%),
-  linear-gradient(180deg,#15111d,#0f0d15);
-}
-.access-hero h2{font-size:16px;margin:0 0 6px}
-.access-hero p{font-size:10px;line-height:1.55;color:#9d96a8;margin:0}
-.access-primary{
-  width:100%;min-height:48px;margin-top:14px;border-radius:14px;
-  border:1px solid rgba(156,114,255,.62);
-  background:linear-gradient(135deg,#6742da,#9b69f5);
-  color:white;font-weight:800;
-  box-shadow:0 12px 28px rgba(101,57,200,.22)
-}
-.access-primary:disabled{opacity:.55}
-.invite-card{
-  border:1px solid rgba(228,183,93,.30);background:linear-gradient(180deg,#16121c,#0f0d14);
-  border-radius:18px;padding:13px;margin-top:12px
-}
-.invite-card .invite-label{font-size:9px;color:#8e8797;margin-bottom:7px}
-.invite-link{
-  width:100%;border:1px solid rgba(255,255,255,.08);background:#0b0910;color:#eee8f4;
-  border-radius:12px;padding:11px 12px;font-size:10px;line-height:1.4;word-break:break-all
-}
-.invite-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}
-.invite-actions button{
-  min-height:40px;border-radius:11px;border:1px solid rgba(255,255,255,.08);
-  background:#15121b;font-size:10px;font-weight:750
-}
-.invite-actions button:first-child{color:#f0ca78;border-color:rgba(228,183,93,.27)}
-.admins-head{
-  display:flex;align-items:center;justify-content:space-between;gap:10px;margin:18px 0 9px
-}
-.admins-head h2{font-size:14px;margin:0}
-.admins-head button{border:0;background:none;color:#9c72ff;font-size:10px;padding:6px}
-.admin-person{
-  display:grid;grid-template-columns:42px 1fr auto;gap:10px;align-items:center;
-  border:1px solid rgba(255,255,255,.06);background:#121018;border-radius:16px;padding:10px;margin-bottom:8px
-}
-.admin-person-avatar{
-  width:42px;height:42px;border-radius:13px;display:grid;place-items:center;
-  background:linear-gradient(135deg,#31224c,#171020);color:#c8a9ff;font-weight:850
-}
-.admin-person h3{font-size:11px;margin:0 0 3px}
-.admin-person p{font-size:8.8px;color:#8e8797;margin:0}
-.admin-remove{
-  border:1px solid rgba(255,104,127,.20);background:rgba(255,104,127,.06);
-  color:#ff8799;border-radius:10px;padding:8px 9px;font-size:9px
-}
-.admin-empty-mini{
-  border:1px dashed rgba(255,255,255,.08);border-radius:16px;padding:17px 12px;
-  text-align:center;color:#8e8797;font-size:10px;line-height:1.5
-}
-
-
-/* v21 — exact client hero card supplied by user */
-.hero.hero-exact-card{
-  position:relative;
-  min-height:0!important;
-  height:auto!important;
-  aspect-ratio:941 / 684;
-  margin-top:18px;
-  overflow:hidden!important;
-  border-radius:24px;
-  background:#0b0810;
-  box-shadow:0 22px 45px rgba(0,0,0,.34);
-  isolation:isolate;
-}
-.hero.hero-exact-card:after{display:none!important}
-.hero-exact-image{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  display:block;
-  object-fit:cover;
-  object-position:center center;
-  border:0;
-  z-index:1;
-}
-.hero-exact-hit{
-  position:absolute;
-  z-index:3;
-  left:8.4%;
-  bottom:7.2%;
-  width:31.8%;
-  height:14.4%;
-  border:0;
-  border-radius:18px;
-  background:transparent;
-  color:transparent;
-  -webkit-tap-highlight-color:transparent;
-}
-.hero-exact-hit:active{
-  background:rgba(255,222,137,.08);
-  transform:scale(.985);
-}
-@media (max-width:360px){
-  .hero.hero-exact-card{
-    aspect-ratio:941 / 684;
-    min-height:0!important;
-  }
-}
-
-
-/* v22 — swipeable home banners */
-.hero-carousel{
-  display:flex;
-  gap:10px;
-  overflow-x:auto;
-  overflow-y:visible;
-  scroll-snap-type:x mandatory;
-  scroll-behavior:smooth;
-  overscroll-behavior-x:contain;
-  -webkit-overflow-scrolling:touch;
-  scrollbar-width:none;
-  margin:18px -14px 0;
-  padding:0 24px 8px 14px;
-  touch-action:pan-x pan-y;
-}
-.hero-carousel::-webkit-scrollbar{display:none}
-.hero-slide{
-  position:relative;
-  flex:0 0 calc(100% - 26px);
-  scroll-snap-align:start;
-  scroll-snap-stop:always;
-  min-width:0;
-}
-.hero-slide .hero.hero-exact-card{
-  margin-top:0!important;
-  width:100%;
-}
-.certificate-banner{
-  position:relative;
-  width:100%;
-  aspect-ratio:941 / 684;
-  overflow:hidden;
-  border-radius:24px;
-  background:#120b16;
-  box-shadow:0 22px 45px rgba(0,0,0,.34);
-}
-.certificate-banner img{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  object-position:center;
-  display:block;
-}
-.certificate-action{
-  position:absolute;
-  z-index:3;
-  left:5.3%;
-  bottom:7.2%;
-  min-height:43px;
-  min-width:39%;
-  padding:0 18px;
-  border-radius:13px;
-  border:1px solid rgba(255,222,137,.78);
-  background:linear-gradient(135deg,#dfa63b 0%,#efc45c 47%,#f6da86 100%);
-  color:#211405;
-  font-size:12px;
-  font-weight:850;
-  box-shadow:0 10px 25px rgba(220,166,55,.22),inset 0 1px 0 rgba(255,255,255,.28);
-  white-space:nowrap;
-  -webkit-tap-highlight-color:transparent;
-}
-.certificate-action:active{transform:translateY(1px) scale(.99)}
-@media (max-width:360px){
-  .hero-carousel{
-    gap:8px;
-    padding-right:22px;
-  }
-  .hero-slide{flex-basis:calc(100% - 24px)}
-  .certificate-action{
-    font-size:10.6px;
-    min-height:40px;
-    padding:0 13px;
-  }
-}
-
-
-/* v24 — both banners use the same compact visual size */
-.hero-carousel{
-  padding-left:14px;
-  padding-right:30px;
-}
-
-/* Keep the original carousel slide size so the swipe/peek behavior stays the same. */
-.hero-slide{
-  display:flex;
-  align-items:flex-start;
-}
-
-/* Both visible cards are now the same size inside their slide. */
-.hero-slide .hero.hero-exact-card,
-.hero-slide .certificate-banner{
-  width:93%;
-  flex:0 0 93%;
-  margin:0!important;
-  aspect-ratio:941 / 684;
-}
-
-/* First banner: crop away the dark area that was baked into the source image,
-   while keeping the card itself at the old visual size. */
-.hero-slide:first-child .hero.hero-exact-card{
-  overflow:hidden!important;
-}
-.hero-slide:first-child .hero-exact-image{
-  width:107%;
-  height:107%;
-  left:-3.5%;
-  top:-3.5%;
-  object-fit:cover;
-  object-position:center center;
-}
-
-/* Correct the invisible click zone after cropping. */
-.hero-slide:first-child .hero-exact-hit{
-  left:5.7%;
-  bottom:4.6%;
-  width:34.1%;
-  height:15.2%;
-}
-
-/* Second banner: same exact shell size as the first. */
-.hero-slide:nth-child(2) .certificate-banner{
-  overflow:hidden;
-}
-.hero-slide:nth-child(2) .certificate-banner img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  object-position:center center;
-}
-
-/* Keep the certificate action aligned to the same visual scale. */
-.hero-slide:nth-child(2) .certificate-action{
-  left:5.4%;
-  bottom:7.1%;
-  min-height:40px;
-  min-width:36%;
-  padding:0 15px;
-  font-size:11px;
-}
-
-
-/* v28 — certificate aligned to the girl banner, without content crop */
-/* The first banner remains untouched. Only the certificate slide is corrected. */
-.hero-slide .hero.hero-exact-card,
-.hero-slide .certificate-banner{
-  width:93%!important;
-  flex:0 0 93%!important;
-  min-height:0!important;
-  margin-left:0!important;
-  margin-right:0!important;
-}
-
-/* Keep the already matched VISIBLE size and corner geometry of the girl banner. */
-.hero-slide:nth-child(2) .certificate-banner{
-  aspect-ratio:1.437 / 1!important;
-  margin-top:0!important;
-  transform:translateY(2.2%)!important;
-  border-radius:14px!important;
-  overflow:hidden!important;
-  background:#0b0810!important;
-  box-shadow:0 22px 45px rgba(0,0,0,.34)!important;
-}
-
-/* Do not zoom the certificate artwork. The previous 110% crop pushed the title
-   almost against the left edge and cut the artwork. Fill the matched shell with
-   the complete source image instead. */
-.hero-slide:nth-child(2) .certificate-banner img{
-  width:100%!important;
-  height:100%!important;
-  left:0!important;
-  top:0!important;
-  object-fit:fill!important;
-  object-position:center center!important;
-}
-
-/* Same visual vertical level as the baked-in “Записаться” button on banner 1. */
-.hero-slide:nth-child(2) .certificate-action{
-  left:5.6%!important;
-  bottom:8.5%!important;
-  height:15.2%!important;
-  min-height:0!important;
-  min-width:0!important;
-  width:auto!important;
-  padding:0 12px!important;
-  border-radius:9px!important;
-  border:1px solid rgba(198,164,99,.78)!important;
-  background:linear-gradient(90deg,#d0a65b 0%,#d4ae62 25%,#dbb86d 52%,#dfbe77 75%,#e4c582 100%)!important;
-  color:#2f1e08!important;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif!important;
-  font-size:10.8px!important;
-  line-height:1!important;
-  font-weight:700!important;
-  letter-spacing:0!important;
-  text-shadow:none!important;
-  box-shadow:0 6px 14px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.07)!important;
-  white-space:nowrap!important;
-  -webkit-tap-highlight-color:transparent;
-}
-
-.hero-slide:nth-child(2) .certificate-action:active{
-  transform:translateY(1px) scale(.99)!important;
-}
-
-@media (max-width:360px){
-  .hero-slide:nth-child(2) .certificate-action{
-    font-size:10.2px!important;
-    padding:0 11px!important;
-  }
-}
-
-
-/* v29 — third home banner: laser hair removal, matched to banner 1 */
-.hero-slide .laser-banner{
-  position:relative;
-  width:93%!important;
-  flex:0 0 93%!important;
-  min-height:0!important;
-  margin:0!important;
-  aspect-ratio:1.437 / 1!important;
-  transform:translateY(2.2%)!important;
-  overflow:hidden!important;
-  border-radius:14px!important;
-  border:.7px solid rgba(135,102,145,.62)!important;
-  background:#0b0810!important;
-  box-shadow:0 22px 45px rgba(0,0,0,.34)!important;
-  isolation:isolate;
-}
-
-/* The selected artwork has the same baked-in outer margin as banner 1.
-   Use the exact same 107% crop so the visible card has the same size and corners. */
-.hero-slide:nth-child(3) .laser-banner img{
-  position:absolute;
-  z-index:1;
-  width:107%!important;
-  height:107%!important;
-  left:-3.5%!important;
-  top:-3.5%!important;
-  object-fit:fill!important;
-  object-position:center center!important;
-  display:block;
-}
-
-/* Invisible tap area over the button already drawn into the selected banner. */
-.hero-slide:nth-child(3) .laser-hit{
-  position:absolute;
-  z-index:3;
-  left:4.7%;
-  bottom:10.8%;
-  width:30.6%;
-  height:12.4%;
-  border:0;
-  border-radius:15px;
-  background:transparent;
-  color:transparent;
-  -webkit-tap-highlight-color:transparent;
-}
-.hero-slide:nth-child(3) .laser-hit:active{
-  background:rgba(255,222,137,.08);
-  transform:scale(.985);
-}
-
-
-
-/* v30 — centered endless banner carousel with subtle neighbour peeks */
-.hero-carousel{
-  display:flex!important;
-  gap:8px!important;
-  overflow-x:auto!important;
-  overflow-y:visible!important;
-  scroll-snap-type:x mandatory!important;
-  scroll-behavior:auto!important;
-  overscroll-behavior-x:contain!important;
-  -webkit-overflow-scrolling:touch!important;
-  scrollbar-width:none!important;
-  margin:18px -14px 0!important;
-  padding:0 0 8px!important;
-  touch-action:pan-x pan-y!important;
-}
-.hero-carousel::-webkit-scrollbar{display:none!important}
-.hero-carousel > .hero-slide{
-  position:relative!important;
-  flex:0 0 85%!important;
-  min-width:0!important;
-  display:flex!important;
-  justify-content:center!important;
-  align-items:flex-start!important;
-  scroll-snap-align:center!important;
-  scroll-snap-stop:always!important;
-}
-
-/* Keep the visible banner width exactly at the previous visual scale. */
-.hero-carousel > .hero-slide > .hero.hero-exact-card,
-.hero-carousel > .hero-slide > .certificate-banner,
-.hero-carousel > .hero-slide > .laser-banner{
-  width:90%!important;
-  flex:0 0 90%!important;
-  margin-left:0!important;
-  margin-right:0!important;
-}
-
-/* Class-based copies of the existing per-banner rules so loop clones look identical. */
-.hero-carousel > .slide-girl .hero.hero-exact-card{
-  margin-top:0!important;
-  overflow:hidden!important;
-}
-.hero-carousel > .slide-girl .hero-exact-image{
-  width:107%!important;
-  height:107%!important;
-  left:-3.5%!important;
-  top:-3.5%!important;
-  object-fit:cover!important;
-  object-position:center center!important;
-}
-.hero-carousel > .slide-girl .hero-exact-hit{
-  left:5.7%!important;
-  bottom:4.6%!important;
-  width:34.1%!important;
-  height:15.2%!important;
-}
-.hero-carousel > .slide-certificate .certificate-banner{
-  aspect-ratio:1.437 / 1!important;
-  margin-top:0!important;
-  transform:translateY(2.2%)!important;
-  border-radius:14px!important;
-  overflow:hidden!important;
-  background:#0b0810!important;
-  box-shadow:0 22px 45px rgba(0,0,0,.34)!important;
-}
-.hero-carousel > .slide-certificate .certificate-banner img{
-  width:100%!important;
-  height:100%!important;
-  left:0!important;
-  top:0!important;
-  object-fit:fill!important;
-  object-position:center center!important;
-}
-.hero-carousel > .slide-certificate .certificate-action{
-  left:5.6%!important;
-  bottom:8.5%!important;
-  height:15.2%!important;
-  min-height:0!important;
-  min-width:0!important;
-  width:auto!important;
-  padding:0 12px!important;
-  border-radius:9px!important;
-  border:1px solid rgba(198,164,99,.78)!important;
-  background:linear-gradient(90deg,#d0a65b 0%,#d4ae62 25%,#dbb86d 52%,#dfbe77 75%,#e4c582 100%)!important;
-  color:#2f1e08!important;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif!important;
-  font-size:10.8px!important;
-  line-height:1!important;
-  font-weight:700!important;
-  letter-spacing:0!important;
-  text-shadow:none!important;
-  box-shadow:0 6px 14px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.07)!important;
-  white-space:nowrap!important;
-}
-.hero-carousel > .slide-laser .laser-banner{
-  margin-top:0!important;
-  aspect-ratio:1.437 / 1!important;
-  transform:translateY(2.2%)!important;
-}
-.hero-carousel > .slide-laser .laser-banner img{
-  position:absolute!important;
-  z-index:1!important;
-  width:107%!important;
-  height:107%!important;
-  left:-3.5%!important;
-  top:-3.5%!important;
-  object-fit:fill!important;
-  object-position:center center!important;
-  display:block!important;
-}
-.hero-carousel > .slide-laser .laser-hit{
-  left:4.7%!important;
-  bottom:10.8%!important;
-  width:30.6%!important;
-  height:12.4%!important;
-}
-
-@media (max-width:360px){
-  .hero-carousel{gap:7px!important}
-  .hero-carousel > .slide-certificate .certificate-action{
-    font-size:10.2px!important;
-    padding:0 11px!important;
-  }
-}
-
-
-
-/* v36 — slightly larger bottom navigation icons and labels */
-.nav-btn .nav-icon{font-size:21px!important;height:26px!important;line-height:26px!important;}
-.nav-btn span{font-size:9px!important;line-height:1.15!important;}
-
-/* v35 — bottom client navigation stays fixed in exactly the same viewport position */
-html.app-ready #app{
-  transform:none!important;
-  will-change:auto!important;
-}
-.bottom-nav{
-  position:fixed!important;
-  z-index:60!important;
-  left:50%!important;
-  right:auto!important;
-  top:auto!important;
-  bottom:0!important;
-  width:min(620px,100vw)!important;
-  margin:0!important;
-  transform:translate3d(-50%,0,0)!important;
-}
-
-
-/* Owner card — single founder/master on the home page */
-.owner-section{margin-top:24px}
-.owner-section-head{margin-bottom:11px}
-.owner-section-head h2{font-size:16px!important}
-.owner-card{
-  position:relative;
-  min-height:0;
-  height:auto;
-  display:block;
-  overflow:hidden;
-  border:1px solid rgba(228,183,93,.26);
-  border-radius:22px;
-  background:
-    radial-gradient(250px 180px at 14% 18%,rgba(112,45,177,.10),transparent 68%),
-    linear-gradient(135deg,#111019 0%,#0d0b13 58%,#171020 100%);
-  box-shadow:0 18px 42px rgba(0,0,0,.30),inset 0 1px 0 rgba(255,255,255,.025);
-}
-.owner-card:after{
-  content:"";
-  position:absolute;
-  inset:0;
-  pointer-events:none;
-  background:linear-gradient(90deg,transparent 45%,rgba(8,6,13,.05) 57%,rgba(8,6,13,.20) 100%);
-}
-.owner-copy{
-  position:relative;
-  z-index:3;
-  width:56%;
-  min-width:0;
-  padding:16px 8px 13px 16px;
-  display:flex;
-  flex-direction:column;
-  align-items:flex-start;
-}
-.owner-kicker{
-  color:#d6aa57;
-  font-size:7.4px;
-  font-weight:800;
-  letter-spacing:2px;
-  text-transform:uppercase;
-  margin-bottom:7px;
-}
-.owner-name{
-  margin:0;
-  font-family:"Cormorant Garamond",serif;
-  font-size:28px;
-  line-height:.95;
-  font-weight:700;
-  color:#f4d48e;
-  letter-spacing:.1px;
-}
-.owner-role{
-  margin-top:7px;
-  color:#d9ad62;
-  font-size:8.8px;
-  line-height:1.4;
-  font-weight:650;
-}
-.owner-text{
-  margin:10px 0 0;
-  color:#b9b2c0;
-  font-size:8.6px;
-  line-height:1.48;
-  max-width:205px;
-}
-.owner-meta{
-  margin-top:9px;
-  display:flex;
-  align-items:center;
-  flex-wrap:wrap;
-  gap:5px;
-  color:#d6aa57;
-  font-size:7.8px;
-  line-height:1.3;
-}
-.owner-meta b{font-weight:750}
-.owner-meta i{font-style:normal;color:#675f6c}
-.owner-more{
-  margin-top:11px;
-  min-height:32px;
-  padding:0 13px;
-  border-radius:10px;
-  border:1px solid rgba(198,164,99,.72);
-  background:linear-gradient(90deg,#d0a65b 0%,#d7b369 50%,#e1c17c 100%);
-  color:#2b1b07;
-  font-size:9.2px;
-  font-weight:800;
-  box-shadow:0 7px 17px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.08);
-}
-.owner-more:active{transform:translateY(1px) scale(.99)}
-.owner-photo-wrap{
-  position:absolute;
-  z-index:1;
-  top:0;
-  right:0;
-  bottom:0;
-  width:44%;
-  min-width:0;
-  overflow:hidden;
-}
-.owner-photo-wrap:before{
-  content:"";
-  position:absolute;
-  z-index:2;
-  inset:0;
-  background:linear-gradient(90deg,#0e0c14 0%,rgba(14,12,20,.53) 10%,transparent 36%);
-  pointer-events:none;
-}
-.owner-photo{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  object-position:center 30%;
-  transform:scale(1.02);
-  transform-origin:center center;
-  filter:saturate(.88) contrast(1.04) brightness(.91);
-}
-@media(max-width:360px){
-  .owner-card{min-height:0;height:auto}
-  .owner-copy{width:56%;padding:14px 6px 13px 14px}
-  .owner-photo-wrap{width:44%}
-  .owner-name{font-size:26px}
-  .owner-role{font-size:8.2px}
-  .owner-text{font-size:8px;line-height:1.45;margin-top:9px}
-  .owner-meta{font-size:6.9px;margin-top:8px}
-  .owner-more{min-height:30px;padding:0 12px;font-size:8.8px}
-}
-
-</style>
+  <!-- Visual modules: edit only the section you are working on. -->
+  <link rel="stylesheet" href="./css/core.css">
+  <link rel="stylesheet" href="./css/home.css">
+  <link rel="stylesheet" href="./css/services.css">
+  <link rel="stylesheet" href="./css/booking.css">
+  <link rel="stylesheet" href="./css/history.css">
+  <link rel="stylesheet" href="./css/profile.css">
+  <!-- Admin is split by screen. Edit only the screen you are working on. -->
+  <link rel="stylesheet" href="./css/admin/base.css">
+  <link rel="stylesheet" href="./css/admin/dashboard.css">
+  <link rel="stylesheet" href="./css/admin/bookings.css">
+  <link rel="stylesheet" href="./css/admin/calendar.css">
+  <link rel="stylesheet" href="./css/admin/clients.css">
+  <link rel="stylesheet" href="./css/admin/access.css">
+  <link rel="stylesheet" href="./css/admin/more.css">
+  <link rel="stylesheet" href="./css/navigation.css">
 </head>
 <body>
   <div id="app"></div>
@@ -1968,8 +680,9 @@ html.app-ready #app{
     </button>`;
   }
 
+  /* ===== CLIENT HOME MODULE — edit home only inside this section + css/home.css ===== */
   function home(){
-    return `<main class="page">${topbar()}
+    return `<main class="page page-home">${topbar()}
       <div class="hero-carousel" aria-label="Баннеры">
         <div class="hero-slide slide-girl">
           <section class="hero hero-exact-card">
@@ -2011,10 +724,11 @@ html.app-ready #app{
     </main>${nav("home")}`;
   }
 
+  /* ===== CLIENT SERVICES MODULE — css/services.css ===== */
   function servicesView(){
     const cats=["Все",...new Set(services.map(x=>x.cat))];
     const list=S.category==="Все"?services:services.filter(x=>x.cat===S.category);
-    return `<main class="page">${topbar()}
+    return `<main class="page page-services">${topbar()}
       <h1 class="page-title">Услуги</h1>
       <p class="page-sub">Выберите направление и откройте карточку услуги для подробностей.</p>
       <div class="search-box">⌕ <input id="serviceSearch" placeholder="Найти услугу" oninput="Beauty.filterServices(this.value)"></div>
@@ -2033,7 +747,7 @@ html.app-ready #app{
 
   function serviceDetail(){
     const s=S.service || services[0];
-    return `<main class="page">
+    return `<main class="page page-services">
       <div class="detail-cover"><img src="${s.img}" alt="">
         <button class="icon-btn back-float" onclick="Beauty.go('services')">‹</button>
         <button class="icon-btn heart-float gold" onclick="Beauty.toast('Добавлено в избранное')">♡</button>
@@ -2048,8 +762,9 @@ html.app-ready #app{
     </main>${nav("services")}`;
   }
 
+  /* ===== CLIENT BOOKING MODULE — css/booking.css ===== */
   function mastersView(){
-    return `<main class="page">${topbar({back:S.service?"Beauty.openService("+S.service.id+")":"Beauty.go('home')"})}
+    return `<main class="page page-booking">${topbar({back:S.service?"Beauty.openService("+S.service.id+")":"Beauty.go('home')"})}
       <h1 class="page-title">Выбор мастера</h1><p class="page-sub">${S.service?esc(S.service.name):"Выберите специалиста"}</p>
       <div class="master-list">${masters.map(m=>`<div class="master-card ${S.master?.id===m.id?"selected":""}">
         <img src="${m.img}" alt=""><div><h3>${m.name}</h3><p>${m.role}</p>${m.exp?`<p>Опыт ${m.exp}</p>`:""}${m.rating?`<div class="rating">★ ${m.rating}</div>`:""}</div>
@@ -2073,7 +788,7 @@ html.app-ready #app{
   function datetimeView(){
     const ds=dates(), times=["10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00","19:00","20:00"];
     if(!S.date)S.date=ds[1].iso;
-    return `<main class="page">${topbar({back:"Beauty.go('masters')"})}
+    return `<main class="page page-booking">${topbar({back:"Beauty.go('masters')"})}
       <h1 class="page-title">Выбор времени</h1><p class="page-sub">Свободные окна выбранного мастера.</p>
       <div class="calendar-card"><div class="date-strip">${ds.map(d=>`<button class="date-btn ${S.date===d.iso?"active":""}" onclick="Beauty.pickDate('${d.iso}')"><span>${d.w}</span><b>${d.day}</b><small>${d.m}</small></button>`).join("")}</div>
       <div class="time-title">Доступное время</div><div class="time-grid">${times.map(t=>`<button class="time-btn ${S.time===t?"active":""}" onclick="Beauty.pickTime('${t}')">${t}</button>`).join("")}</div></div>
@@ -2088,7 +803,7 @@ html.app-ready #app{
   }
 
   function confirmView(){
-    return `<main class="page">${topbar()}
+    return `<main class="page page-booking">${topbar()}
       <div class="confirm-wrap"><div class="confirm-icon">✓</div><h1>Запись подтверждена</h1>
       <p>Детали сохранены в разделе «Мои записи».<br>Напоминание о визите появится позже после подключения backend.</p></div>
       <div class="summary">
@@ -2103,7 +818,7 @@ html.app-ready #app{
 
   function bookingView(){
     const bookings=serverBookings;
-    return `<main class="page">${topbar()}
+    return `<main class="page page-booking">${topbar()}
       <h1 class="page-title">Мои записи</h1><p class="page-sub">Предстоящие процедуры и управление записью.</p>
       ${bookings.length?bookings.map(b=>bookingCard(b,false)).join(""):`<div class="empty">У вас пока нет предстоящих записей.<br><br><button class="btn-primary" onclick="Beauty.go('services')">Выбрать услугу</button></div>`}
     </main>${nav("booking")}`;
@@ -2117,23 +832,25 @@ html.app-ready #app{
     return `<button class="booking-card" onclick="Beauty.bookingInfo('${b.id}')"><img src="${s.img}" alt=""><div><h3>${esc(serviceName)}</h3><p>${esc(b.date)} · ${esc(b.time)}</p><p>Мастер: ${esc(masterName)} · ${priceLabel(s)}</p></div><span class="status-pill ${done?"done":""}">${done?"Завершено":"Предстоит"}</span></button>`;
   }
 
+  /* ===== CLIENT HISTORY MODULE — css/history.css ===== */
   function historyView(){
     const demo=[
       {id:"h1",serviceId:6,masterId:2,date:"18.08.2026",time:"12:00"},
       {id:"h2",serviceId:1,masterId:1,date:"05.08.2026",time:"14:00"},
       {id:"h3",serviceId:7,masterId:3,date:"20.07.2026",time:"16:00"}
     ];
-    return `<main class="page">${topbar()}
+    return `<main class="page page-history">${topbar()}
       <h1 class="page-title">История</h1><p class="page-sub">Прошлые посещения и быстрый повтор записи.</p>
       ${demo.map(b=>bookingCard(b,true)).join("")}
     </main>${nav("history")}`;
   }
 
+  /* ===== CLIENT PROFILE MODULE — css/profile.css ===== */
   function profileView(){
     const user=tg?.initDataUnsafe?.user;
     const name=[user?.first_name,user?.last_name].filter(Boolean).join(" ") || "Алина";
     const avatar=user?.photo_url || masters[0].img;
-    return `<main class="page">${topbar()}
+    return `<main class="page page-profile">${topbar()}
       <div class="profile-head"><img class="profile-avatar" src="${avatar}" alt=""><div><h2>${esc(name)}</h2><p>${user?.username?"@"+esc(user.username):"+7 (999) 123-45-67"}</p><div class="badge">♔ Gold клиент</div></div></div>
       <div class="menu-list">
         <button class="menu-item" onclick="Beauty.toast('Редактирование профиля подключим позже')"><span class="mi">♙</span><b>Личные данные</b><span>›</span></button>
@@ -2147,7 +864,7 @@ html.app-ready #app{
   }
 
   function bonusView(){
-    return `<main class="page">${topbar({back:"Beauty.go('profile')"})}
+    return `<main class="page page-profile">${topbar({back:"Beauty.go('profile')"})}
       <h1 class="page-title">Бонусная программа</h1><p class="page-sub">Копите бонусы и оплачивайте ими услуги.</p>
       <div class="bonus-card"><small>Ваши бонусы</small><strong>1 250 ₸</strong><small>Доступно для оплаты услуг</small>
         <div class="bonus-status"><span>Ваш статус: <b style="color:var(--gold2)">Gold</b></span><span>до Platinum 2 750 ₸</span></div>
@@ -2225,11 +942,12 @@ html.app-ready #app{
     return `<button class="admin-book-row" onclick="Beauty.bookingInfo('${b.id}')"><div class="t">${esc(b.time||"—")}</div><div><h3>${esc(b.serviceName||s.name||"Запись")}</h3><p>${esc(b.masterName||m.name||"Мастер не указан")} · ${esc(b.date||"")}</p></div><div class="dots">⋮</div></button>`;
   }
 
+  /* ===== ADMIN MODULE — visual styles are isolated in css/admin/*.css by screen ===== */
   function adminHome(){
     const today=adminTodayBookings();
     const nearest=adminNearest();
     const total=serverBookings.length;
-    return `<main class="admin-page">${adminHeader()}
+    return `<main class="admin-page admin-dashboard-page">${adminHeader()}
       <div class="admin-date-row"><div><h1>Сегодня</h1><p>${esc(niceToday())}</p></div><button class="admin-link" onclick="Beauty.go('admin-calendar')">Открыть календарь ›</button></div>
       <div class="admin-metrics">
         ${adminMetric(String(total),"Записи",Math.min(100,total*13),total?"активные":"пока нет")}
@@ -2256,7 +974,7 @@ html.app-ready #app{
 
   function adminBookingsView(){
     const list=sortedAdminBookings();
-    return `<main class="admin-page">${adminHeader()}<div class="admin-date-row"><div><h1>Записи</h1><p>Быстрый контроль расписания</p></div><button class="admin-link" onclick="Beauty.toast('Поиск подключим вместе с клиентской базой')">⌕ Поиск</button></div>
+    return `<main class="admin-page admin-bookings-page">${adminHeader()}<div class="admin-date-row"><div><h1>Записи</h1><p>Быстрый контроль расписания</p></div><button class="admin-link" onclick="Beauty.toast('Поиск подключим вместе с клиентской базой')">⌕ Поиск</button></div>
       <div class="admin-filter">${["Сегодня","Завтра","Неделя","Все"].map(x=>`<button class="${S.adminFilter===x?"active":""}" onclick="Beauty.setAdminFilter('${x}')">${x}</button>`).join("")}</div>
       <div class="admin-list">${list.length?list.map(adminBookingRow).join(""):`<div class="admin-empty">Записей пока нет.</div>`}</div>
       <section class="admin-section"><button class="btn-primary" style="width:100%;background:linear-gradient(135deg,#7651e8,#9c72ff);border-color:#9570ff;color:white" onclick="Beauty.toast('Ручную запись подключим следующим шагом')">＋ Новая запись</button></section>
@@ -2268,7 +986,7 @@ html.app-ready #app{
     for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()+i);ds.push({iso:d.toISOString().slice(0,10),day:d.getDate(),w:w[d.getDay()]})}
     if(!S.adminDate)S.adminDate=ds[0].iso;
     const selected=serverBookings.filter(b=>String(b.date||"").slice(0,10)===S.adminDate).sort((a,b)=>String(a.time).localeCompare(String(b.time)));
-    return `<main class="admin-page">${adminHeader()}<div class="admin-date-row"><div><h1>Календарь</h1><p>Записи и свободные окна</p></div><button class="admin-link" onclick="Beauty.toast('Настройку рабочих часов добавим далее')">Настроить</button></div>
+    return `<main class="admin-page admin-calendar-page">${adminHeader()}<div class="admin-date-row"><div><h1>Календарь</h1><p>Записи и свободные окна</p></div><button class="admin-link" onclick="Beauty.toast('Настройку рабочих часов добавим далее')">Настроить</button></div>
       <div class="admin-calendar"><div class="admin-week">${ds.map(d=>`<button class="admin-day ${S.adminDate===d.iso?"active":""}" onclick="Beauty.pickAdminDate('${d.iso}')"><span>${d.w}</span><b>${d.day}</b></button>`).join("")}</div>
       <div class="admin-timeline">${selected.length?selected.map(b=>`<div class="admin-slot"><div class="admin-slot-time">${esc(b.time||"—")}</div><div class="admin-slot-card"><b>${esc(b.serviceName||"Запись")}</b><span>${esc(b.masterName||"Мастер не указан")}</span></div></div>`).join(""):`<div class="admin-slot"><div class="admin-slot-time">День</div><div class="admin-slot-free">Свободно · записей нет</div></div>`}</div></div>
       <section class="admin-section"><div class="admin-actions"><button class="admin-action" onclick="Beauty.toast('Создание ручной записи — следующим шагом')"><i>＋</i><b>Добавить запись</b></button><button class="admin-action" onclick="Beauty.toast('Блокировку окна подключим к расписанию')"><i>×</i><b>Закрыть окно</b></button><button class="admin-action" onclick="Beauty.toast('Перерыв подключим к расписанию')"><i>☕</i><b>Перерыв</b></button><button class="admin-action" onclick="Beauty.toast('Выходной подключим к расписанию')"><i>○</i><b>Выходной</b></button></div></section>
@@ -2276,7 +994,7 @@ html.app-ready #app{
   }
 
   function adminClientsView(){
-    return `<main class="admin-page">${adminHeader()}<div class="admin-date-row"><div><h1>Клиенты</h1><p>Карточки, история и повторные записи</p></div><button class="admin-link" onclick="Beauty.toast('Добавление клиента подключим вместе с базой клиентов')">＋ Добавить</button></div>
+    return `<main class="admin-page admin-clients-page">${adminHeader()}<div class="admin-date-row"><div><h1>Клиенты</h1><p>Карточки, история и повторные записи</p></div><button class="admin-link" onclick="Beauty.toast('Добавление клиента подключим вместе с базой клиентов')">＋ Добавить</button></div>
       <div class="search-box" style="margin-top:0">⌕ <input placeholder="Имя, Telegram, телефон" oninput="Beauty.toast('Поиск будет работать после подключения клиентской базы')"></div>
       <div class="admin-kpis"><div class="admin-kpi"><small>Клиентов в базе</small><strong>—</strong></div><div class="admin-kpi"><small>Новых за месяц</small><strong>—</strong></div></div>
       <section class="admin-section"><div class="admin-empty">Карточки реальных клиентов подключим к Neon следующим этапом. Никакие тестовые люди здесь не подставлены, чтобы не смешивать демо-данные с настоящими.</div></section>
@@ -2288,7 +1006,7 @@ html.app-ready #app{
       return adminMoreView();
     }
     const admins=Array.isArray(S.admins)?S.admins:[];
-    return `<main class="admin-page">${adminHeader()}
+    return `<main class="admin-page admin-access-page">${adminHeader()}
       <div class="admin-date-row">
         <div><h1>Администраторы</h1><p>Доступ выдаётся через одноразовую Telegram-ссылку</p></div>
         <button class="admin-link" onclick="Beauty.go('admin-more')">Назад</button>
@@ -2333,7 +1051,7 @@ html.app-ready #app{
 
   function adminMoreView(){
     const creatorItem=S.actualRole==="creator"?`<button onclick="Beauty.openAdminAccess()"><span class="ico">♛</span><div><b>Администраторы</b><small>Добавление по ссылке и права доступа</small></div><span class="go">›</span></button>`:"";
-    return `<main class="admin-page">${adminHeader()}<div class="admin-date-row"><div><h1>Ещё</h1><p>Управление и автоматизация</p></div></div>
+    return `<main class="admin-page admin-more-page">${adminHeader()}<div class="admin-date-row"><div><h1>Ещё</h1><p>Управление и автоматизация</p></div></div>
       <div class="admin-menu">
         <button onclick="Beauty.toast('Редактор услуг подключим следующим этапом')"><span class="ico">⌘</span><div><b>Услуги</b><small>Цены, длительность, доступность</small></div><span class="go">›</span></button>
         <button onclick="Beauty.go('admin-calendar')"><span class="ico">□</span><div><b>Расписание</b><small>Рабочие дни, перерывы, выходные</small></div><span class="go">›</span></button>
