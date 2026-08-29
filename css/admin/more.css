@@ -1,0 +1,15 @@
+/* ADMIN MORE / SETTINGS ONLY — .admin-more-page */
+.admin-more-page .admin-menu{border:1px solid rgba(255,255,255,.07);border-radius:20px;overflow:hidden;background:#111019}
+.admin-more-page .admin-menu button{width:100%;border:0;border-bottom:1px solid rgba(255,255,255,.055);background:none;color:#fff;padding:14px 12px;display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;text-align:left}
+.admin-more-page .admin-menu button:last-child{border-bottom:0}
+.admin-more-page .admin-menu .ico{width:30px;height:30px;border-radius:10px;background:rgba(143,98,255,.10);color:var(--admin-accent2);display:grid;place-items:center}
+.admin-more-page .admin-menu b{font-size:9.5px}
+.admin-more-page .admin-menu small{font-size:7.2px;color:var(--muted);display:block;margin-top:2px}
+.admin-more-page .admin-menu .go{color:#746f7c;font-size:15px}
+.admin-more-page .admin-client-switch{margin-top:14px;border:1px solid rgba(240,181,91,.20);background:rgba(240,181,91,.055);border-radius:18px;padding:13px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.admin-more-page .admin-client-switch b{font-size:9.5px}
+.admin-more-page .admin-client-switch p{font-size:7.5px;color:var(--muted);margin:3px 0 0}
+.admin-more-page .switch-pill{width:44px;height:25px;border:0;border-radius:999px;background:#272331;padding:3px;position:relative}
+.admin-more-page .switch-pill:after{content:"";display:block;width:19px;height:19px;border-radius:50%;background:#7a7382;transition:.2s}
+.admin-more-page .switch-pill.on{background:var(--admin-accent)}
+.admin-more-page .switch-pill.on:after{transform:translateX(19px);background:#fff}

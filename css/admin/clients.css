@@ -1,0 +1,5 @@
+/* ADMIN CLIENTS ONLY — .admin-clients-page */
+.admin-clients-page .admin-kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.admin-clients-page .admin-kpi{border:1px solid rgba(255,255,255,.07);background:#121019;border-radius:16px;padding:12px}
+.admin-clients-page .admin-kpi small{font-size:7.4px;color:var(--muted)}
+.admin-clients-page .admin-kpi strong{display:block;font-size:18px;margin-top:4px;color:#fff}

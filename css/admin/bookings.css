@@ -1,0 +1,10 @@
+/* ADMIN BOOKINGS ONLY — .admin-bookings-page */
+.admin-bookings-page .admin-list{display:grid;gap:8px}
+.admin-bookings-page .admin-book-row{border:1px solid rgba(255,255,255,.07);background:#121019;border-radius:16px;padding:10px;display:grid;grid-template-columns:48px 1fr auto;gap:10px;align-items:center;text-align:left}
+.admin-bookings-page .admin-book-row .t{font-size:11px;font-weight:800;color:var(--admin-accent2)}
+.admin-bookings-page .admin-book-row h3{font-size:9.5px;margin:0 0 3px}
+.admin-bookings-page .admin-book-row p{font-size:7.7px;color:var(--muted);margin:1px 0}
+.admin-bookings-page .admin-book-row .dots{color:#6e6877;font-size:18px}
+.admin-bookings-page .admin-filter{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;margin:8px 0 13px}
+.admin-bookings-page .admin-filter button{flex:0 0 auto;border:1px solid rgba(255,255,255,.07);background:#111019;color:var(--muted);border-radius:999px;padding:8px 11px;font-size:8px}
+.admin-bookings-page .admin-filter button.active{color:#fff;border-color:rgba(143,98,255,.36);background:rgba(143,98,255,.13)}
