@@ -2204,57 +2204,98 @@ html.app-ready #app{
     const carousel=document.querySelector('.hero-carousel');
     if(!carousel) return;
 
-    const realSlides=Array.from(carousel.children).filter(el=>el.classList.contains('hero-slide'));
-    if(realSlides.length<2) return;
+    const originals=Array.from(carousel.children).filter(el=>el.classList.contains('hero-slide'));
+    const count=originals.length;
+    if(count<2) return;
 
-    const firstClone=realSlides[0].cloneNode(true);
-    const lastClone=realSlides[realSlides.length-1].cloneNode(true);
-    firstClone.dataset.loopClone='first';
-    lastClone.dataset.loopClone='last';
-    carousel.insertBefore(lastClone,realSlides[0]);
-    carousel.appendChild(firstClone);
+    /*
+      Build five identical cycles instead of using only one clone at each end.
+      The user always swipes through real neighbouring banners. After momentum
+      stops, an outer copy is silently mapped to the identical banner in the
+      middle cycle. Because the whole surrounding sequence is identical, there
+      is no visible "return to the beginning" jump.
+    */
+    const fragment=document.createDocumentFragment();
+    const cycles=5;
+    for(let cycle=0;cycle<cycles;cycle++){
+      originals.forEach((source,realIndex)=>{
+        const slide=source.cloneNode(true);
+        slide.dataset.loopCycle=String(cycle);
+        slide.dataset.loopReal=String(realIndex);
+        fragment.appendChild(slide);
+      });
+    }
+    carousel.replaceChildren(fragment);
 
-    const slides=()=>Array.from(carousel.children).filter(el=>el.classList.contains('hero-slide'));
+    const slides=Array.from(carousel.children).filter(el=>el.classList.contains('hero-slide'));
+    const middleCycle=2;
+
     const centeredLeft=(slide)=>slide.offsetLeft-(carousel.clientWidth-slide.offsetWidth)/2;
-    const jump=(index,behavior='auto')=>{
-      const slide=slides()[index];
+
+    const teleportTo=(index)=>{
+      const slide=slides[index];
       if(!slide) return;
-      carousel.scrollTo({left:centeredLeft(slide),behavior});
+
+      const previousBehavior=carousel.style.scrollBehavior;
+      const previousSnap=carousel.style.scrollSnapType;
+      carousel.style.scrollBehavior='auto';
+      carousel.style.scrollSnapType='none';
+      carousel.scrollLeft=centeredLeft(slide);
+      // Force the position to commit before restoring normal swipe snapping.
+      void carousel.offsetWidth;
+      requestAnimationFrame(()=>{
+        carousel.style.scrollSnapType=previousSnap;
+        carousel.style.scrollBehavior=previousBehavior;
+      });
     };
 
-    // First real banner starts exactly in the center: laser edge on the left, certificate edge on the right.
-    requestAnimationFrame(()=>requestAnimationFrame(()=>jump(1,'auto')));
-
-    let timer=0;
-    let correcting=false;
-    const normalize=()=>{
-      if(correcting) return;
-      const all=slides();
+    const nearestIndex=()=>{
       const center=carousel.scrollLeft+carousel.clientWidth/2;
       let nearest=0;
       let distance=Infinity;
-      all.forEach((slide,index)=>{
+      slides.forEach((slide,index)=>{
         const d=Math.abs((slide.offsetLeft+slide.offsetWidth/2)-center);
-        if(d<distance){distance=d;nearest=index;}
+        if(d<distance){
+          distance=d;
+          nearest=index;
+        }
       });
-
-      if(nearest===0){
-        correcting=true;
-        jump(all.length-2,'auto');
-        requestAnimationFrame(()=>{correcting=false;});
-      }else if(nearest===all.length-1){
-        correcting=true;
-        jump(1,'auto');
-        requestAnimationFrame(()=>{correcting=false;});
-      }
+      return nearest;
     };
 
+    const normalize=()=>{
+      const nearest=nearestIndex();
+      const realIndex=((nearest%count)+count)%count;
+      const target=middleCycle*count+realIndex;
+      if(nearest!==target) teleportTo(target);
+    };
+
+    // Start on the first banner in the middle copy: previous is visible on the
+    // left and next is visible on the right, with plenty of runway both ways.
+    requestAnimationFrame(()=>requestAnimationFrame(()=>teleportTo(middleCycle*count)));
+
+    let settleTimer=0;
     carousel.addEventListener('scroll',()=>{
-      clearTimeout(timer);
-      timer=setTimeout(normalize,100);
+      clearTimeout(settleTimer);
+      settleTimer=setTimeout(normalize,150);
     },{passive:true});
-    carousel.addEventListener('touchend',()=>setTimeout(normalize,120),{passive:true});
-    carousel.addEventListener('pointerup',()=>setTimeout(normalize,120),{passive:true});
+
+    carousel.addEventListener('touchend',()=>{
+      clearTimeout(settleTimer);
+      settleTimer=setTimeout(normalize,180);
+    },{passive:true});
+
+    carousel.addEventListener('pointerup',()=>{
+      clearTimeout(settleTimer);
+      settleTimer=setTimeout(normalize,180);
+    },{passive:true});
+
+    if('onscrollend' in carousel){
+      carousel.addEventListener('scrollend',()=>{
+        clearTimeout(settleTimer);
+        normalize();
+      },{passive:true});
+    }
   }
 
   function render(){
