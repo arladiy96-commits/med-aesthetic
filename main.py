@@ -4,6 +4,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.gzip import GZipMiddleware
 
 from api import router as api_router
 from bot import (
@@ -23,12 +24,16 @@ app = FastAPI(
     openapi_url=None,
 )
 
+app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=5)
+
 app.include_router(api_router, prefix="/api")
 app.include_router(telegram_router)
 
 # Serve the modular CSS files used by index.html.
 CSS_DIR = BASE_DIR / "css"
+ASSETS_DIR = BASE_DIR / "assets"
 app.mount("/css", StaticFiles(directory=CSS_DIR), name="css")
+app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
 
 
 @app.on_event("startup")
@@ -38,12 +43,20 @@ def startup() -> None:
 
 
 @app.middleware("http")
-async def no_cache_for_app(request, call_next):
+async def cache_policy(request, call_next):
     response = await call_next(request)
-    if request.url.path == "/" or request.url.path.startswith("/css/"):
-        response.headers["Cache-Control"] = (
-            "no-store, no-cache, must-revalidate, max-age=0"
-        )
+    path = request.url.path
+
+    if path == "/":
+        # index.html must always pick up the newest deployment.
+        response.headers["Cache-Control"] = "no-cache, must-revalidate"
+    elif path.startswith("/assets/"):
+        # Static image assets almost never change and have their own filenames.
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    elif path.startswith("/css/"):
+        # Let the browser reuse CSS but still revalidate after a short period.
+        response.headers["Cache-Control"] = "public, max-age=300, must-revalidate"
+
     return response
 
 

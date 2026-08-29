@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import base64
 import json
 from datetime import date, time
 from typing import Literal, Optional
 
-from fastapi import APIRouter, BackgroundTasks, Header, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Header, HTTPException, Response
 from pydantic import BaseModel, Field
 from psycopg.errors import UniqueViolation
 
@@ -66,13 +67,20 @@ def _service_payload(row: dict) -> dict:
     includes = row.get("includes") or []
     if not isinstance(includes, list):
         includes = []
+
+    image_url = row.get("image_url") or ""
+    if isinstance(image_url, str) and image_url.startswith("data:image/"):
+        updated_at = row.get("updated_at")
+        version = int(updated_at.timestamp()) if updated_at else 0
+        image_url = f"/api/services/{int(row['id'])}/image?v={version}"
+
     return {
         "id": int(row["id"]),
         "cat": row["category"],
         "name": row["name"],
         "price": row.get("price"),
         "duration": row.get("duration"),
-        "img": row.get("image_url") or "",
+        "img": image_url,
         "desc": row.get("description") or "",
         "includes": [str(x) for x in includes],
         "isActive": bool(row.get("is_active", True)),
@@ -406,13 +414,49 @@ def remove_admin(
     return {"ok": True}
 
 
+@router.get("/services/{service_id}/image")
+def service_image(service_id: int):
+    with db() as conn:
+        row = conn.execute(
+            """
+            SELECT image_url
+            FROM beauty_services
+            WHERE id=%s AND deleted_at IS NULL
+            """,
+            (service_id,),
+        ).fetchone()
+
+    if not row or not row.get("image_url"):
+        raise HTTPException(status_code=404, detail="Фото не найдено")
+
+    value = str(row["image_url"])
+    if not value.startswith("data:image/") or ";base64," not in value:
+        raise HTTPException(status_code=404, detail="Локального фото нет")
+
+    header, encoded = value.split(",", 1)
+    media_type = header[5:].split(";", 1)[0] or "image/jpeg"
+
+    try:
+        content = base64.b64decode(encoded, validate=True)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="Повреждённое фото") from exc
+
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={
+            "Cache-Control": "public, max-age=31536000, immutable",
+        },
+    )
+
+
 @router.get("/services")
 def list_services():
     with db() as conn:
         rows = conn.execute(
             """
             SELECT id, category, name, price, duration, image_url,
-                   description, includes, is_active, sort_order
+                   description, includes, is_active, sort_order, updated_at
             FROM beauty_services
             WHERE deleted_at IS NULL
               AND is_active = TRUE
@@ -436,7 +480,7 @@ def list_admin_services(
         rows = conn.execute(
             """
             SELECT id, category, name, price, duration, image_url,
-                   description, includes, is_active, sort_order
+                   description, includes, is_active, sort_order, updated_at
             FROM beauty_services
             WHERE deleted_at IS NULL
             ORDER BY sort_order ASC, id ASC
@@ -470,7 +514,7 @@ def create_admin_service(
                 COALESCE((SELECT MAX(sort_order) + 1 FROM beauty_services), 1)
             )
             RETURNING id, category, name, price, duration, image_url,
-                      description, includes, is_active, sort_order
+                      description, includes, is_active, sort_order, updated_at
             """,
             (
                 payload.category.strip(),
@@ -544,7 +588,7 @@ def update_admin_service(
             SET {", ".join(sets)}, updated_at=NOW()
             WHERE id=%s AND deleted_at IS NULL
             RETURNING id, category, name, price, duration, image_url,
-                      description, includes, is_active, sort_order
+                      description, includes, is_active, sort_order, updated_at
             """,
             tuple(values),
         ).fetchone()
