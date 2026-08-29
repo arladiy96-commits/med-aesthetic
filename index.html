@@ -1059,7 +1059,7 @@ html.app-ready #app{
   overflow-x:auto!important;
   overflow-y:visible!important;
   scroll-snap-type:x mandatory!important;
-  scroll-behavior:smooth!important;
+  scroll-behavior:auto!important;
   overscroll-behavior-x:contain!important;
   -webkit-overflow-scrolling:touch!important;
   scrollbar-width:none!important;
@@ -2364,14 +2364,15 @@ html.app-ready #app{
     if(count<2) return;
 
     /*
-      Build five identical cycles instead of using only one clone at each end.
-      The user always swipes through real neighbouring banners. After momentum
-      stops, an outer copy is silently mapped to the identical banner in the
-      middle cycle. Because the whole surrounding sequence is identical, there
-      is no visible "return to the beginning" jump.
+      True endless track: repeat the same three banners many times and keep the
+      viewport inside the middle copies. Re-centering changes scrollLeft by an
+      exact whole-cycle width, so the pixels under the finger stay identical —
+      there is no visible end, rewind or jump back to banner 1.
     */
+    const cycles=9;
+    const middleCycle=4;
     const fragment=document.createDocumentFragment();
-    const cycles=5;
+
     for(let cycle=0;cycle<cycles;cycle++){
       originals.forEach((source,realIndex)=>{
         const slide=source.cloneNode(true);
@@ -2383,74 +2384,65 @@ html.app-ready #app{
     carousel.replaceChildren(fragment);
 
     const slides=Array.from(carousel.children).filter(el=>el.classList.contains('hero-slide'));
-    const middleCycle=2;
-
+    const firstOfCycle=(cycle)=>slides[cycle*count];
     const centeredLeft=(slide)=>slide.offsetLeft-(carousel.clientWidth-slide.offsetWidth)/2;
 
-    const teleportTo=(index)=>{
-      const slide=slides[index];
-      if(!slide) return;
+    let cycleWidth=0;
+    const measureCycle=()=>{
+      const a=firstOfCycle(middleCycle);
+      const b=firstOfCycle(middleCycle+1);
+      cycleWidth=(a&&b) ? (b.offsetLeft-a.offsetLeft) : 0;
+      return cycleWidth;
+    };
 
-      const previousBehavior=carousel.style.scrollBehavior;
-      const previousSnap=carousel.style.scrollSnapType;
+    const jumpInstant=(left)=>{
+      const old=carousel.style.scrollBehavior;
       carousel.style.scrollBehavior='auto';
-      carousel.style.scrollSnapType='none';
-      carousel.scrollLeft=centeredLeft(slide);
-      // Force the position to commit before restoring normal swipe snapping.
+      carousel.scrollLeft=left;
       void carousel.offsetWidth;
-      requestAnimationFrame(()=>{
-        carousel.style.scrollSnapType=previousSnap;
-        carousel.style.scrollBehavior=previousBehavior;
-      });
+      carousel.style.scrollBehavior=old;
     };
 
-    const nearestIndex=()=>{
-      const center=carousel.scrollLeft+carousel.clientWidth/2;
-      let nearest=0;
-      let distance=Infinity;
-      slides.forEach((slide,index)=>{
-        const d=Math.abs((slide.offsetLeft+slide.offsetWidth/2)-center);
-        if(d<distance){
-          distance=d;
-          nearest=index;
-        }
-      });
-      return nearest;
+    const keepInMiddle=()=>{
+      const w=cycleWidth || measureCycle();
+      if(!w) return;
+
+      // Rebase by whole repeated cycles, preserving the exact visual position.
+      const min=2*w;
+      const max=6*w;
+      if(carousel.scrollLeft < min){
+        jumpInstant(carousel.scrollLeft + 3*w);
+      }else if(carousel.scrollLeft > max){
+        jumpInstant(carousel.scrollLeft - 3*w);
+      }
     };
 
-    const normalize=()=>{
-      const nearest=nearestIndex();
-      const realIndex=((nearest%count)+count)%count;
-      const target=middleCycle*count+realIndex;
-      if(nearest!==target) teleportTo(target);
+    const start=()=>{
+      measureCycle();
+      const first=firstOfCycle(middleCycle);
+      if(first) jumpInstant(centeredLeft(first));
     };
+    requestAnimationFrame(()=>requestAnimationFrame(start));
 
-    // Start on the first banner in the middle copy: previous is visible on the
-    // left and next is visible on the right, with plenty of runway both ways.
-    requestAnimationFrame(()=>requestAnimationFrame(()=>teleportTo(middleCycle*count)));
-
-    let settleTimer=0;
+    let raf=0;
     carousel.addEventListener('scroll',()=>{
-      clearTimeout(settleTimer);
-      settleTimer=setTimeout(normalize,150);
+      if(raf) return;
+      raf=requestAnimationFrame(()=>{
+        raf=0;
+        keepInMiddle();
+      });
     },{passive:true});
 
-    carousel.addEventListener('touchend',()=>{
-      clearTimeout(settleTimer);
-      settleTimer=setTimeout(normalize,180);
+    // Re-measure only if Telegram/iOS changes the viewport width.
+    window.addEventListener('resize',()=>{
+      const current=slides.reduce((best,slide)=>{
+        const c=carousel.scrollLeft+carousel.clientWidth/2;
+        const d=Math.abs((slide.offsetLeft+slide.offsetWidth/2)-c);
+        return !best||d<best.d ? {slide,d} : best;
+      },null);
+      measureCycle();
+      if(current?.slide) jumpInstant(centeredLeft(current.slide));
     },{passive:true});
-
-    carousel.addEventListener('pointerup',()=>{
-      clearTimeout(settleTimer);
-      settleTimer=setTimeout(normalize,180);
-    },{passive:true});
-
-    if('onscrollend' in carousel){
-      carousel.addEventListener('scrollend',()=>{
-        clearTimeout(settleTimer);
-        normalize();
-      },{passive:true});
-    }
   }
 
   function render(){
