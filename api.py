@@ -3,12 +3,12 @@ from __future__ import annotations
 from datetime import date, time
 from typing import Literal, Optional
 
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Header, HTTPException
 from pydantic import BaseModel, Field
 from psycopg.errors import UniqueViolation
 
 from auth import validate_telegram_init_data
-from bot import make_admin_invite_link
+from bot import make_admin_invite_link, send_notification, send_notifications
 from database import (
     create_admin_invite,
     db,
@@ -74,6 +74,109 @@ def _require_creator(app_user: dict) -> None:
 def _require_staff(app_user: dict) -> None:
     if app_user.get("role") not in {"creator", "admin"}:
         raise HTTPException(status_code=403, detail="Требуются права администратора")
+
+
+
+def _staff_chat_ids() -> list[int]:
+    with db() as conn:
+        rows = conn.execute(
+            """
+            SELECT telegram_user_id
+            FROM app_users
+            WHERE role IN ('creator', 'admin')
+            ORDER BY telegram_user_id
+            """
+        ).fetchall()
+    return [int(r["telegram_user_id"]) for r in rows]
+
+
+def _date_ru(value: date) -> str:
+    return value.strftime("%d.%m.%Y")
+
+
+def _client_label(first_name: str | None, username: str | None, telegram_user_id: int) -> str:
+    if first_name and username:
+        return f"{first_name} (@{username})"
+    if first_name:
+        return first_name
+    if username:
+        return f"@{username}"
+    return f"Telegram ID {telegram_user_id}"
+
+
+def _new_booking_admin_text(
+    *,
+    booking_id: int,
+    telegram_user_id: int,
+    first_name: str | None,
+    username: str | None,
+    service_name: str,
+    master_name: str | None,
+    booking_date: date,
+    booking_time: time,
+) -> str:
+    client = _client_label(first_name, username, telegram_user_id)
+    return (
+        "🆕 Новая запись MED AESTHETIC\n\n"
+        f"Клиент: {client}\n"
+        f"Услуга: {service_name}\n"
+        f"Мастер: {master_name or 'Людмила'}\n"
+        f"Дата: {_date_ru(booking_date)}\n"
+        f"Время: {booking_time.strftime('%H:%M')}\n"
+        f"Запись #{booking_id}"
+    )
+
+
+def _booking_created_client_text(
+    *,
+    service_name: str,
+    master_name: str | None,
+    booking_date: date,
+    booking_time: time,
+) -> str:
+    return (
+        "✅ Запись создана\n\n"
+        f"{service_name}\n"
+        f"Мастер: {master_name or 'Людмила'}\n"
+        f"{_date_ru(booking_date)} в {booking_time.strftime('%H:%M')}\n\n"
+        "Если статус записи изменится, я сообщу здесь."
+    )
+
+
+def _status_client_text(row: dict) -> str:
+    status = str(row["status"])
+    title = {
+        "pending": "⏳ Запись ожидает подтверждения",
+        "confirmed": "✅ Запись подтверждена",
+        "completed": "✨ Визит завершён",
+        "cancelled": "❌ Запись отменена",
+        "no_show": "ℹ️ Визит отмечен как несостоявшийся",
+    }.get(status, "ℹ️ Статус записи изменён")
+
+    return (
+        f"{title}\n\n"
+        f"{row['service_name']}\n"
+        f"Мастер: {row.get('master_name') or 'Людмила'}\n"
+        f"{_date_ru(row['booking_date'])} в {row['booking_time'].strftime('%H:%M')}\n"
+        f"Запись #{row['id']}"
+    )
+
+
+def _client_cancelled_admin_text(row: dict) -> str:
+    client = _client_label(
+        row.get("first_name"),
+        row.get("username"),
+        int(row["telegram_user_id"]),
+    )
+    return (
+        "⚠️ Клиент отменил запись\n\n"
+        f"Клиент: {client}\n"
+        f"Услуга: {row['service_name']}\n"
+        f"Мастер: {row.get('master_name') or 'Людмила'}\n"
+        f"Дата: {_date_ru(row['booking_date'])}\n"
+        f"Время: {row['booking_time'].strftime('%H:%M')}\n"
+        f"Запись #{row['id']}"
+    )
 
 
 @router.get("/me")
@@ -241,6 +344,7 @@ def list_admin_bookings(
 def update_admin_booking(
     booking_id: int,
     payload: BookingStatusUpdate,
+    background_tasks: BackgroundTasks,
     x_telegram_init_data: str | None = Header(
         default=None, alias="X-Telegram-Init-Data"
     ),
@@ -264,6 +368,12 @@ def update_admin_booking(
     if not row:
         raise HTTPException(status_code=404, detail="Запись не найдена")
 
+    background_tasks.add_task(
+        send_notification,
+        int(row["telegram_user_id"]),
+        _status_client_text(row),
+    )
+
     return {
         "ok": True,
         "booking": _booking_payload(row, include_client=True),
@@ -273,6 +383,7 @@ def update_admin_booking(
 @router.post("/bookings")
 def create_booking(
     payload: BookingCreate,
+    background_tasks: BackgroundTasks,
     x_telegram_init_data: str | None = Header(
         default=None, alias="X-Telegram-Init-Data"
     ),
@@ -313,6 +424,34 @@ def create_booking(
             detail="Это время уже занято. Выберите другое время.",
         )
 
+    staff_ids = _staff_chat_ids()
+    if staff_ids:
+        background_tasks.add_task(
+            send_notifications,
+            staff_ids,
+            _new_booking_admin_text(
+                booking_id=int(row["id"]),
+                telegram_user_id=uid,
+                first_name=first_name,
+                username=username,
+                service_name=payload.service_name,
+                master_name=payload.master_name,
+                booking_date=payload.booking_date,
+                booking_time=payload.booking_time,
+            ),
+        )
+
+    background_tasks.add_task(
+        send_notification,
+        uid,
+        _booking_created_client_text(
+            service_name=payload.service_name,
+            master_name=payload.master_name,
+            booking_date=payload.booking_date,
+            booking_time=payload.booking_time,
+        ),
+    )
+
     return {
         "ok": True,
         "booking": {
@@ -332,6 +471,7 @@ def create_booking(
 @router.delete("/bookings/{booking_id}")
 def cancel_booking(
     booking_id: int,
+    background_tasks: BackgroundTasks,
     x_telegram_init_data: str | None = Header(
         default=None, alias="X-Telegram-Init-Data"
     ),
@@ -347,12 +487,22 @@ def cancel_booking(
             WHERE id=%s
               AND telegram_user_id=%s
               AND status <> 'cancelled'
-            RETURNING id
+            RETURNING id, telegram_user_id, first_name, username,
+                      service_id, service_name, master_id, master_name,
+                      booking_date, booking_time, status, created_at
             """,
             (booking_id, uid),
         ).fetchone()
 
     if not row:
         raise HTTPException(status_code=404, detail="Запись не найдена")
+
+    staff_ids = _staff_chat_ids()
+    if staff_ids:
+        background_tasks.add_task(
+            send_notifications,
+            staff_ids,
+            _client_cancelled_admin_text(row),
+        )
 
     return {"ok": True}
