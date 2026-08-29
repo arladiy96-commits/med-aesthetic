@@ -950,9 +950,13 @@
     return `<div class="safe-top"></div><header class="topbar"><div class="toprow">
       ${opts.back?`<button class="icon-btn" onclick="${opts.back}">‹</button>`:`<button class="icon-btn" onclick="Beauty.toast('Меню появится позже')">☰</button>`}
       <div class="brand-wrap"><div class="brand">MED <span>AESTHETIC</span></div><div class="brand-sub">cosmetology · piercing</div></div>
-      ${S.actualRole==="creator"
-        ? `<button class="creator-crown" onclick="Beauty.openRoleSheet()" aria-label="Переключить роль">♛</button>`
-        : `<button class="icon-btn gold" onclick="Beauty.toast('Новых уведомлений нет')">♧</button>`}
+      ${opts.phone
+        ? `<button class="icon-btn services-phone-btn" onclick="Beauty.toast('Контакты студии')" aria-label="Связаться со студией">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.2 3.8 9.5 7c.3.5.3 1-.1 1.4L8 9.8c1.1 2.2 2.9 4 5.1 5.1l1.4-1.4c.4-.4.9-.4 1.4-.1l3.2 2.3c.5.3.7.9.5 1.5l-.7 2.5c-.2.7-.8 1.2-1.5 1.3-7.7.6-14.9-6.6-14.3-14.3.1-.7.6-1.3 1.3-1.5l2.5-.7c.5-.2 1.1 0 1.4.5Z"/></svg>
+          </button>`
+        : S.actualRole==="creator"
+          ? `<button class="creator-crown" onclick="Beauty.openRoleSheet()" aria-label="Переключить роль">♛</button>`
+          : `<button class="icon-btn gold" onclick="Beauty.toast('Новых уведомлений нет')">♧</button>`}
     </div></header>`;
   }
 
@@ -1008,24 +1012,103 @@
   }
 
   /* ===== CLIENT SERVICES MODULE — css/services.css ===== */
+  function serviceCatalogIcon(cat){
+    const value=String(cat||"").toLowerCase();
+    if(value.includes("пирс")){
+      return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.8 18.7c-1.7 1.2-4.2.8-5.5-.8-1.2-1.4-.9-3.4.4-4.6 1-.9 2.2-1.2 3-2.2 1.7-1.7 1.9-4.6.4-6.4-1.6-2-4.8-2.2-6.7-.4-1.5 1.4-1.9 3.7-1 5.6"/><path d="M10.3 18.9c-.1 1.2.8 2.2 2 2.2 1.3 0 2.2-1 2.2-2.2"/></svg>`;
+    }
+    if(value.includes("аппарат")){
+      return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 1.5 5.2L19 9l-5.5 1.8L12 16l-1.5-5.2L5 9l5.5-1.8L12 2Z"/><path d="m19 15 .8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15Z"/></svg>`;
+    }
+    if(value.includes("космет")){
+      return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2c1.2-1.5 2.5-2.2 4-2.2s2.8.7 4 2.2c1.4 1.8 2 4.1 1.6 6.4-.5 3.4-2.8 7.4-5.6 7.4s-5.1-4-5.6-7.4C6 9.3 6.6 7 8 5.2Z"/><path d="M8.7 11.5h.1M15.2 11.5h.1M9.5 15c1.6 1.1 3.4 1.1 5 0"/></svg>`;
+    }
+    return `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg>`;
+  }
+
+  function serviceCatalogCategoryLabel(cat){
+    return String(cat||"").replace("Аппаратные процедуры","Аппаратные");
+  }
+
+  function serviceFeaturedCard(s){
+    if(!s)return "";
+    return `<article class="lux-service-feature" data-service-search="${esc((s.name+" "+s.cat+" "+(s.desc||"")).toLowerCase())}" onclick="Beauty.openService(${s.id})">
+      <img class="lux-feature-image" src="${esc(s.img||"")}" alt="${esc(s.name)}">
+      <div class="lux-feature-shade"></div>
+      <div class="lux-feature-copy">
+        <h2>${esc(s.name)}</h2>
+        <p>${esc(s.desc||"")}</p>
+        <div class="lux-feature-meta">
+          <span class="lux-time">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3.2 2"/></svg>
+            ${durationLabel(s)}
+          </span>
+          <span class="lux-price">${priceLabel(s)}</span>
+        </div>
+      </div>
+      <button class="lux-favorite" onclick="event.stopPropagation();Beauty.toast('Добавлено в избранное')" aria-label="Добавить в избранное">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.5 5.1 5.6.8-4 4 1 5.6-5.1-2.7-5.1 2.7 1-5.6-4-4 5.6-.8L12 3Z"/></svg>
+      </button>
+      <div class="lux-feature-dots"><i class="active"></i><i></i><i></i></div>
+    </article>`;
+  }
+
+  function serviceGridCard(s){
+    return `<button class="lux-service-card" data-service-search="${esc((s.name+" "+s.cat+" "+(s.desc||"")).toLowerCase())}" onclick="Beauty.openService(${s.id})">
+      <div class="lux-card-photo">
+        <img src="${esc(s.img||"")}" alt="${esc(s.name)}">
+        <span class="lux-card-icon">${serviceCatalogIcon(s.cat)}</span>
+      </div>
+      <div class="lux-card-copy">
+        <h3>${esc(s.name)}</h3>
+        <p>${esc(s.desc||"")}</p>
+        <div class="lux-card-meta">
+          <span class="lux-time">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3.2 2"/></svg>
+            ${durationLabel(s)}
+          </span>
+          <span class="lux-price">${priceLabel(s)}</span>
+        </div>
+      </div>
+    </button>`;
+  }
+
   function servicesView(){
     const cats=["Все",...new Set(services.map(x=>x.cat))];
     const list=S.category==="Все"?services:services.filter(x=>x.cat===S.category);
-    return `<main class="page page-services">${topbar()}
-      <h1 class="page-title">Услуги</h1>
-      <p class="page-sub">Выберите направление и откройте карточку услуги для подробностей.</p>
-      <div class="search-box">⌕ <input id="serviceSearch" placeholder="Найти услугу" oninput="Beauty.filterServices(this.value)"></div>
-      <div class="chips">${cats.map(c=>`<button class="chip ${S.category===c?"active":""}" onclick="Beauty.setCategory('${c}')">${c}</button>`).join("")}</div>
-      <div class="service-list" id="serviceList">${list.map(serviceRow).join("")}</div>
+    const featured=list[0]||null;
+    const rest=list.slice(1);
+
+    return `<main class="page page-services services-catalog">${topbar({phone:true})}
+      <section class="lux-services-head">
+        <h1>Услуги</h1>
+        <p>Выберите направление и узнайте больше о процедурах.</p>
+      </section>
+
+      <div class="lux-search">
+        <svg class="lux-search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>
+        <input id="serviceSearch" placeholder="Найти услугу, процедуру или зону" oninput="Beauty.filterServices(this.value)">
+        <button onclick="Beauty.toast('Выберите нужную категорию ниже')" aria-label="Фильтры">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+        </button>
+      </div>
+
+      <div class="lux-category-strip">
+        ${cats.map(c=>`<button class="lux-category ${S.category===c?"active":""}" onclick="Beauty.setCategory('${esc(c)}')">
+          <span>${serviceCatalogIcon(c)}</span>
+          <b>${esc(c==="Все"?"Все":serviceCatalogCategoryLabel(c))}</b>
+        </button>`).join("")}
+      </div>
+
+      <div id="serviceList" class="lux-service-catalog">
+        ${featured?serviceFeaturedCard(featured):`<div class="lux-services-empty">В этой категории пока нет услуг.</div>`}
+        ${rest.length?`<div class="lux-service-grid">${rest.map(serviceGridCard).join("")}</div>`:""}
+      </div>
     </main>${nav("services")}`;
   }
 
   function serviceRow(s){
-    return `<button class="service-row" data-name="${esc(s.name.toLowerCase())}" onclick="Beauty.openService(${s.id})">
-      <img src="${s.img}" alt="">
-      <div><h3>${esc(s.name)}</h3><p>${esc(s.desc)}</p><div class="row-meta">${priceLabel(s)} · ${durationLabel(s)}</div></div>
-      <div class="chev">›</div>
-    </button>`;
+    return serviceGridCard(s);
   }
 
   function serviceDetail(){
@@ -1811,9 +1894,9 @@
     },
     setCategory(c){S.category=c;render()},
     filterServices(q){
-      q=q.trim().toLowerCase();
-      document.querySelectorAll("#serviceList .service-row").forEach(el=>{
-        el.style.display=el.dataset.name.includes(q)?"grid":"none";
+      q=String(q||"").trim().toLowerCase();
+      document.querySelectorAll("#serviceList [data-service-search]").forEach(el=>{
+        el.hidden=Boolean(q) && !String(el.dataset.serviceSearch||"").includes(q);
       });
     },
     openService(id){
