@@ -20,6 +20,7 @@ from database import (
     revoke_admin,
     upsert_app_user,
 )
+from service_assets import service_asset_urls
 
 router = APIRouter()
 
@@ -46,7 +47,6 @@ class ServiceCreate(BaseModel):
     name: str = Field(min_length=1, max_length=180)
     price: Optional[int] = Field(default=None, ge=0)
     duration: Optional[int] = Field(default=None, ge=1, le=1440)
-    image_url: Optional[str] = Field(default=None, max_length=2500000)
     description: Optional[str] = Field(default=None, max_length=5000)
     includes: list[str] = Field(default_factory=list, max_length=30)
     is_active: bool = True
@@ -57,7 +57,6 @@ class ServiceUpdate(BaseModel):
     name: Optional[str] = Field(default=None, min_length=1, max_length=180)
     price: Optional[int] = Field(default=None, ge=0)
     duration: Optional[int] = Field(default=None, ge=1, le=1440)
-    image_url: Optional[str] = Field(default=None, max_length=2500000)
     description: Optional[str] = Field(default=None, max_length=5000)
     includes: Optional[list[str]] = Field(default=None, max_length=30)
     is_active: Optional[bool] = None
@@ -68,11 +67,13 @@ def _service_payload(row: dict) -> dict:
     if not isinstance(includes, list):
         includes = []
 
-    image_url = row.get("image_url") or ""
-    if isinstance(image_url, str) and image_url.startswith("data:image/"):
-        updated_at = row.get("updated_at")
-        version = int(updated_at.timestamp()) if updated_at else 0
-        image_url = f"/api/services/{int(row['id'])}/image?v={version}"
+    updated_at = row.get("updated_at")
+    version = int(updated_at.timestamp()) if updated_at else 0
+    images = service_asset_urls(
+        int(row["id"]),
+        row.get("image_url"),
+        version,
+    )
 
     return {
         "id": int(row["id"]),
@@ -80,7 +81,8 @@ def _service_payload(row: dict) -> dict:
         "name": row["name"],
         "price": row.get("price"),
         "duration": row.get("duration"),
-        "img": image_url,
+        "img": images["thumb"],
+        "fullImg": images["full"],
         "desc": row.get("description") or "",
         "includes": [str(x) for x in includes],
         "isActive": bool(row.get("is_active", True)),
@@ -506,11 +508,11 @@ def create_admin_service(
         row = conn.execute(
             """
             INSERT INTO beauty_services (
-                category, name, price, duration, image_url, description,
+                category, name, price, duration, description,
                 includes, is_active, sort_order
             )
             VALUES (
-                %s,%s,%s,%s,%s,%s,%s::jsonb,%s,
+                %s,%s,%s,%s,%s,%s::jsonb,%s,
                 COALESCE((SELECT MAX(sort_order) + 1 FROM beauty_services), 1)
             )
             RETURNING id, category, name, price, duration, image_url,
@@ -521,7 +523,6 @@ def create_admin_service(
                 payload.name.strip(),
                 payload.price,
                 payload.duration,
-                (payload.image_url or "").strip() or None,
                 (payload.description or "").strip() or None,
                 json.dumps(includes, ensure_ascii=False),
                 payload.is_active,
@@ -562,14 +563,15 @@ def update_admin_service(
         elif key == "duration":
             sets.append("duration=%s")
             values.append(value)
-        elif key == "image_url":
-            sets.append("image_url=%s")
-            values.append((value or "").strip() or None)
         elif key == "description":
             sets.append("description=%s")
             values.append((value or "").strip() or None)
         elif key == "includes":
-            cleaned = [str(x).strip()[:300] for x in (value or []) if str(x).strip()]
+            cleaned = [
+                str(x).strip()[:300]
+                for x in (value or [])
+                if str(x).strip()
+            ]
             sets.append("includes=%s::jsonb")
             values.append(json.dumps(cleaned, ensure_ascii=False))
         elif key == "is_active":

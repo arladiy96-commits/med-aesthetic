@@ -43,6 +43,29 @@
   <link rel="stylesheet" href="./css/admin/more.css">
   <link rel="stylesheet" href="./css/admin/services.css">
   <link rel="stylesheet" href="./css/navigation.css">
+
+<style>
+.service-static-photo-note{
+  margin:4px 0 13px;
+  padding:11px 12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.07);
+  background:#0b0910;
+}
+.service-static-photo-note b{
+  display:block;
+  color:#eee8f5;
+  font-size:9px;
+}
+.service-static-photo-note span{
+  display:block;
+  margin-top:4px;
+  color:#756e7c;
+  font-size:7.5px;
+  line-height:1.45;
+}
+</style>
+
 </head>
 <body>
   <div id="app"></div>
@@ -263,219 +286,11 @@
 
   const LASER_BANNER = "/assets/laser.webp";
 
-  let services = [
-    {
-      id:1,
-      cat:"Косметология",
-      name:"Чистка лица",
-      price:null,
-      duration:null,
-      img:IMG.faceCleaning,
-      desc:"Профессиональное очищение кожи с подбором метода по её состоянию и чувствительности.",
-      includes:[
-        "Аппаратная чистка",
-        "Механическая чистка",
-        "Комбинированная чистка",
-        "Подбор варианта после консультации"
-      ]
-    },
-    {
-      id:2,
-      cat:"Пирсинг",
-      name:"Детский прокол ушей",
-      price:null,
-      duration:null,
-      img:IMG.childPiercing,
-      desc:"Аккуратный прокол мочек ушей для детей с внимательным и спокойным подходом к процедуре.",
-      includes:[
-        "Подбор места прокола",
-        "Подготовка и обработка зоны",
-        "Прокол мочек ушей",
-        "Рекомендации по домашнему уходу"
-      ]
-    },
-    {
-      id:3,
-      cat:"Косметология",
-      name:"Удаление кожных новообразований",
-      price:null,
-      duration:null,
-      img:IMG.lesionRemoval,
-      desc:"Удаление подходящих кожных новообразований после предварительной оценки специалистом.",
-      includes:[
-        "Предварительная консультация",
-        "Оценка зоны",
-        "Проведение процедуры при отсутствии противопоказаний",
-        "Рекомендации по уходу после процедуры"
-      ]
-    },
-    {
-      id:4,
-      cat:"Пирсинг",
-      name:"Пирсинг уха",
-      price:null,
-      duration:null,
-      img:IMG.earPiercing,
-      desc:"Проколы разных зон уха — от классической мочки до сложных композиций.",
-      includes:[
-        "Мочка и верхняя мочка",
-        "Хеликс и форвард-хеликс",
-        "Трагус, конч, дейс и rook",
-        "Индустриал"
-      ]
-    },
-    {
-      id:5,
-      cat:"Пирсинг",
-      name:"Пирсинг носа",
-      price:null,
-      duration:null,
-      img:IMG.nosePiercing,
-      desc:"Подбор прокола под анатомию и желаемый образ — от аккуратной ноздри до более выразительных вариантов.",
-      includes:[
-        "Ноздря",
-        "Септум",
-        "Бридж",
-        "Рекомендации по уходу"
-      ]
-    },
-    {
-      id:6,
-      cat:"Пирсинг",
-      name:"Пирсинг губ",
-      price:null,
-      duration:null,
-      img:IMG.lipPiercing,
-      desc:"Разные варианты пирсинга губ с подбором расположения под черты лица и анатомию.",
-      includes:[
-        "Лабрет",
-        "Медуза",
-        "Монро",
-        "Вертикальный лабрет",
-        "Snake bites и другие парные варианты"
-      ]
-    },
-    {
-      id:7,
-      cat:"Пирсинг",
-      name:"Пирсинг языка",
-      price:null,
-      duration:null,
-      img:IMG.tonguePiercing,
-      desc:"Классический прокол языка и отдельные варианты поверхностного пирсинга после оценки анатомии.",
-      includes:[
-        "Классический прокол языка",
-        "Оценка анатомии перед процедурой",
-        "Некоторые поверхностные варианты",
-        "Подробные рекомендации по уходу"
-      ]
-    },
-    {
-      id:8,
-      cat:"Пирсинг",
-      name:"Пирсинг брови",
-      price:null,
-      duration:null,
-      img:IMG.browPiercing,
-      desc:"Стандартный прокол брови с выбором подходящего расположения и украшения.",
-      includes:[
-        "Подбор точки прокола",
-        "Стандартный прокол брови",
-        "Установка украшения",
-        "Рекомендации по уходу"
-      ]
-    },
-    {
-      id:9,
-      cat:"Пирсинг",
-      name:"Пирсинг пупка",
-      price:null,
-      duration:null,
-      img:IMG.navelPiercing,
-      desc:"Классический пирсинг пупка и отдельные анатомические варианты при подходящем строении зоны.",
-      includes:[
-        "Оценка анатомии",
-        "Классический прокол",
-        "Некоторые анатомические варианты",
-        "Рекомендации по заживлению"
-      ]
-    },
-    {
-      id:10,
-      cat:"Пирсинг",
-      name:"Пирсинг тела",
-      price:null,
-      duration:null,
-      img:IMG.bodyPiercing,
-      desc:"Пирсинг отдельных зон тела с обязательной предварительной оценкой анатомии и возможности безопасного размещения.",
-      includes:[
-        "Пирсинг сосков",
-        "Различные поверхностные проколы",
-        "Подбор расположения",
-        "Рекомендации по уходу"
-      ]
-    },
-    {
-      id:11,
-      cat:"Аппаратные процедуры",
-      name:"Лазерная эпиляция",
-      price:null,
-      duration:null,
-      img:IMG.laser,
-      desc:"Аппаратная процедура для длительного уменьшения роста нежелательных волос на выбранных зонах.",
-      includes:[
-        "Подбор зоны обработки",
-        "Настройка параметров под клиента",
-        "Проведение процедуры",
-        "Рекомендации между сеансами"
-      ]
-    },
-    {
-      id:12,
-      cat:"Аппаратные процедуры",
-      name:"Курс аппаратной коррекции",
-      price:null,
-      duration:null,
-      img:IMG.bodyCorrection,
-      desc:"Курс процедур для работы с выбранными зонами тела по индивидуально подобранной программе.",
-      includes:[
-        "Первичная консультация",
-        "Подбор курса",
-        "Аппаратная работа по выбранным зонам",
-        "Контроль динамики в процессе курса"
-      ]
-    },
-    {
-      id:13,
-      cat:"Аппаратные процедуры",
-      name:"Токовая терапия",
-      price:null,
-      duration:null,
-      img:IMG.currentTherapy,
-      desc:"Аппаратная процедура с использованием слабых электрических импульсов по индивидуально выбранному протоколу.",
-      includes:[
-        "Оценка состояния кожи",
-        "Подбор режима процедуры",
-        "Проведение токовой терапии",
-        "Рекомендации по дальнейшему уходу"
-      ]
-    },
-    {
-      id:14,
-      cat:"Сертификаты",
-      name:"Подарочные сертификаты",
-      price:null,
-      duration:null,
-      img:IMG.certificate,
-      desc:"Красивый способ подарить близкому человеку процедуру или возможность самостоятельно выбрать услугу.",
-      includes:[
-        "Подбор номинала",
-        "Возможность подарить на выбранную услугу",
-        "Оформление сертификата",
-        "Уточнение условий использования при записи"
-      ]
-    }
-  ];
+  // Услуги не храним в HTML: единственный источник истины — Neon через /api/services.
+  // Это исключает вспышку старых названий/фото до прихода актуальных данных.
+  let services = [];
+  let servicesLoaded = false;
+
 
   const fmt = n => new Intl.NumberFormat("ru-RU").format(n) + " ₸";
   const priceLabel = s => Number.isFinite(Number(s?.price)) ? fmt(Number(s.price)) : "Цена по записи";
@@ -490,8 +305,6 @@
   })();
   let adminBookingsLoaded = adminBookings.length > 0;
   let adminServices = [];
-  let servicePhotoDraft = "";
-  let servicePhotoChanged = false;
   let lastServicesSignature = "";
   let lastBookingsSignature = "";
   let lastAdminBookingsSignature = dataSignature(adminBookings);
@@ -571,10 +384,21 @@
       const data=await serviceCatalogApi();
       const next=Array.isArray(data.services)?data.services:[];
       const signature=dataSignature(next);
+      const firstLoad=!servicesLoaded;
       const changed=signature!==lastServicesSignature;
-      if(changed){
+
+      servicesLoaded=true;
+
+      if(changed || firstLoad){
         services=next;
         lastServicesSignature=signature;
+
+        if(S.service){
+          const fresh=services.find(x=>Number(x.id)===Number(S.service.id));
+          S.service=fresh||null;
+          if(S.view==="service" && !fresh)S.view="services";
+        }
+
         if(["home","services","service"].includes(S.view))backgroundRender();
       }
     }catch(e){
@@ -607,110 +431,13 @@
 
   function openAdminServiceEditor(id){
     S.adminServiceId=id==="new"?"new":String(id);
-    const s=id==="new"?null:adminServices.find(x=>String(x.id)===String(id));
-    servicePhotoDraft=s?.img||"";
-    servicePhotoChanged=false;
     render();
     haptic();
   }
 
   function closeAdminServiceEditor(){
     S.adminServiceId=null;
-    servicePhotoDraft="";
-    servicePhotoChanged=false;
     render();
-  }
-
-  function previewServicePhoto(src){
-    const img=document.querySelector("#adminServicePhotoPreview");
-    const placeholder=document.querySelector(".service-photo-placeholder");
-    if(img){
-      img.src=src||"";
-      img.style.display=src?"block":"none";
-    }
-    if(placeholder)placeholder.style.display=src?"none":"grid";
-  }
-
-  function removeServicePhoto(){
-    servicePhotoDraft="";
-    servicePhotoChanged=true;
-    previewServicePhoto("");
-    const input=document.querySelector("#adminServicePhoto");
-    if(input)input.value="";
-    haptic();
-  }
-
-  function compressServicePhoto(image){
-    let maxSide=1080;
-    let quality=.76;
-
-    for(let attempt=0;attempt<5;attempt++){
-      const scale=Math.min(1,maxSide/Math.max(image.width,image.height));
-      const w=Math.max(1,Math.round(image.width*scale));
-      const h=Math.max(1,Math.round(image.height*scale));
-      const canvas=document.createElement("canvas");
-      canvas.width=w;
-      canvas.height=h;
-
-      const ctx=canvas.getContext("2d",{alpha:false});
-      if(!ctx)throw new Error("canvas");
-      ctx.fillStyle="#0b0910";
-      ctx.fillRect(0,0,w,h);
-      ctx.drawImage(image,0,0,w,h);
-
-      const data=canvas.toDataURL("image/jpeg",quality);
-      if(data.length<1500000)return data;
-
-      maxSide=Math.round(maxSide*.82);
-      quality=Math.max(.58,quality-.07);
-    }
-    throw new Error("too_large");
-  }
-
-  function handleServicePhoto(input){
-    const file=input?.files?.[0];
-    if(!file)return;
-
-    if(!String(file.type||"").startsWith("image/")){
-      toast("Выберите фотографию");
-      input.value="";
-      return;
-    }
-    if(file.size>20*1024*1024){
-      toast("Фото слишком большое");
-      input.value="";
-      return;
-    }
-
-    // Show the chosen photo immediately. Compression happens after the preview.
-    const objectUrl=URL.createObjectURL(file);
-    previewServicePhoto(objectUrl);
-
-    const image=new Image();
-    image.onload=()=>{
-      try{
-        const data=compressServicePhoto(image);
-        servicePhotoDraft=data;
-        servicePhotoChanged=true;
-        previewServicePhoto(data);
-        haptic("medium");
-      }catch(e){
-        servicePhotoDraft="";
-        previewServicePhoto("");
-        input.value="";
-        toast("Не удалось подготовить фото");
-      }finally{
-        URL.revokeObjectURL(objectUrl);
-      }
-    };
-    image.onerror=()=>{
-      URL.revokeObjectURL(objectUrl);
-      servicePhotoDraft="";
-      previewServicePhoto("");
-      input.value="";
-      toast("Не удалось открыть фото");
-    };
-    image.src=objectUrl;
   }
 
   async function saveAdminService(){
@@ -729,8 +456,15 @@
 
     const price=priceRaw===""?null:Number(priceRaw);
     const duration=durationRaw===""?null:Number(durationRaw);
-    if(price!==null&&(!Number.isFinite(price)||price<0)){toast("Проверьте цену");return}
-    if(duration!==null&&(!Number.isFinite(duration)||duration<1)){toast("Проверьте длительность");return}
+
+    if(price!==null&&(!Number.isFinite(price)||price<0)){
+      toast("Проверьте цену");
+      return;
+    }
+    if(duration!==null&&(!Number.isFinite(duration)||duration<1)){
+      toast("Проверьте длительность");
+      return;
+    }
 
     const body={
       name,
@@ -738,25 +472,36 @@
       price:price===null?null:Math.round(price),
       duration:duration===null?null:Math.round(duration),
       description,
-      includes:includesRaw.split(/\n+/).map(x=>x.trim()).filter(Boolean).slice(0,30),
+      includes:includesRaw
+        .split(/\n+/)
+        .map(x=>x.trim())
+        .filter(Boolean)
+        .slice(0,30),
       is_active:active
     };
-    if(id==="new" || servicePhotoChanged){
-      body.image_url=servicePhotoDraft||null;
-    }
 
     const btn=document.querySelector("#saveAdminServiceBtn");
     if(btn)btn.disabled=true;
+
     try{
       if(id==="new"){
-        await adminServicesApi("",{method:"POST",body:JSON.stringify(body)});
+        await adminServicesApi("",{
+          method:"POST",
+          body:JSON.stringify(body)
+        });
       }else{
-        await adminServicesApi("/"+encodeURIComponent(id),{method:"PATCH",body:JSON.stringify(body)});
+        await adminServicesApi("/"+encodeURIComponent(id),{
+          method:"PATCH",
+          body:JSON.stringify(body)
+        });
       }
+
       S.adminServiceId=null;
-      servicePhotoDraft="";
-      servicePhotoChanged=false;
-      await Promise.all([loadAdminServices(true),loadServices(true)]);
+      await Promise.all([
+        loadAdminServices(true),
+        loadServices(true)
+      ]);
+
       render();
       toast(id==="new"?"Услуга добавлена":"Изменения сохранены");
       haptic("medium");
@@ -790,7 +535,6 @@
     try{
       await adminServicesApi("/"+encodeURIComponent(id),{method:"DELETE"});
       S.adminServiceId=null;
-      servicePhotoDraft="";
       await Promise.all([loadAdminServices(true),loadServices(true)]);
       render();
       toast("Услуга удалена");
@@ -1100,7 +844,13 @@
       </div>
       <section class="section">
         <div class="section-head"><h2>Популярные услуги</h2><button onclick="Beauty.go('services')">Все</button></div>
-        <div class="service-scroll">${services.slice(0,4).map(serviceCard).join("")||`<div class="empty">Доступных услуг пока нет.</div>`}</div>
+        <div class="service-scroll">${
+          !servicesLoaded
+            ? `<div class="empty">Загружаем актуальные услуги…</div>`
+            : services.length
+              ? services.slice(0,4).map(serviceCard).join("")
+              : `<div class="empty">Доступных услуг пока нет.</div>`
+        }</div>
       </section>
       <section class="section owner-section">
         <div class="section-head owner-section-head"><h2>О студии и основателе</h2></div>
@@ -1201,17 +951,28 @@
         </button>
       </div>
 
-      <div class="lux-category-strip">
-        ${cats.map(c=>`<button class="lux-category ${S.category===c?"active":""}" onclick="Beauty.setCategory('${esc(c)}')">
-          <span>${serviceCatalogIcon(c)}</span>
-          <b>${esc(c==="Все"?"Все":serviceCatalogCategoryLabel(c))}</b>
-        </button>`).join("")}
-      </div>
+      ${servicesLoaded?`
+        <div class="lux-category-strip">
+          ${cats.map(c=>`<button class="lux-category ${S.category===c?"active":""}" onclick="Beauty.setCategory('${esc(c)}')">
+            <span>${serviceCatalogIcon(c)}</span>
+            <b>${esc(c==="Все"?"Все":serviceCatalogCategoryLabel(c))}</b>
+          </button>`).join("")}
+        </div>
 
-      <div id="serviceList" class="lux-service-catalog">
-        ${featured?serviceFeaturedCard(featured):`<div class="lux-services-empty">В этой категории пока нет услуг.</div>`}
-        ${rest.length?`<div class="lux-service-grid">${rest.map(serviceGridCard).join("")}</div>`:""}
-      </div>
+        <div id="serviceList" class="lux-service-catalog">
+          ${featured?serviceFeaturedCard(featured):`<div class="lux-services-empty">В этой категории пока нет услуг.</div>`}
+          ${rest.length?`<div class="lux-service-grid">${rest.map(serviceGridCard).join("")}</div>`:""}
+        </div>
+      `:`
+        <div class="lux-category-strip">
+          <button class="lux-category active" disabled>
+            <span>${serviceCatalogIcon("Все")}</span><b>Все</b>
+          </button>
+        </div>
+        <div id="serviceList" class="lux-service-catalog">
+          <div class="lux-services-empty">Загружаем актуальные услуги…</div>
+        </div>
+      `}
     </main>${nav("services")}`;
   }
 
@@ -1222,7 +983,7 @@
   function serviceDetail(){
     const s=S.service || services[0];
     return `<main class="page page-services service-detail-page">
-      <div class="detail-cover"><img src="${s.img}" alt="" fetchpriority="high" decoding="async">
+      <div class="detail-cover"><img src="${s.fullImg||s.img}" alt="" fetchpriority="high" decoding="async">
         <button class="icon-btn back-float" onclick="Beauty.go('services')">‹</button>
         <button class="icon-btn heart-float gold" onclick="Beauty.toast('Добавлено в избранное')">♡</button>
       </div>
@@ -1769,7 +1530,7 @@
           : list.length
             ? list.map(s=>`<article class="admin-service-card ${s.isActive?"":"disabled"}">
                 <div class="admin-service-photo">
-                  ${s.img?`<img src="${esc(s.img)}" alt="">`:`<div class="admin-service-no-photo">⌘</div>`}
+                  ${s.img?`<img src="${esc(s.img)}" alt="" loading="lazy" decoding="async">`:`<div class="admin-service-no-photo">⌘</div>`}
                   <span class="admin-service-state ${s.isActive?"on":"off"}">${s.isActive?"В каталоге":"Скрыта"}</span>
                 </div>
                 <div class="admin-service-body">
@@ -1808,15 +1569,9 @@
           <button onclick="Beauty.closeAdminServiceEditor()" aria-label="Закрыть">×</button>
         </div>
 
-        <div class="service-photo-editor">
-          <div class="service-photo-preview">
-            ${servicePhotoDraft?`<img id="adminServicePhotoPreview" src="${esc(servicePhotoDraft)}" alt="">`:`<img id="adminServicePhotoPreview" src="" alt="" style="display:none">`}
-            <div class="service-photo-placeholder" ${servicePhotoDraft?'style="display:none"':""}>Фото услуги</div>
-          </div>
-          <div class="service-photo-actions">
-            <label class="service-photo-pick">Выбрать фото<input id="adminServicePhoto" type="file" accept="image/*" onchange="Beauty.handleServicePhoto(this)"></label>
-            ${servicePhotoDraft?`<button onclick="Beauty.removeServicePhoto()">Убрать фото</button>`:""}
-          </div>
+        <div class="service-static-photo-note">
+          <b>Фото услуги закреплено</b>
+          <span>Фотографии хранятся как лёгкие WebP-файлы и не меняются через админку.</span>
         </div>
 
         <div class="service-edit-grid">
@@ -1853,7 +1608,7 @@
     const creatorItem=S.actualRole==="creator"?`<button onclick="Beauty.openAdminAccess()"><span class="ico">♛</span><div><b>Администраторы</b><small>Добавление по Telegram ID и права доступа</small></div><span class="go">›</span></button>`:"";
     return `<main class="admin-page admin-more-page">${adminHeader()}<div class="admin-date-row"><div><h1>Ещё</h1><p>Управление и автоматизация</p></div></div>
       <div class="admin-menu">
-        <button onclick="Beauty.openAdminServices()"><span class="ico">⌘</span><div><b>Услуги</b><small>Фото, описание, цены и доступность</small></div><span class="go">›</span></button>
+        <button onclick="Beauty.openAdminServices()"><span class="ico">⌘</span><div><b>Услуги</b><small>Описание, цены и доступность</small></div><span class="go">›</span></button>
         <button onclick="Beauty.go('admin-calendar')"><span class="ico">□</span><div><b>Расписание</b><small>Рабочие дни, перерывы, выходные</small></div><span class="go">›</span></button>
         <button onclick="Beauty.toast('Автоматические уведомления — следующий модуль')"><span class="ico">♧</span><div><b>Уведомления</b><small>Напоминания и сообщения клиентам</small></div><span class="go">›</span></button>
         <button onclick="Beauty.toast('Автоматизацию будем настраивать по сценариям')"><span class="ico">↻</span><div><b>Автоматизация</b><small>Правила без ручной работы</small></div><span class="go">›</span></button>
@@ -2103,8 +1858,6 @@
     loadAdminServices(){return loadAdminServices(false)},
     openAdminServiceEditor,
     closeAdminServiceEditor,
-    handleServicePhoto,
-    removeServicePhoto,
     saveAdminService,
     toggleAdminService,
     deleteAdminService,
@@ -2149,8 +1902,21 @@
     },
     openService(id){
       const found=services.find(x=>Number(x.id)===Number(id));
-      if(!found){S.view="services";render();toast("Эта услуга сейчас недоступна");return}
-      S.service=found;S.master=null;S.time=null;S.view="service";render();window.scrollTo(0,0);haptic()
+      if(!found){
+        S.view="services";
+        render();
+        if(servicesLoaded)toast("Эта услуга сейчас недоступна");
+        else loadServices(false);
+        return;
+      }
+      // Always use the current object returned by /api/services, never an old copy.
+      S.service=found;
+      S.master=null;
+      S.time=null;
+      S.view="service";
+      render();
+      window.scrollTo(0,0);
+      haptic();
     },
     startBooking(id){S.service=services.find(x=>x.id===id);S.master=masters[0];S.date=null;S.time=null;go("datetime")},
     openMaster(id){S.master=masters.find(x=>x.id===id);if(!S.service){S.service=services[0]}go("masters")},

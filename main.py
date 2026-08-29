@@ -13,6 +13,7 @@ from bot import (
     setup_telegram_webhook,
 )
 from database import database_status, init_db
+from service_assets import build_service_assets, service_assets_status
 
 BASE_DIR = Path(__file__).resolve().parent
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
@@ -39,6 +40,7 @@ app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
 @app.on_event("startup")
 def startup() -> None:
     init_db()
+    build_service_assets()
     setup_telegram_webhook()
 
 
@@ -75,6 +77,7 @@ async def health() -> JSONResponse:
             "bot_configured": bool(BOT_TOKEN),
             "telegram_webhook_enabled": bot_webhook_enabled(),
             "database": db,
+            "service_images": service_assets_status(),
         }
     )
 
