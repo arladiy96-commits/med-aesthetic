@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#09060f" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>MED AESTHETIC v24</title>
+  <!-- Priority service thumbnails: start with the first screen, before API/JS rendering. -->
+  <link rel="preload" as="image" href="/assets/services/service-1-thumb.webp?v=0601e3c57a32" fetchpriority="high">
+  <link rel="preload" as="image" href="/assets/services/service-2-thumb.webp?v=9f86c2fd6a61" fetchpriority="high">
+  <link rel="preload" as="image" href="/assets/services/service-3-thumb.webp?v=ddf7f21c8f0d" fetchpriority="high">
+  <link rel="preload" as="image" href="/assets/services/service-4-thumb.webp?v=9368267b5483" fetchpriority="high">
+  <!-- Visual modules: edit only the section you are working on. -->
+  <!-- Admin is split by screen. Edit only the screen you are working on. -->
+  <style>
+.service-static-photo-note{
+  margin:4px 0 13px;
+  padding:11px 12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.07);
+  background:#0b0910;
+}
+.service-static-photo-note b{
+  display:block;
+  color:#eee8f5;
+  font-size:9px;
+}
+.service-static-photo-note span{
+  display:block;
+  margin-top:4px;
+  color:#756e7c;
+  font-size:7.5px;
+  line-height:1.45;
+}
+</style>
+
+
+<style id="booking-keyboard-kz-fix">
+/* While the iOS keyboard is open, fixed bottom controls must not cover inputs. */
+/* Remove the ENTIRE fixed bottom UI from rendering while iOS changes
+   visualViewport. display:none means there is no fixed layer available to jump. */
+.booking-keyboard-open .page-booking .sticky-action,
+.booking-keyboard-open .bottom-nav{
+  display:none!important;
+}
+
+/* Bottom fixed UI never animates its geometry. */
+.page-booking .sticky-action,
+.bottom-nav{
+  transition:none!important;
+  animation:none!important;
+  will-change:auto!important;
+}
+
+/* Keep page geometry constant. Do not change padding when keyboard opens. */
+.booking-keyboard-open .page-booking{
+  padding-bottom:calc(190px + env(safe-area-inset-bottom))!important;
+}
+
+.page-booking .booking-contact-field input{
+  scroll-margin-top:120px;
+  scroll-margin-bottom:36px;
+}
+
+#bookingClientPhone{
+  font-variant-numeric:tabular-nums;
+  letter-spacing:.025em;
+}
+
+/* iOS zooms pages when focused inputs are below 16px.
+   Prevent that zoom/jump on the contact screen. */
+@media (max-width:700px){
+  .page-booking .booking-contact-field input{
+    font-size:16px!important;
+  }
+}
+</style>
+
+
+<style id="instant-action-feedback">
+.action-busy-content{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  width:100%;
+  min-width:0;
+}
+
+.action-busy-spinner{
+  width:16px;
+  height:16px;
+  flex:0 0 16px;
+  border-radius:50%;
+  border:2px solid currentColor;
+  border-right-color:transparent;
+  animation:med-action-spin .68s linear infinite;
+}
+
+button.is-busy,
+button:disabled.is-busy{
+  cursor:default!important;
+  pointer-events:none!important;
+  opacity:.88!important;
+}
+
+.admin-booking-actions button:disabled:not(.is-busy){
+  opacity:.42!important;
+  pointer-events:none!important;
+}
+
+@keyframes med-action-spin{
+  to{transform:rotate(360deg)}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .action-busy-spinner{animation-duration:1.25s}
+}
+</style>
+
+
+<style id="booking-date-fixed-selection">
+.booking-selected-date{
+  margin:10px 2px 3px;
+  font-size:11px;
+  color:var(--muted);
+  white-space:nowrap;
+}
+.booking-selected-date b{
+  color:var(--gold2);
+  font-weight:800;
+}
+</style>
+
+
+<style id="services-scroll-return-fix">
+/* #app is the real vertical scroller. Prevent browser scroll anchoring
+   from overriding the exact position we restore after rebuilding Services. */
+#app.services-restoring-scroll{
+  overflow-anchor:none!important;
+}
+</style>
+  <title>MED AESTHETIC — Клиент</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="./js/boot.js"></script>
+  <link rel="stylesheet" href="./css/core.css">
+  <link rel="stylesheet" href="./css/home.css">
+  <link rel="stylesheet" href="./css/services.css">
+  <link rel="stylesheet" href="./css/booking.css">
+  <link rel="stylesheet" href="./css/history.css">
+  <link rel="stylesheet" href="./css/profile.css">
+  <link rel="stylesheet" href="./css/navigation.css">
+  <link rel="stylesheet" href="./css/booking-availability.css">
+</head>
+<body>
+<div id="app"></div>
+  <div id="toast" class="toast"></div>
+  <script src="./js/app.js"></script>
+</body>
+</html>
