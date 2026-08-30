@@ -21,9 +21,9 @@
     if(res.ok) actualRole=String(data?.user?.actualRole||data?.actualRole||"client").toLowerCase();
   }catch(e){}
   if(actualRole==="creator"||actualRole==="admin"){
-    location.replace(`/admin/mobile/index.html?entry=${actualRole}`);
+    location.replace(`/admin/mobile/index.html?entry=${actualRole}&build=mobileclient2`);
   }else{
-    location.replace("/client/index.html?entry=client");
+    location.replace("/client/index.html?entry=client&build=mobileclient2");
   }
 })();
 </script>

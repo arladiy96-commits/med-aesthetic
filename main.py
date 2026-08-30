@@ -57,7 +57,7 @@ async def cache_policy(request, call_next):
 
     if path == "/":
         # index.html must always pick up the newest deployment.
-        response.headers["Cache-Control"] = "no-cache, must-revalidate"
+        response.headers["Cache-Control"] = "no-store, max-age=0"
     elif path in {"/api/services", "/api/admin/services"} or path.startswith("/api/admin/") or path.startswith("/api/availability"):
         # Live admin/availability data must never be stale. Service catalog speed
         # still comes from the server RAM cache, not from browser caching.
@@ -67,7 +67,9 @@ async def cache_policy(request, call_next):
         response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
     elif path.startswith("/client/") or path.startswith("/admin/mobile/"):
         # Keep the physical client/mobile-admin bundles fresh after deploys.
-        response.headers["Cache-Control"] = "no-cache, must-revalidate"
+        response.headers["Cache-Control"] = "no-store, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
 
     return response
 
