@@ -1,4 +1,5 @@
-/* DESKTOP ADMIN — services. No mobile dependency. */
+/* DESKTOP ADMIN — services.css */
+/* Base admin styles */
 /* ADMIN SERVICES + EDITOR — CALM MOBILE */
 .admin-services-page .admin-services-summary{
   display:grid;
@@ -302,8 +303,7 @@
   .service-edit-grid{grid-template-columns:1fr}
 }
 
-
-/* DESKTOP OVERRIDES */
+/* desktop-only overrides */
 /* MED AESTHETIC — DESKTOP SERVICES */
 /* ========== SERVICES / FINANCE / ACCESS / MORE ========== */
   body.admin-layout-desktop .admin-services-page .admin-service-list{

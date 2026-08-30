@@ -1,4 +1,5 @@
-/* DESKTOP ADMIN — base. No mobile dependency. */
+/* DESKTOP ADMIN — base.css */
+/* Base admin styles */
 /* MED AESTHETIC — ADMIN SHARED / CALM MOBILE
    Shared admin shell only. Client UI is untouched. */
 :root{
@@ -389,8 +390,7 @@
 .admin-search-group>p,.admin-search-empty{padding:18px 12px;border:1px solid var(--admin-border);border-radius:13px;background:#0d0e13;color:#77727d;text-align:center;font-size:9.5px}
 .admin-search-empty b,.admin-search-empty span{display:block}.admin-search-empty b{color:#c8c3cc;font-size:11px}.admin-search-empty span{margin-top:5px;line-height:1.45}
 
-
-/* DESKTOP OVERRIDES */
+/* desktop-only overrides */
 /* MED AESTHETIC — DESKTOP BASE */
 /* MED AESTHETIC — DESKTOP ADMIN ONLY
    Activated only by JS class body.admin-layout-desktop.

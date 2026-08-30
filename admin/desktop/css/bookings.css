@@ -1,4 +1,5 @@
-/* DESKTOP ADMIN — bookings. No mobile dependency. */
+/* DESKTOP ADMIN — bookings.css */
+/* Base admin styles */
 /* ADMIN BOOKINGS + BOOKING SHEET — CALM MOBILE */
 .admin-bookings-page .admin-filter{
   display:flex;
@@ -239,8 +240,7 @@
 .admin-slot-choice{width:100%;padding:12px;border:1px solid rgba(156,132,216,.16);border-radius:13px;background:rgba(156,132,216,.045);color:var(--admin-text);text-align:left}.admin-slot-choice b,.admin-slot-choice span{display:block}.admin-slot-choice b{font-size:10.5px}.admin-slot-choice span{margin-top:4px;color:#817c86;font-size:8.5px}
 @media(max-width:390px){.admin-form-grid{grid-template-columns:1fr}}
 
-
-/* DESKTOP OVERRIDES */
+/* desktop-only overrides */
 /* MED AESTHETIC — DESKTOP BOOKINGS */
 /* ========== BOOKINGS ========== */
   body.admin-layout-desktop .admin-bookings-page .admin-create-main{

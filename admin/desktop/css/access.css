@@ -1,4 +1,5 @@
-/* DESKTOP ADMIN — access. No mobile dependency. */
+/* DESKTOP ADMIN — access.css */
+/* Base admin styles */
 /* ADMIN ACCESS — CALM MOBILE */
 .admin-access-page .access-hero{
   margin:3px 0 14px;
@@ -118,7 +119,5 @@
   font-size:8.5px;
 }
 
-
-/* DESKTOP OVERRIDES */
+/* desktop-only overrides */
 /* MED AESTHETIC — DESKTOP ACCESS */
-

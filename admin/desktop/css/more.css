@@ -1,4 +1,5 @@
-/* DESKTOP ADMIN — more. No mobile dependency. */
+/* DESKTOP ADMIN — more.css */
+/* Base admin styles */
 /* ADMIN MORE — CALM MOBILE */
 .admin-more-page .admin-menu{
   overflow:hidden;
@@ -93,8 +94,7 @@
   background:#b9acd2;
 }
 
-
-/* DESKTOP OVERRIDES */
+/* desktop-only overrides */
 /* MED AESTHETIC — DESKTOP MORE */
 body.admin-layout-desktop .admin-more-page .admin-menu{
     display:grid!important;
