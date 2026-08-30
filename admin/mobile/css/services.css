@@ -1,4 +1,5 @@
-/* MOBILE ADMIN — services. No desktop dependency. */
+/* MOBILE ADMIN — services.css */
+/* Base admin styles */
 /* ADMIN SERVICES + EDITOR — CALM MOBILE */
 .admin-services-page .admin-services-summary{
   display:grid;
@@ -302,8 +303,7 @@
   .service-edit-grid{grid-template-columns:1fr}
 }
 
-
-/* MOBILE OVERRIDES */
+/* mobile-only overrides */
 /* MED AESTHETIC — MOBILE SERVICES */
 body.admin-layout-mobile .admin-services-page .admin-services-summary>div,
   body.admin-layout-mobile .admin-services-page .admin-service-card{

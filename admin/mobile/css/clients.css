@@ -1,4 +1,5 @@
-/* MOBILE ADMIN — clients. No desktop dependency. */
+/* MOBILE ADMIN — clients.css */
+/* Base admin styles */
 /* ADMIN CLIENTS — CALM MOBILE */
 .admin-clients-page .search-box{
   min-height:43px;
@@ -57,8 +58,7 @@
 .admin-client-note{display:block;margin-top:9px;padding:10px;border:1px solid var(--admin-border);border-radius:13px;background:#0d0e13}.admin-client-note>span{display:block;margin-bottom:6px;color:#8b8690;font-size:8px;font-weight:650}.admin-client-note textarea{width:100%;padding:9px;border:1px solid rgba(255,255,255,.06);border-radius:10px;outline:0;resize:vertical;background:#111218;color:var(--admin-text);font:inherit;font-size:9.5px;line-height:1.45}.admin-client-note button{width:100%;min-height:33px;margin-top:7px;border:1px solid rgba(156,132,216,.15);border-radius:9px;background:rgba(156,132,216,.045);color:#b6a9cc;font-size:8.5px;font-weight:700}
 .admin-client-history-title{display:flex;align-items:center;justify-content:space-between;margin:15px 1px 7px}.admin-client-history-title h4{margin:0;font-size:11px}.admin-client-history-title span{color:#77727d;font-size:8px}.admin-client-history{overflow:hidden;border:1px solid var(--admin-border);border-radius:13px;background:#0d0e13}.admin-client-history>button{width:100%;min-height:55px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;padding:9px 10px;border:0;border-bottom:1px solid rgba(255,255,255,.05);background:none;color:var(--admin-text);text-align:left}.admin-client-history>button:last-child{border-bottom:0}.admin-client-history b,.admin-client-history small{display:block}.admin-client-history b{font-size:9.5px}.admin-client-history small{margin-top:3px;color:#7f7a84;font-size:8px}.admin-client-history em{max-width:104px;color:#99939c;font-size:7.5px;font-style:normal;text-align:right}.admin-client-history em.status-confirmed{color:#83ae90}.admin-client-history em.status-pending{color:#cfb16f}.admin-client-history em.status-no_show,.admin-client-history em.status-cancelled{color:#c7838e}
 
-
-/* MOBILE OVERRIDES */
+/* mobile-only overrides */
 /* MED AESTHETIC — MOBILE CLIENTS */
 body.admin-layout-mobile .admin-clients-page .search-box{
     border-color:#e1dcd8!important;background:#fff!important;color:#918a92!important;

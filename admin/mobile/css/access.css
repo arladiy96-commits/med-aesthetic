@@ -1,4 +1,5 @@
-/* MOBILE ADMIN — access. No desktop dependency. */
+/* MOBILE ADMIN — access.css */
+/* Base admin styles */
 /* ADMIN ACCESS — CALM MOBILE */
 .admin-access-page .access-hero{
   margin:3px 0 14px;
@@ -118,8 +119,7 @@
   font-size:8.5px;
 }
 
-
-/* MOBILE OVERRIDES */
+/* mobile-only overrides */
 /* MED AESTHETIC — MOBILE ACCESS */
 body.admin-layout-mobile .admin-access-page .admin-id-form input{
     border-color:#dfdad6!important;background:#faf9f7!important;color:#252127!important;

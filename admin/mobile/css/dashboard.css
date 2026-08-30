@@ -1,4 +1,5 @@
-/* MOBILE ADMIN — dashboard. No desktop dependency. */
+/* MOBILE ADMIN — dashboard.css */
+/* Base admin styles */
 /* ADMIN DASHBOARD — CALM MOBILE */
 .v3-admin-home{
   --v3-panel:#101117;
@@ -331,8 +332,7 @@
 .admin-next-actions button{min-height:34px;padding:0 7px;border:1px solid var(--admin-border);border-radius:10px;background:#0d0e13;color:#a7a1ab;font-size:8.5px;font-weight:650}
 .admin-next-empty{padding:11px 0 5px}.admin-next-empty b,.admin-next-empty span{display:block}.admin-next-empty b{font-size:12px}.admin-next-empty span{margin-top:4px;color:#817c86;font-size:9px}
 
-
-/* MOBILE OVERRIDES */
+/* mobile-only overrides */
 /* MED AESTHETIC — MOBILE DASHBOARD */
 body.admin-layout-mobile .admin-next-card{
     border-color:#d9cce8!important;
