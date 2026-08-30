@@ -83,3 +83,11 @@
 .admin-calendar-page .admin-action{
   min-height:71px;
 }
+
+/* Complete time-slot calendar */
+.admin-week-scroll{grid-template-columns:none!important;display:flex!important;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.admin-week-scroll::-webkit-scrollbar{display:none}.admin-week-scroll .admin-day{flex:0 0 43px}
+.admin-calendar-date-label{margin:3px 0 11px;color:#aaa4ad;font-size:10px;font-weight:650}
+.admin-calendar-page .admin-slot-card,.admin-calendar-page .admin-slot-free,.admin-calendar-page .admin-slot-blocked{width:100%;text-align:left}
+.admin-calendar-page .admin-slot-free{display:block!important;border-style:dashed!important;background:#0c0d11!important}.admin-calendar-page .admin-slot-free b,.admin-calendar-page .admin-slot-free span,.admin-calendar-page .admin-slot-blocked b,.admin-calendar-page .admin-slot-blocked span{display:block}.admin-calendar-page .admin-slot-free b{color:#8c8791;font-size:9.5px;font-weight:600}.admin-calendar-page .admin-slot-free span{margin-top:3px;color:#605c65;font-size:7.8px}
+.admin-calendar-page .admin-slot-blocked{min-height:56px;padding:10px 11px;border:1px solid rgba(214,180,107,.14);border-radius:13px;background:rgba(214,180,107,.035);color:#b59b66}.admin-calendar-page .admin-slot-blocked b{font-size:9.5px}.admin-calendar-page .admin-slot-blocked span{margin-top:4px;color:#7b6c50;font-size:7.8px}
+.admin-calendar-hint{margin:9px 2px 0;color:#6f6a74;font-size:8px;line-height:1.4}

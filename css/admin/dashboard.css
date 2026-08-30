@@ -310,3 +310,22 @@
   line-height:1.45;
 }
 .v3-admin-empty.success{color:#7b9484}
+
+/* Next appointment — primary working card */
+.admin-next-card{
+  margin-bottom:10px;
+  padding:13px;
+  border:1px solid rgba(156,132,216,.14);
+  border-radius:18px;
+  background:linear-gradient(180deg,#15151c,#101117);
+}
+.admin-next-card.late{border-color:rgba(201,120,134,.24)}
+.admin-next-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+.admin-next-top span{color:#8d8892;font-size:8.5px;text-transform:uppercase;letter-spacing:.6px}
+.admin-next-top b{padding:5px 7px;border-radius:999px;background:rgba(156,132,216,.07);color:#b7a9d0;font-size:8.5px;font-weight:700}
+.admin-next-card.late .admin-next-top b{background:rgba(201,120,134,.06);color:#cf8490}
+.admin-next-main{width:100%;display:grid;grid-template-columns:58px minmax(0,1fr) 10px;align-items:center;gap:9px;padding:5px 0 9px;border:0;background:none;color:var(--admin-text);text-align:left}
+.admin-next-main>strong{font-size:23px;font-weight:650;letter-spacing:-.03em}.admin-next-main h2{margin:0;font-size:14px;font-weight:650}.admin-next-main p{margin:4px 0 0;color:#8b8690;font-size:9.5px}.admin-next-main i{color:#625e68;font-style:normal;font-size:16px}
+.admin-next-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding-top:8px;border-top:1px solid rgba(255,255,255,.05)}
+.admin-next-actions button{min-height:34px;padding:0 7px;border:1px solid var(--admin-border);border-radius:10px;background:#0d0e13;color:#a7a1ab;font-size:8.5px;font-weight:650}
+.admin-next-empty{padding:11px 0 5px}.admin-next-empty b,.admin-next-empty span{display:block}.admin-next-empty b{font-size:12px}.admin-next-empty span{margin-top:4px;color:#817c86;font-size:9px}
