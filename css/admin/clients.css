@@ -1,5 +1,50 @@
-/* ADMIN CLIENTS ONLY — .admin-clients-page */
-.admin-clients-page .admin-kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-.admin-clients-page .admin-kpi{border:1px solid rgba(255,255,255,.07);background:#121019;border-radius:16px;padding:12px}
-.admin-clients-page .admin-kpi small{font-size:7.4px;color:var(--muted)}
-.admin-clients-page .admin-kpi strong{display:block;font-size:18px;margin-top:4px;color:#fff}
+/* ADMIN CLIENTS — CALM MOBILE */
+.admin-clients-page .search-box{
+  min-height:43px;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin:0 0 11px!important;
+  padding:0 12px;
+  border:1px solid var(--admin-border);
+  border-radius:13px;
+  background:#111218;
+  color:#706b75;
+}
+.admin-clients-page .search-box input{
+  width:100%;
+  border:0;
+  outline:0;
+  background:transparent;
+  color:var(--admin-text);
+  font-size:10.5px;
+}
+.admin-clients-page .search-box input::placeholder{color:#696570}
+.admin-clients-page .admin-kpis{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-bottom:11px;
+}
+.admin-clients-page .admin-kpi{
+  min-height:73px;
+  padding:12px;
+  border:1px solid var(--admin-border);
+  border-radius:15px;
+  background:#111218;
+}
+.admin-clients-page .admin-kpi small{
+  display:block;
+  color:var(--admin-muted);
+  font-size:9px;
+}
+.admin-clients-page .admin-kpi strong{
+  display:block;
+  margin-top:9px;
+  color:#ede9ef;
+  font-size:21px;
+  font-weight:650;
+}
+.admin-clients-page .admin-section{
+  margin-top:0;
+}

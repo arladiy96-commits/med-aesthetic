@@ -1,33 +1,118 @@
-/* ADMIN ACCESS / ADMINISTRATORS ONLY — .admin-access-page */
-.admin-access-page .access-hero{margin:4px 0 14px;border:1px solid rgba(151,105,255,.24);border-radius:22px;padding:16px;background:radial-gradient(260px 120px at 90% 0%,rgba(127,71,255,.18),transparent 60%),linear-gradient(180deg,#15111d,#0f0d15)}
-.admin-access-page .access-hero h2{font-size:16px;margin:0 0 6px}
-.admin-access-page .access-hero p{font-size:10px;line-height:1.55;color:#9d96a8;margin:0}
-.admin-access-page .access-primary{width:100%;min-height:48px;margin-top:14px;border-radius:14px;border:1px solid rgba(156,114,255,.62);background:linear-gradient(135deg,#6742da,#9b69f5);color:white;font-weight:800;box-shadow:0 12px 28px rgba(101,57,200,.22)}
-.admin-access-page .access-primary:disabled{opacity:.55}
-.admin-access-page .invite-card{border:1px solid rgba(228,183,93,.30);background:linear-gradient(180deg,#16121c,#0f0d14);border-radius:18px;padding:13px;margin-top:12px}
-.admin-access-page .invite-card .invite-label{font-size:9px;color:#8e8797;margin-bottom:7px}
-.admin-access-page .invite-link{width:100%;border:1px solid rgba(255,255,255,.08);background:#0b0910;color:#eee8f4;border-radius:12px;padding:11px 12px;font-size:10px;line-height:1.4;word-break:break-all}
-.admin-access-page .invite-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}
-.admin-access-page .invite-actions button{min-height:40px;border-radius:11px;border:1px solid rgba(255,255,255,.08);background:#15121b;font-size:10px;font-weight:750}
-.admin-access-page .invite-actions button:first-child{color:#f0ca78;border-color:rgba(228,183,93,.27)}
-.admin-access-page .admins-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:18px 0 9px}
-.admin-access-page .admins-head h2{font-size:14px;margin:0}
-.admin-access-page .admins-head button{border:0;background:none;color:#9c72ff;font-size:10px;padding:6px}
-.admin-access-page .admin-person{display:grid;grid-template-columns:42px 1fr auto;gap:10px;align-items:center;border:1px solid rgba(255,255,255,.06);background:#121018;border-radius:16px;padding:10px;margin-bottom:8px}
-.admin-access-page .admin-person-avatar{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(135deg,#31224c,#171020);color:#c8a9ff;font-weight:850}
-.admin-access-page .admin-person h3{font-size:11px;margin:0 0 3px}
-.admin-access-page .admin-person p{font-size:8.8px;color:#8e8797;margin:0}
-.admin-access-page .admin-remove{border:1px solid rgba(255,104,127,.20);background:rgba(255,104,127,.06);color:#ff8799;border-radius:10px;padding:8px 9px;font-size:9px}
-.admin-access-page .admin-empty-mini{border:1px dashed rgba(255,255,255,.08);border-radius:16px;padding:17px 12px;text-align:center;color:#8e8797;font-size:10px;line-height:1.5}
-
-.admin-access-page .admin-id-form{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:stretch;margin-top:14px}
-.admin-access-page .admin-id-form input{min-width:0;height:48px;border-radius:14px;border:1px solid rgba(255,255,255,.10);background:#0b0910;color:#f5efff;padding:0 13px;font-size:13px;font-weight:700;outline:none}
-.admin-access-page .admin-id-form input:focus{border-color:rgba(156,114,255,.62);box-shadow:0 0 0 3px rgba(156,114,255,.08)}
-.admin-access-page .admin-id-form input::placeholder{color:#6f6878;font-weight:600}
-.admin-access-page .admin-id-form .access-primary{width:auto;min-width:112px;margin-top:0;padding:0 14px}
-.admin-access-page .admin-id-help{margin-top:9px;color:#777080;font-size:9px;line-height:1.45}
-.admin-access-page .admin-id-help b{color:#c5a3ff}
-@media(max-width:390px){
-  .admin-access-page .admin-id-form{grid-template-columns:1fr}
-  .admin-access-page .admin-id-form .access-primary{width:100%}
+/* ADMIN ACCESS — CALM MOBILE */
+.admin-access-page .access-hero{
+  margin:3px 0 14px;
+  padding:14px;
+  border:1px solid var(--admin-border);
+  border-radius:18px;
+  background:#111218;
+}
+.admin-access-page .access-hero h2{
+  margin:0 0 6px;
+  color:var(--admin-text);
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:18px;
+  font-weight:600;
+}
+.admin-access-page .access-hero p{
+  margin:0;
+  color:var(--admin-muted);
+  font-size:9.5px;
+  line-height:1.55;
+}
+.admin-access-page .admin-id-form{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:7px;
+  margin-top:12px;
+}
+.admin-access-page .admin-id-form input{
+  min-width:0;
+  height:43px;
+  padding:0 11px;
+  border:1px solid var(--admin-border);
+  border-radius:12px;
+  outline:0;
+  background:#0d0e13;
+  color:var(--admin-text);
+  font-size:10px;
+}
+.admin-access-page .admin-id-form input:focus{
+  border-color:rgba(156,132,216,.25);
+}
+.admin-access-page .access-primary{
+  min-height:43px;
+  padding:0 12px;
+  border:1px solid rgba(156,132,216,.22);
+  border-radius:12px;
+  background:rgba(156,132,216,.065);
+  color:#c5b9dc;
+  font-size:9.5px;
+  font-weight:700;
+  box-shadow:none;
+}
+.admin-access-page .admin-id-help{
+  margin-top:8px;
+  color:#706b75;
+  font-size:8.5px;
+}
+.admin-access-page .admins-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin:17px 0 9px;
+}
+.admin-access-page .admins-head h2{
+  margin:0;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:17px;
+  font-weight:600;
+}
+.admin-access-page .admins-head button{
+  border:0;
+  background:none;
+  color:#9b95a0;
+  padding:5px;
+  font-size:9.5px;
+}
+.admin-access-page .admin-person{
+  display:grid;
+  grid-template-columns:40px minmax(0,1fr) auto;
+  align-items:center;
+  gap:9px;
+  margin-bottom:7px;
+  padding:10px;
+  border:1px solid var(--admin-border);
+  border-radius:14px;
+  background:#111218;
+}
+.admin-access-page .admin-person-avatar{
+  width:40px;
+  height:40px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(156,132,216,.12);
+  border-radius:12px;
+  background:#18171e;
+  color:#ad9dcc;
+  font-size:11px;
+  font-weight:750;
+}
+.admin-access-page .admin-person h3{
+  margin:0 0 3px;
+  font-size:10.5px;
+}
+.admin-access-page .admin-person p{
+  margin:0;
+  color:var(--admin-muted);
+  font-size:8.7px;
+}
+.admin-access-page .admin-remove{
+  min-height:32px;
+  padding:0 9px;
+  border:1px solid rgba(201,120,134,.17);
+  border-radius:9px;
+  background:rgba(201,120,134,.035);
+  color:#c8808c;
+  font-size:8.5px;
 }
