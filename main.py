@@ -15,6 +15,9 @@ from bot import (
 from database import database_status, init_db
 
 BASE_DIR = Path(__file__).resolve().parent
+CLIENT_DIR = BASE_DIR / "client"
+ADMIN_MOBILE_DIR = BASE_DIR / "admin" / "mobile"
+ADMIN_DESKTOP_DIR = BASE_DIR / "admin" / "desktop"
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
 
 app = FastAPI(
@@ -29,13 +32,15 @@ app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=5)
 app.include_router(api_router, prefix="/api")
 app.include_router(telegram_router)
 
-# Serve the modular CSS files used by index.html.
-CSS_DIR = BASE_DIR / "css"
-ASSETS_DIR = BASE_DIR / "assets"
-ASSETS_DIR.mkdir(parents=True, exist_ok=True)
-app.mount("/css", StaticFiles(directory=CSS_DIR), name="css")
-app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
+# Three physically isolated frontends.
+app.mount("/client", StaticFiles(directory=CLIENT_DIR, html=True), name="client")
+app.mount("/admin/mobile", StaticFiles(directory=ADMIN_MOBILE_DIR, html=True), name="admin-mobile")
+app.mount("/admin/desktop", StaticFiles(directory=ADMIN_DESKTOP_DIR, html=True), name="admin-desktop")
 
+# Existing global assets stay shared because they are content, not interface code.
+ASSETS_DIR = BASE_DIR / "assets"
+if ASSETS_DIR.exists():
+    app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
 
 @app.on_event("startup")
 def startup() -> None:
