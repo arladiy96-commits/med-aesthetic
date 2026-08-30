@@ -30,15 +30,11 @@ app.include_router(api_router, prefix="/api")
 app.include_router(telegram_router)
 
 # Serve the modular CSS files used by index.html.
+CSS_DIR = BASE_DIR / "css"
 ASSETS_DIR = BASE_DIR / "assets"
-CLIENT_DIR = BASE_DIR / "client"
-ADMIN_MOBILE_DIR = BASE_DIR / "admin" / "mobile"
 ASSETS_DIR.mkdir(parents=True, exist_ok=True)
-CLIENT_DIR.mkdir(parents=True, exist_ok=True)
-ADMIN_MOBILE_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/css", StaticFiles(directory=CSS_DIR), name="css")
 app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
-app.mount("/client", StaticFiles(directory=CLIENT_DIR, html=True), name="client")
-app.mount("/admin/mobile", StaticFiles(directory=ADMIN_MOBILE_DIR, html=True), name="admin-mobile")
 
 
 @app.on_event("startup")
@@ -57,7 +53,7 @@ async def cache_policy(request, call_next):
 
     if path == "/":
         # index.html must always pick up the newest deployment.
-        response.headers["Cache-Control"] = "no-store, max-age=0"
+        response.headers["Cache-Control"] = "no-cache, must-revalidate"
     elif path in {"/api/services", "/api/admin/services"} or path.startswith("/api/admin/") or path.startswith("/api/availability"):
         # Live admin/availability data must never be stale. Service catalog speed
         # still comes from the server RAM cache, not from browser caching.
@@ -65,11 +61,9 @@ async def cache_policy(request, call_next):
     elif path.startswith("/assets/"):
         # Static image assets almost never change and have their own filenames.
         response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
-    elif path.startswith("/client/") or path.startswith("/admin/mobile/"):
-        # Keep the physical client/mobile-admin bundles fresh after deploys.
-        response.headers["Cache-Control"] = "no-store, max-age=0"
-        response.headers["Pragma"] = "no-cache"
-        response.headers["Expires"] = "0"
+    elif path.startswith("/css/"):
+        # Let the browser reuse CSS but still revalidate after a short period.
+        response.headers["Cache-Control"] = "public, max-age=300, must-revalidate"
 
     return response
 
