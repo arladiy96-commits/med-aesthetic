@@ -1,0 +1,3264 @@
+
+/* MED AESTHETIC CLIENT v11 — JRMA root-path compatible */
+(() => {
+  const tg = window.Telegram?.WebApp;
+
+  function syncTelegramShell(){
+    try{
+      const h = Number(tg?.viewportStableHeight || tg?.viewportHeight || window.innerHeight || 0);
+      if(h > 0){
+        document.documentElement.style.setProperty("--beauty-vh", Math.round(h) + "px");
+      }
+
+      const safe = tg?.contentSafeAreaInset || tg?.safeAreaInset;
+      if(safe){
+        if(Number.isFinite(Number(safe.top))){
+          document.documentElement.style.setProperty("--tg-safe-top", Number(safe.top) + "px");
+        }
+        if(Number.isFinite(Number(safe.bottom))){
+          document.documentElement.style.setProperty("--tg-safe-bottom", Number(safe.bottom) + "px");
+        }
+      }
+    }catch(e){}
+  }
+
+  function requestTelegramFullscreenOnce(){
+    if(window.__medAestheticFullscreenRequested) return;
+    window.__medAestheticFullscreenRequested = true;
+    try{
+      if(tg?.requestFullscreen && !tg?.isFullscreen) tg.requestFullscreen();
+    }catch(e){}
+  }
+
+  function initTelegramShell(){
+    try{ tg?.ready?.(); }catch(e){}
+
+    if(!window.__medAestheticEarlyTelegramBoot){
+      try{ tg?.expand?.(); }catch(e){}
+      try{ tg?.disableVerticalSwipes?.(); }catch(e){}
+      try{ tg?.lockOrientation?.(); }catch(e){}
+      try{ tg?.setHeaderColor?.("#07050c"); }catch(e){}
+      try{ tg?.setBackgroundColor?.("#07050c"); }catch(e){}
+      try{ tg?.setBottomBarColor?.("#07050c"); }catch(e){}
+    }
+
+    syncTelegramShell();
+
+    /*
+      Do not fullscreen at the first zero-size/intermediate frame.
+      Give Telegram one short bottom-sheet expansion beat, then fullscreen.
+    */
+    setTimeout(requestTelegramFullscreenOnce, 70);
+  }
+
+  initTelegramShell();
+  setTimeout(syncTelegramShell, 120);
+  setTimeout(syncTelegramShell, 450);
+
+  (() => {
+    const started = performance.now();
+    let lastW = 0;
+    let lastH = 0;
+    let stableTicks = 0;
+    let revealed = false;
+
+    const reveal = () => {
+      if(revealed) return;
+      revealed = true;
+      syncTelegramShell();
+      requestAnimationFrame(() => {
+        document.documentElement.classList.add("app-ready");
+      });
+    };
+
+    const probe = () => {
+      if(revealed) return;
+
+      if(tg?.isFullscreen){
+        reveal();
+        return;
+      }
+
+      const w = Math.round(window.innerWidth || 0);
+      const h = Math.round(
+        Number(tg?.viewportStableHeight || tg?.viewportHeight || window.innerHeight || 0)
+      );
+
+      if(w > 0 && h > 0 && Math.abs(w-lastW) <= 1 && Math.abs(h-lastH) <= 1){
+        stableTicks += 1;
+      }else{
+        stableTicks = 0;
+        lastW = w;
+        lastH = h;
+      }
+
+      const elapsed = performance.now() - started;
+      if((stableTicks >= 1 && elapsed >= 55) || elapsed >= 220){
+        reveal();
+        return;
+      }
+      setTimeout(probe, 25);
+    };
+
+    setTimeout(probe, 25);
+
+    try{
+      tg?.onEvent?.("fullscreenChanged", () => {
+        syncTelegramShell();
+        reveal();
+      });
+      tg?.onEvent?.("viewportChanged", () => {
+        syncTelegramShell();
+        stableTicks = 0;
+        if((tg?.viewportHeight || window.innerHeight) > 300){
+          requestTelegramFullscreenOnce();
+        }
+      });
+    }catch(e){}
+  })();
+
+  try{
+    tg?.onEvent?.("safeAreaChanged", syncTelegramShell);
+    tg?.onEvent?.("contentSafeAreaChanged", syncTelegramShell);
+  }catch(e){}
+
+  window.addEventListener("resize", syncTelegramShell, {passive:true});
+
+  // Роль не угадываем по старому localStorage.
+  // Бот выдаёт каждому Telegram ID персональную кнопку:
+  //   ?entry=creator / ?entry=admin / ?entry=client
+  // Поэтому обычный вход сразу открывает правильный интерфейс.
+  // Если Mini App открыт по старой/прямой ссылке без entry, показываем
+  // нейтральный экран на время серверной проверки, а не чужой интерфейс.
+  const entryHint = (() => {
+    try{
+      const v = new URLSearchParams(location.search).get("entry");
+      return (v === "creator" || v === "admin" || v === "client") ? v : null;
+    }catch(e){ return null; }
+  })();
+
+  const CLIENT_APP = true;
+  const startupRole = "client";
+  const startupSwitch = ["client"];
+
+  const S = {
+    view: startupRole === "creator" || startupRole === "admin"
+      ? "admin-home"
+      : startupRole === "client"
+        ? "home"
+        : "role-loading",
+    category: "Все",
+    service: null,
+    master: null,
+    date: null,
+    time: null,
+    bookingName: (() => {
+      try{
+        const saved=localStorage.getItem("medAestheticBookingName");
+        if(saved)return saved;
+      }catch(e){}
+      const u=tg?.initDataUnsafe?.user;
+      return [u?.first_name,u?.last_name].filter(Boolean).join(" ");
+    })(),
+    // Phone intentionally starts empty for every new booking flow.
+    bookingPhone: "",
+    bookingConfirmed: false,
+    identityReady: Boolean(startupRole),
+    actualRole: startupRole,
+    roleMode: startupRole,
+    roleSwitch: startupSwitch,
+    roleSheet: false,
+    adminFilter: "Все",
+    adminDate: null,
+    admins: [],
+    adminsLoading: false,
+    adminInviteLink: "",
+    adminBookingId: null,
+    adminServiceId: null,
+    adminServicesLoading: false,
+    adminSearchOpen: false,
+    adminSearchQuery: "",
+    adminCreateOpen: false,
+    adminCreatePreset: null,
+    adminRescheduleId: null,
+    adminSlotDate: null,
+    adminSlotTime: null,
+    adminClientKey: null,
+    adminBlocksLoading: false
+  };
+
+  const HERO_EXACT_CARD = "/assets/hero.webp";
+  const CERTIFICATE_BANNER = "/assets/certificate.webp";
+
+  const IMG = {
+    hero:"https://images.pexels.com/photos/20820960/pexels-photo-20820960.jpeg?auto=compress&cs=tinysrgb&w=1200",
+
+    faceCleaning:"https://images.unsplash.com/photo-1761718210089-ba3bb5ccb54f?auto=format&fit=crop&w=900&q=82",
+    childPiercing:"https://images.unsplash.com/photo-1723986071829-42d53407ae38?auto=format&fit=crop&w=900&q=82",
+    lesionRemoval:"https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=900&q=82",
+
+    earPiercing:"https://images.unsplash.com/photo-1723986071829-42d53407ae38?auto=format&fit=crop&w=900&q=82",
+    nosePiercing:"https://www.covetear.com/cdn/shop/files/NOSE_IMAGES_1.png?v=1718343576&width=900",
+    lipPiercing:"https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?auto=format&fit=crop&w=900&q=82",
+    tonguePiercing:"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=900&q=82",
+    browPiercing:"https://images.unsplash.com/photo-1555697594-6a6168782157?auto=format&fit=crop&w=900&q=82",
+    navelPiercing:"https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=900&q=82",
+    bodyPiercing:"https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=82",
+
+    laser:"https://static.shumailas.com/wp-content/uploads/2025/07/Full-Body-Laser-Hair-Removal-1024x683.jpg",
+    bodyCorrection:"https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&w=900&q=82",
+    currentTherapy:"https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=900&q=82",
+    certificate:"https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=900&q=82"
+  };
+
+  const LUDMILA_PHOTO = "/assets/ludmila.webp";
+  const OWNER_DESCRIPTION = "Людмила — владелица студии и ваш персональный мастер. Лично следит за качеством сервиса и помогает подобрать процедуры под ваш запрос.";
+
+  const masters = [
+    {id:1,name:"Людмила",role:"Владелица и ведущий мастер",rating:"",exp:"",img:LUDMILA_PHOTO}
+  ];
+
+  const LASER_BANNER = "/assets/laser.webp";
+
+  // Услуги не храним в HTML: единственный источник истины — Neon через /api/services.
+  // Это исключает вспышку старых названий/фото до прихода актуальных данных.
+  let services = [];
+  let servicesLoaded = false;
+
+  const HOME_PRIORITY_SERVICE_IDS = new Set([1,2,3,4]);
+  const warmedServiceThumbUrls = new Set();
+  const serviceThumbWarmers = [];
+
+  function warmRemainingServiceThumbs(list){
+    const queue=(Array.isArray(list)?list:[])
+      .filter(s=>s?.img && !HOME_PRIORITY_SERVICE_IDS.has(Number(s.id)))
+      .map(s=>String(s.img))
+      .filter(url=>{
+        if(warmedServiceThumbUrls.has(url))return false;
+        warmedServiceThumbUrls.add(url);
+        return true;
+      });
+
+    let cursor=0;
+    let active=0;
+    const concurrency=3;
+
+    const pump=()=>{
+      while(active<concurrency && cursor<queue.length){
+        const url=queue[cursor++];
+        active++;
+
+        const img=new Image();
+        img.decoding="async";
+        try{img.fetchPriority="low"}catch(e){}
+
+        const done=()=>{
+          active--;
+          pump();
+        };
+
+        img.onload=done;
+        img.onerror=done;
+        img.src=url;
+
+        // Keep references while requests are in flight.
+        serviceThumbWarmers.push(img);
+      }
+    };
+
+    // Give the four visible cards a tiny head start, then fill the cache below.
+    setTimeout(pump,80);
+  }
+
+
+  const fmt = n => new Intl.NumberFormat("ru-RU").format(n) + " ₸";
+  const priceLabel = s => Number.isFinite(Number(s?.price)) ? fmt(Number(s.price)) : "Цена по записи";
+  const durationLabel = s => Number.isFinite(Number(s?.duration)) ? `${Number(s.duration)} мин` : "Время индивидуально";
+  const esc = s => String(s ?? "").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]));
+  let serverBookings = [];
+  let adminBookings = (() => {
+    try{
+      const cached = JSON.parse(localStorage.getItem("medAestheticAdminBookingsCache") || "[]");
+      return Array.isArray(cached) ? cached : [];
+    }catch(e){ return []; }
+  })();
+  let adminBookingsLoaded = adminBookings.length > 0;
+  let adminServices = [];
+  let adminBlocks = [];
+  let adminClientNotes = {};
+  const BOOKING_AVAILABILITY_CLIENT_TTL_MS = 15000;
+  let bookingUnavailableTimes = new Set();
+  let bookingAvailabilityDate = "";
+  let bookingAvailabilityByDate = new Map();
+  let bookingAvailabilityRangeStart = "";
+  let bookingAvailabilityServiceId = 0;
+  let bookingAvailabilityLoadedAt = 0;
+  let bookingAvailabilityRequest = null;
+  let servicesReturnState = null;
+  let lastServicesSignature = "";
+  let lastBookingsSignature = "";
+  let lastAdminBookingsSignature = dataSignature(adminBookings);
+
+  function dataSignature(value){
+    try{
+      return JSON.stringify(value);
+    }catch(e){
+      return "";
+    }
+  }
+
+  function saveAdminBookingsCache(){
+    try{
+      localStorage.setItem("medAestheticAdminBookingsCache", JSON.stringify(adminBookings));
+    }catch(e){}
+  }
+
+  async function bookingApi(path="", options={}){
+    const headers = {
+      "Content-Type":"application/json",
+      "X-Telegram-Init-Data": tg?.initData || "",
+      "X-Act-As-Role": S.roleMode || "client",
+      ...(options.headers || {})
+    };
+    const res = await fetch("/api/bookings" + path, {...options, headers});
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok) throw new Error(data.detail || data.error || "Ошибка сервера");
+    return data;
+  }
+
+  async function adminBookingApi(path="", options={}){
+    const headers = {
+      "Content-Type":"application/json",
+      "X-Telegram-Init-Data": tg?.initData || "",
+      ...(options.headers || {})
+    };
+    const res = await fetch("/api/admin/bookings" + path, {...options, headers, cache:"no-store"});
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok) throw new Error(data.detail || data.error || "Ошибка сервера");
+    return data;
+  }
+
+  async function availabilityRangeApi(startDate,days=14,serviceId=null){
+    const headers={"X-Telegram-Init-Data":tg?.initData||""};
+    const sid=Number(serviceId||S.service?.id||0);
+    if(!sid)throw new Error("Сначала выберите услугу");
+    const res=await fetch(
+      `/api/availability-range?start_date=${encodeURIComponent(startDate)}&days=${encodeURIComponent(days)}&service_id=${encodeURIComponent(sid)}`,
+      {headers,cache:"no-store"}
+    );
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok)throw new Error(data.detail||data.error||"Не удалось проверить время");
+    return data;
+  }
+
+  async function adminBlocksApi(path="",options={}){
+    const headers={
+      "Content-Type":"application/json",
+      "X-Telegram-Init-Data":tg?.initData||"",
+      ...(options.headers||{})
+    };
+    const res=await fetch("/api/admin/blocks"+path,{...options,headers,cache:"no-store"});
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok)throw new Error(data.detail||data.error||"Ошибка расписания");
+    return data;
+  }
+
+  async function adminClientNotesApi(path="",options={}){
+    const headers={
+      "Content-Type":"application/json",
+      "X-Telegram-Init-Data":tg?.initData||"",
+      ...(options.headers||{})
+    };
+    const res=await fetch("/api/admin/client-notes"+path,{...options,headers,cache:"no-store"});
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok)throw new Error(data.detail||data.error||"Ошибка заметок");
+    return data;
+  }
+
+  async function loadAdminBlocks(silent=true){
+    if(!["creator","admin"].includes(S.actualRole))return;
+    S.adminBlocksLoading=true;
+    try{
+      const data=await adminBlocksApi();
+      adminBlocks=Array.isArray(data.blocks)?data.blocks:[];
+    }catch(e){
+      console.error("Admin blocks load failed:",e);
+      if(!silent)toast(e.message||"Не удалось загрузить закрытые окна");
+    }finally{
+      S.adminBlocksLoading=false;
+      if(S.view==="admin-calendar"&&!formFieldIsActive())backgroundRender();
+    }
+  }
+
+  async function loadAdminClientNotes(silent=true){
+    if(!["creator","admin"].includes(S.actualRole))return;
+    try{
+      const data=await adminClientNotesApi();
+      adminClientNotes=data.notes&&typeof data.notes==="object"?data.notes:{};
+      if(S.view==="admin-clients"&&!formFieldIsActive())backgroundRender();
+    }catch(e){
+      console.error("Admin client notes load failed:",e);
+      if(!silent)toast(e.message||"Не удалось загрузить заметки клиентов");
+    }
+  }
+
+  function applyBookingAvailabilityDate(dateValue){
+    if(!dateValue)return;
+    const known=bookingAvailabilityByDate.has(dateValue);
+    bookingAvailabilityDate=known?dateValue:"";
+    bookingUnavailableTimes=known
+      ? new Set(bookingAvailabilityByDate.get(dateValue)||[])
+      : new Set();
+
+    if(S.time&&bookingUnavailableTimes.has(S.time)){
+      S.time=null;
+    }
+    updateBookingAvailabilityUi();
+  }
+
+  function bookingAvailabilityCacheFresh(){
+    const ds=dates();
+    const startDate=ds[0]?.iso||"";
+    const serviceId=Number(S.service?.id||0);
+    return Boolean(
+      startDate &&
+      serviceId &&
+      bookingAvailabilityRangeStart===startDate &&
+      bookingAvailabilityServiceId===serviceId &&
+      bookingAvailabilityLoadedAt &&
+      Date.now()-bookingAvailabilityLoadedAt<BOOKING_AVAILABILITY_CLIENT_TTL_MS
+    );
+  }
+
+  async function loadBookingAvailabilityRange(silent=true,force=false){
+    const ds=dates();
+    if(!ds.length)return;
+    const startDate=ds[0].iso;
+    const serviceId=Number(S.service?.id||0);
+    if(!serviceId)return;
+
+    if(!force&&bookingAvailabilityCacheFresh()){
+      if(S.view==="datetime"&&S.date)applyBookingAvailabilityDate(S.date);
+      return;
+    }
+
+    if(bookingAvailabilityRequest)return bookingAvailabilityRequest;
+
+    bookingAvailabilityRequest=(async()=>{
+      try{
+        const data=await availabilityRangeApi(startDate,ds.length,serviceId);
+        if(Number(S.service?.id||0)!==serviceId)return data;
+        const raw=data.availability&&typeof data.availability==="object"
+          ? data.availability
+          : {};
+
+        const nextMap=new Map();
+        ds.forEach(day=>{
+          nextMap.set(
+            day.iso,
+            new Set(Array.isArray(raw[day.iso])?raw[day.iso]:[])
+          );
+        });
+
+        bookingAvailabilityByDate=nextMap;
+        bookingAvailabilityRangeStart=startDate;
+        bookingAvailabilityServiceId=serviceId;
+        bookingAvailabilityLoadedAt=Date.now();
+
+        if(S.view==="datetime"&&S.date){
+          applyBookingAvailabilityDate(S.date);
+        }
+        return data;
+      }catch(e){
+        console.error("Availability range load failed:",e);
+        if(!silent)toast(e.message||"Не удалось проверить свободное время");
+      }finally{
+        bookingAvailabilityRequest=null;
+      }
+    })();
+
+    return bookingAvailabilityRequest;
+  }
+
+  function ensureBookingAvailabilityFresh(silent=true){
+    if(S.view==="datetime"&&S.date){
+      applyBookingAvailabilityDate(S.date);
+    }
+    if(!bookingAvailabilityCacheFresh()){
+      loadBookingAvailabilityRange(silent);
+    }
+  }
+
+  function invalidateLocalBookingAvailability(){
+    bookingAvailabilityLoadedAt=0;
+  }
+
+  function resetBookingAvailabilityForService(serviceId){
+    const sid=Number(serviceId||0);
+    if(bookingAvailabilityServiceId===sid)return;
+    bookingAvailabilityByDate=new Map();
+    bookingAvailabilityRangeStart="";
+    bookingAvailabilityServiceId=0;
+    bookingAvailabilityLoadedAt=0;
+    bookingAvailabilityDate="";
+    bookingUnavailableTimes=new Set();
+  }
+
+  async function accessApi(path="", options={}){
+    const headers = {
+      "Content-Type":"application/json",
+      "X-Telegram-Init-Data": tg?.initData || "",
+      ...(options.headers || {})
+    };
+    const res = await fetch("/api" + path, {...options, headers});
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok) throw new Error(data.detail || data.error || "Ошибка сервера");
+    return data;
+  }
+
+  async function serviceCatalogApi(){
+    const res=await fetch("/api/services",{cache:"no-store"});
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok)throw new Error(data.detail||data.error||"Не удалось загрузить услуги");
+    return data;
+  }
+
+  async function adminServicesApi(path="",options={}){
+    const headers={
+      "Content-Type":"application/json",
+      "X-Telegram-Init-Data":tg?.initData||"",
+      ...(options.headers||{})
+    };
+    const res=await fetch("/api/admin/services"+path,{...options,headers,cache:"no-store"});
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok)throw new Error(data.detail||data.error||"Ошибка услуг");
+    return data;
+  }
+
+  async function loadServices(silent=true){
+    try{
+      const data=await serviceCatalogApi();
+      const next=Array.isArray(data.services)?data.services:[];
+      const signature=dataSignature(next);
+      const firstLoad=!servicesLoaded;
+      const changed=signature!==lastServicesSignature;
+
+      servicesLoaded=true;
+
+      if(firstLoad){
+        warmRemainingServiceThumbs(next);
+      }
+
+      if(changed || firstLoad){
+        services=next;
+        lastServicesSignature=signature;
+
+        if(S.service){
+          const fresh=services.find(x=>Number(x.id)===Number(S.service.id));
+          S.service=fresh||null;
+          if(S.view==="service" && !fresh)S.view="services";
+        }
+
+        if(S.view==="home"){
+          updateHomeServiceRail();
+        }else if(["services","service"].includes(S.view)){
+          backgroundRender();
+        }
+      }
+    }catch(e){
+      console.error("Service catalog load failed:",e);
+      if(!silent)toast(e.message||"Не удалось загрузить услуги");
+    }
+  }
+
+  async function loadAdminServices(silent=false){
+    if(!["creator","admin"].includes(S.actualRole))return;
+    S.adminServicesLoading=true;
+    if(!silent)render();
+    try{
+      const data=await adminServicesApi();
+      adminServices=Array.isArray(data.services)?data.services:[];
+    }catch(e){
+      if(!silent)toast(e.message||"Не удалось загрузить услуги");
+    }finally{
+      S.adminServicesLoading=false;
+      if(S.view==="admin-services" && !S.adminServiceId)backgroundRender();
+    }
+  }
+
+  async function openAdminServices(){
+    S.view="admin-services";
+    S.adminServiceId=null;
+    render();
+    await loadAdminServices(true);
+  }
+
+  function openAdminServiceEditor(id){
+    S.adminServiceId=id==="new"?"new":String(id);
+    render();
+    haptic();
+  }
+
+  function closeAdminServiceEditor(){
+    S.adminServiceId=null;
+    render();
+  }
+
+  async function saveAdminService(){
+    if(!S.adminServiceId)return;
+    const id=S.adminServiceId;
+    const name=String(document.querySelector("#serviceEditName")?.value||"").trim();
+    const category=String(document.querySelector("#serviceEditCategory")?.value||"").trim();
+    const priceRaw=String(document.querySelector("#serviceEditPrice")?.value||"").trim();
+    const durationRaw=String(document.querySelector("#serviceEditDuration")?.value||"").trim();
+    const description=String(document.querySelector("#serviceEditDescription")?.value||"").trim();
+    const includesRaw=String(document.querySelector("#serviceEditIncludes")?.value||"");
+    const active=Boolean(document.querySelector("#serviceEditActive")?.checked);
+
+    if(!name){toast("Введите название услуги");return}
+    if(!category){toast("Введите категорию");return}
+
+    const price=priceRaw===""?null:Number(priceRaw);
+    const duration=durationRaw===""?null:Number(durationRaw);
+
+    if(price!==null&&(!Number.isFinite(price)||price<0)){
+      toast("Проверьте цену");
+      return;
+    }
+    if(duration!==null&&(!Number.isFinite(duration)||duration<1)){
+      toast("Проверьте длительность");
+      return;
+    }
+
+    const body={
+      name,
+      category,
+      price:price===null?null:Math.round(price),
+      duration:duration===null?null:Math.round(duration),
+      description,
+      includes:includesRaw
+        .split(/\n+/)
+        .map(x=>x.trim())
+        .filter(Boolean)
+        .slice(0,30),
+      is_active:active
+    };
+
+    const btn=document.querySelector("#saveAdminServiceBtn");
+    if(btn)btn.disabled=true;
+
+    try{
+      if(id==="new"){
+        await adminServicesApi("",{
+          method:"POST",
+          body:JSON.stringify(body)
+        });
+      }else{
+        await adminServicesApi("/"+encodeURIComponent(id),{
+          method:"PATCH",
+          body:JSON.stringify(body)
+        });
+      }
+
+      S.adminServiceId=null;
+      await Promise.all([
+        loadAdminServices(true),
+        loadServices(true)
+      ]);
+
+      render();
+      toast(id==="new"?"Услуга добавлена":"Изменения сохранены");
+      haptic("medium");
+    }catch(e){
+      toast(e.message||"Не удалось сохранить услугу");
+      if(btn)btn.disabled=false;
+    }
+  }
+
+  async function toggleAdminService(id){
+    const s=adminServices.find(x=>String(x.id)===String(id));
+    if(!s)return;
+    try{
+      await adminServicesApi("/"+encodeURIComponent(id),{
+        method:"PATCH",
+        body:JSON.stringify({is_active:!s.isActive})
+      });
+      await Promise.all([loadAdminServices(true),loadServices(true)]);
+      render();
+      toast(s.isActive?"Услуга скрыта":"Услуга снова доступна");
+      haptic();
+    }catch(e){
+      toast(e.message||"Не удалось изменить доступность");
+    }
+  }
+
+  async function deleteAdminService(id){
+    const s=adminServices.find(x=>String(x.id)===String(id));
+    if(!s)return;
+    if(!confirm(`Удалить услугу «${s.name}»? Старые записи клиентов сохранятся.`))return;
+    try{
+      await adminServicesApi("/"+encodeURIComponent(id),{method:"DELETE"});
+      S.adminServiceId=null;
+      await Promise.all([loadAdminServices(true),loadServices(true)]);
+      render();
+      toast("Услуга удалена");
+      haptic("medium");
+    }catch(e){
+      toast(e.message||"Не удалось удалить услугу");
+    }
+  }
+
+  async function loadAdmins(silent=false){
+    if(S.actualRole!=="creator")return;
+    S.adminsLoading=true;
+    if(!silent)render();
+    try{
+      const data=await accessApi("/admins");
+      S.admins=Array.isArray(data.admins)?data.admins:[];
+    }catch(e){
+      if(!silent)toast(e.message || "Не удалось загрузить администраторов");
+    }finally{
+      S.adminsLoading=false;
+      if(S.view==="admin-access")backgroundRender();
+    }
+  }
+
+  async function addAdminById(){
+    if(S.actualRole!=="creator")return;
+    const input=document.querySelector("#adminTelegramId");
+    const btn=document.querySelector("#addAdminByIdBtn");
+    const raw=String(input?.value||"").trim();
+
+    if(!/^\d{5,20}$/.test(raw)){
+      toast("Введите корректный Telegram ID");
+      input?.focus();
+      return;
+    }
+
+    if(btn)btn.disabled=true;
+    haptic("medium");
+    try{
+      const data=await accessApi("/admins",{
+        method:"POST",
+        body:JSON.stringify({telegram_user_id:Number(raw)})
+      });
+      if(input)input.value="";
+      await loadAdmins(true);
+      render();
+      toast("Администратор добавлен");
+    }catch(e){
+      toast(e.message || "Не удалось добавить администратора");
+      if(btn)btn.disabled=false;
+    }
+  }
+
+  async function createAdminInvite(){
+    if(S.actualRole!=="creator")return;
+    const btn=document.querySelector("#createAdminInviteBtn");
+    if(btn)btn.disabled=true;
+    haptic("medium");
+    try{
+      const data=await accessApi("/admin-invites",{method:"POST",body:"{}"});
+      S.adminInviteLink=data?.invite?.link || "";
+      render();
+      if(S.adminInviteLink)toast("Ссылка администратора создана");
+    }catch(e){
+      toast(e.message || "Не удалось создать приглашение");
+      if(btn)btn.disabled=false;
+    }
+  }
+
+  async function copyAdminInvite(){
+    if(!S.adminInviteLink)return;
+    try{
+      await navigator.clipboard.writeText(S.adminInviteLink);
+      toast("Ссылка скопирована");
+    }catch(e){
+      const ta=document.createElement("textarea");
+      ta.value=S.adminInviteLink;
+      ta.style.position="fixed";ta.style.opacity="0";
+      document.body.appendChild(ta);ta.select();
+      try{document.execCommand("copy");toast("Ссылка скопирована")}catch(_e){toast("Не удалось скопировать")}
+      ta.remove();
+    }
+    haptic();
+  }
+
+  function shareAdminInvite(){
+    if(!S.adminInviteLink)return;
+    const url="https://t.me/share/url?url="+encodeURIComponent(S.adminInviteLink)+"&text="+encodeURIComponent("Приглашение администратора MED AESTHETIC");
+    try{tg?.openTelegramLink?.(url)}catch(e){window.open(url,"_blank")}
+    haptic();
+  }
+
+  async function removeAdmin(id){
+    if(S.actualRole!=="creator")return;
+    if(!confirm("Убрать права администратора?"))return;
+    try{
+      await accessApi("/admins/"+encodeURIComponent(id),{method:"DELETE"});
+      S.admins=S.admins.filter(x=>String(x.telegramUserId)!==String(id));
+      render();toast("Права администратора удалены");haptic("medium");
+    }catch(e){
+      toast(e.message || "Не удалось удалить администратора");
+    }
+  }
+
+  async function loadIdentity(){
+    const keepCreatorClientPreview =
+      S.identityReady && S.actualRole==="creator" && S.roleMode==="client";
+    const beforeRole=S.actualRole;
+    const beforeMode=S.roleMode;
+    const beforeView=S.view;
+    const wasIdentityReady=S.identityReady;
+
+    try{
+      const res = await fetch("/api/me",{
+        cache:"no-store",
+        headers:{
+          "X-Telegram-Init-Data": tg?.initData || ""
+        }
+      });
+      const data = await res.json().catch(()=>({}));
+      if(!res.ok) throw new Error(data.detail || "Не удалось определить роль");
+
+      const actualRole = data?.user?.actualRole || "client";
+      S.actualRole = actualRole;
+      S.roleSwitch = Array.isArray(data?.roleSwitch) ? data.roleSwitch : [actualRole];
+
+      const preview = new URLSearchParams(location.search).get("preview")==="1";
+      if(actualRole==="creator" && preview){
+        S.roleMode="client";
+      }else if(actualRole==="creator" || actualRole==="admin"){
+        const entry=actualRole==="creator"?"creator":"admin";
+        location.replace(`/?entry=${entry}`);
+        return;
+      }else{
+        S.roleMode="client";
+      }
+      if(!["home","services","service","masters","datetime","booking-contact","confirm","booking","history","profile","bonus"].includes(S.view))
+        S.view="home";
+
+      S.identityReady=true;
+      const identityChanged=
+        !wasIdentityReady ||
+        beforeRole!==S.actualRole ||
+        beforeMode!==S.roleMode ||
+        beforeView!==S.view;
+      if(identityChanged)backgroundRender();
+    }catch(e){
+      console.error("Role load failed:",e);
+      // Не показываем заведомо неправильную роль из старого кэша.
+      // Если был персональный entry от бота — оставляем уже открытый интерфейс;
+      // если entry не было — остаёмся на нейтральном экране до следующей проверки.
+      if(!entryHint){
+        S.actualRole=null;
+        S.roleMode=null;
+        S.roleSwitch=[];
+        S.view="role-loading";
+        S.identityReady=false;
+        render();
+      }
+    }
+  }
+
+  async function loadBookings(silent=false){
+    try{
+      const data = await bookingApi();
+      const next=Array.isArray(data.bookings)?data.bookings:[];
+      const signature=dataSignature(next);
+      if(signature!==lastBookingsSignature){
+        serverBookings=next;
+        lastBookingsSignature=signature;
+        if(["booking","history"].includes(S.view))backgroundRender();
+      }
+    }catch(e){
+      console.error("Booking load failed:", e);
+      if(!silent && ["booking","history"].includes(S.view)) toast(e.message || "Не удалось загрузить записи");
+    }
+  }
+
+  async function loadAdminBookings(silent=false){
+    if(!["creator","admin"].includes(S.actualRole))return;
+    try{
+      const data = await adminBookingApi();
+      const next=Array.isArray(data.bookings)?data.bookings:[];
+      const signature=dataSignature(next);
+      const changed=signature!==lastAdminBookingsSignature;
+      if(changed){
+        adminBookings=next;
+        lastAdminBookingsSignature=signature;
+        saveAdminBookingsCache();
+        if(["admin-home","admin-bookings","admin-calendar","admin-clients","admin-finance"].includes(S.view))backgroundRender();
+      }
+      adminBookingsLoaded=true;
+    }catch(e){
+      console.error("Admin booking load failed:", e);
+      if(!silent && String(S.view).startsWith("admin-")) toast(e.message || "Не удалось загрузить записи клиентов");
+    }
+  }
+
+  function formFieldIsActive(){
+    const el=document.activeElement;
+    if(!el)return false;
+    return Boolean(
+      el.matches?.("input,textarea,select") ||
+      el.isContentEditable
+    );
+  }
+
+  function adminFormIsOpen(){
+    return Boolean(
+      S.adminServiceId ||
+      S.adminCreateOpen ||
+      S.adminRescheduleId ||
+      S.adminSlotDate ||
+      S.adminClientKey ||
+      S.adminSearchOpen ||
+      S.view==="admin-access" && formFieldIsActive()
+    );
+  }
+
+  function backgroundRender(){
+    // Background refresh is never allowed to destroy a field or an open editor.
+    if(formFieldIsActive() || S.adminServiceId)return false;
+    render();
+    return true;
+  }
+
+  function toast(text){
+    const el=document.querySelector("#toast");
+    if(!el)return;
+    el.textContent=text;el.classList.add("show");
+    clearTimeout(window.__toast);
+    window.__toast=setTimeout(()=>el.classList.remove("show"),1800);
+  }
+
+  function haptic(kind="light"){
+    try{ tg?.HapticFeedback?.impactOccurred?.(kind); }catch(e){}
+  }
+
+  function appScroller(){
+    return document.querySelector("#app");
+  }
+
+  function currentPageScrollY(){
+    const app=appScroller();
+    return Math.max(0,Number(app?.scrollTop)||0);
+  }
+
+  function setAppScrollTop(top,behavior="auto"){
+    const app=appScroller();
+    if(!app)return;
+    app.scrollTo({
+      top:Math.max(0,Number(top)||0),
+      left:0,
+      behavior
+    });
+  }
+
+  function rememberServicesPosition(serviceId){
+    if(S.view!=="services")return;
+
+    const card=document.querySelector(
+      `[data-service-id="${CSS.escape(String(serviceId))}"]`
+    );
+
+    servicesReturnState={
+      serviceId:String(serviceId),
+      scrollY:currentPageScrollY(),
+      cardTop:card ? card.getBoundingClientRect().top : null,
+      search:String(document.querySelector("#serviceSearch")?.value||""),
+      category:S.category
+    };
+  }
+
+  function applyServiceSearchValue(query){
+    const q=String(query||"").trim().toLowerCase();
+    const input=document.querySelector("#serviceSearch");
+    if(input)input.value=query||"";
+
+    document.querySelectorAll("#serviceList [data-service-search]").forEach(el=>{
+      el.hidden=Boolean(q) &&
+        !String(el.dataset.serviceSearch||"").includes(q);
+    });
+  }
+
+  function restoreServicesPosition(){
+    const state=servicesReturnState;
+    if(!state || S.view!=="services")return;
+
+    const app=appScroller();
+    app?.classList.add("services-restoring-scroll");
+
+    const restore=()=>{
+      if(S.view!=="services")return;
+
+      applyServiceSearchValue(state.search);
+
+      // First restore the exact document position.
+      setAppScrollTop(state.scrollY,"auto");
+
+      // Then compensate for any tiny layout difference so the chosen card
+      // returns to the same vertical place on the screen.
+      const card=document.querySelector(
+        `[data-service-id="${CSS.escape(String(state.serviceId))}"]`
+      );
+
+      if(card && Number.isFinite(Number(state.cardTop))){
+        const delta=card.getBoundingClientRect().top-Number(state.cardTop);
+        if(Math.abs(delta)>1){
+          const app=appScroller();
+          if(app){
+            app.scrollBy({
+              top:delta,
+              left:0,
+              behavior:"auto"
+            });
+          }
+        }
+      }
+    };
+
+    // Immediate next paint + two small corrections cover delayed image decode
+    // without producing a visible animated scroll.
+    requestAnimationFrame(()=>{
+      restore();
+      setTimeout(restore,70);
+      setTimeout(()=>{
+        restore();
+        appScroller()?.classList.remove("services-restoring-scroll");
+      },260);
+    });
+  }
+
+  function backToServices(){
+    S.view="services";
+    S.bookingConfirmed=false;
+    S.adminBookingId=null;
+    render();
+
+    if(servicesReturnState){
+      restoreServicesPosition();
+    }else{
+      setAppScrollTop(0,"auto");
+    }
+
+    haptic();
+  }
+
+  function go(view){
+    if(view==="services" && S.view==="service" && servicesReturnState){
+      backToServices();
+      return;
+    }
+
+    S.view=view;
+    S.bookingConfirmed=false;
+    S.adminBookingId=null;
+    S.adminSearchOpen=false;
+    S.adminCreateOpen=false;
+    S.adminCreatePreset=null;
+    S.adminRescheduleId=null;
+    S.adminSlotDate=null;
+    S.adminSlotTime=null;
+    S.adminClientKey=null;
+    setAppScrollTop(0,"auto");
+    render();
+
+    // Live booking data is requested only on screens that display it.
+    if(["admin-home","admin-bookings","admin-calendar","admin-clients","admin-finance"].includes(view)){
+      loadAdminBookings(true);
+      if(view==="admin-calendar")loadAdminBlocks(true);
+      if(view==="admin-clients")loadAdminClientNotes(true);
+      if(view==="admin-finance"&&!servicesLoaded)loadServices(true);
+    }else if(view==="booking" || view==="history"){
+      loadBookings(true);
+    }
+    haptic();
+  }
+
+  function nav(active){
+    const items=[
+      ["home","⌂","Главная"],
+      ["services","⌘","Услуги"],
+      ["booking","▣","Запись"],
+      ["history","◷","История"],
+      ["profile","♙","Профиль"]
+    ];
+    return `<nav class="bottom-nav"><div class="nav-inner">${items.map(([v,i,l])=>`<button class="nav-btn ${active===v?"active":""}" onclick="Beauty.go('${v}')"><div class="nav-icon">${i}</div><span>${l}</span></button>`).join("")}</div></nav>`;
+  }
+
+  function topbar(opts={}){
+    return `<div class="safe-top"></div><header class="topbar"><div class="toprow">
+      ${opts.back?`<button class="icon-btn" onclick="${opts.back}">‹</button>`:`<button class="icon-btn" onclick="Beauty.toast('Меню появится позже')">☰</button>`}
+      <div class="brand-wrap"><div class="brand">MED <span>AESTHETIC</span></div><div class="brand-sub">cosmetology · piercing</div></div>
+      ${opts.phone
+        ? `<button class="icon-btn services-phone-btn" onclick="Beauty.toast('Контакты студии')" aria-label="Связаться со студией">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.2 3.8 9.5 7c.3.5.3 1-.1 1.4L8 9.8c1.1 2.2 2.9 4 5.1 5.1l1.4-1.4c.4-.4.9-.4 1.4-.1l3.2 2.3c.5.3.7.9.5 1.5l-.7 2.5c-.2.7-.8 1.2-1.5 1.3-7.7.6-14.9-6.6-14.3-14.3.1-.7.6-1.3 1.3-1.5l2.5-.7c.5-.2 1.1 0 1.4.5Z"/></svg>
+          </button>`
+        : S.actualRole==="creator"
+          ? `<button class="creator-crown" onclick="Beauty.openRoleSheet()" aria-label="Переключить роль">♛</button>`
+          : `<button class="icon-btn gold" onclick="Beauty.toast('Новых уведомлений нет')">♧</button>`}
+    </div></header>`;
+  }
+
+  function serviceCard(s){
+    return `<button class="service-card" onclick="Beauty.openService(${s.id})">
+      <img src="${s.img}" alt="${esc(s.name)}" loading="eager" fetchpriority="high" decoding="async">
+      <div class="body"><b>${esc(s.name)}</b><div class="meta"><span class="price">${priceLabel(s)}</span><span>${durationLabel(s)}</span></div></div>
+    </button>`;
+  }
+
+  function updateHomeServiceRail(){
+    if(S.view!=="home")return false;
+    const rail=document.querySelector("#homeServiceScroll");
+    if(!rail)return false;
+
+    rail.innerHTML=services.length
+      ? services.slice(0,4).map(serviceCard).join("")
+      : `<div class="empty">Доступных услуг пока нет.</div>`;
+    return true;
+  }
+
+  /* ===== CLIENT HOME MODULE — edit home only inside this section + css/home.css ===== */
+  function home(){
+    return `<main class="page page-home">${topbar()}
+      <div class="hero-carousel" aria-label="Баннеры">
+        <div class="hero-slide slide-girl">
+          <section class="hero hero-exact-card">
+            <img class="hero-exact-image" src="${HERO_EXACT_CARD}" alt="Красота в каждой детали" fetchpriority="high" decoding="async" width="1200" height="675">
+            <button class="hero-exact-hit" onclick="Beauty.go('services')" aria-label="Записаться">Записаться</button>
+          </section>
+        </div>
+        <div class="hero-slide slide-certificate">
+          <section class="certificate-banner">
+            <img src="${CERTIFICATE_BANNER}" alt="Подарочный сертификат" loading="lazy" decoding="async" width="1200" height="675">
+            <button class="certificate-action" onclick="Beauty.openService(14)">Оформить сертификат</button>
+          </section>
+        </div>
+        <div class="hero-slide slide-laser">
+          <section class="laser-banner">
+            <img src="${LASER_BANNER}" alt="Лазерная эпиляция — скидка 20%" loading="lazy" decoding="async" width="1200" height="675">
+            <button class="laser-hit" onclick="Beauty.openService(11)" aria-label="Подробнее о лазерной эпиляции">Подробнее</button>
+          </section>
+        </div>
+      </div>
+      <section class="section">
+        <div class="section-head"><h2>Популярные услуги</h2><button onclick="Beauty.go('services')">Все</button></div>
+        <div class="service-scroll" id="homeServiceScroll">${
+          !servicesLoaded
+            ? `<div class="empty">Загружаем актуальные услуги…</div>`
+            : services.length
+              ? services.slice(0,4).map(serviceCard).join("")
+              : `<div class="empty">Доступных услуг пока нет.</div>`
+        }</div>
+      </section>
+      <section class="section owner-section">
+        <div class="section-head owner-section-head"><h2>О студии и основателе</h2></div>
+        <article class="owner-card">
+          <div class="owner-copy">
+            <div class="owner-kicker">MED AESTHETIC</div>
+            <h3 class="owner-name">Людмила</h3>
+            <div class="owner-role">Основательница и ведущий мастер студии</div>
+            <p class="owner-text">${esc(OWNER_DESCRIPTION)}</p>
+            <div class="owner-meta"><span>♙</span><b>1 мастер</b><i>•</i><span>личное сопровождение</span></div>
+            <button class="owner-more" onclick="Beauty.toast('Людмила — основательница и ведущий мастер MED AESTHETIC')">Подробнее</button>
+          </div>
+          <div class="owner-photo-wrap"><img class="owner-photo" src="${LUDMILA_PHOTO}" alt="Людмила — основательница MED AESTHETIC" loading="lazy" decoding="async"></div>
+        </article>
+      </section>
+    </main>${nav("home")}`;
+  }
+
+  /* ===== CLIENT SERVICES MODULE — css/services.css ===== */
+  function serviceCatalogIcon(cat){
+    const value=String(cat||"").toLowerCase();
+    if(value.includes("пирс")){
+      return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.8 18.7c-1.7 1.2-4.2.8-5.5-.8-1.2-1.4-.9-3.4.4-4.6 1-.9 2.2-1.2 3-2.2 1.7-1.7 1.9-4.6.4-6.4-1.6-2-4.8-2.2-6.7-.4-1.5 1.4-1.9 3.7-1 5.6"/><path d="M10.3 18.9c-.1 1.2.8 2.2 2 2.2 1.3 0 2.2-1 2.2-2.2"/></svg>`;
+    }
+    if(value.includes("аппарат")){
+      return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 1.5 5.2L19 9l-5.5 1.8L12 16l-1.5-5.2L5 9l5.5-1.8L12 2Z"/><path d="m19 15 .8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15Z"/></svg>`;
+    }
+    if(value.includes("космет")){
+      return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2c1.2-1.5 2.5-2.2 4-2.2s2.8.7 4 2.2c1.4 1.8 2 4.1 1.6 6.4-.5 3.4-2.8 7.4-5.6 7.4s-5.1-4-5.6-7.4C6 9.3 6.6 7 8 5.2Z"/><path d="M8.7 11.5h.1M15.2 11.5h.1M9.5 15c1.6 1.1 3.4 1.1 5 0"/></svg>`;
+    }
+    return `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg>`;
+  }
+
+  function serviceCatalogCategoryLabel(cat){
+    return String(cat||"").replace("Аппаратные процедуры","Аппаратные");
+  }
+
+  function serviceFeaturedCard(s){
+    if(!s)return "";
+    return `<article class="lux-service-feature" data-service-id="${s.id}" data-service-search="${esc((s.name+" "+s.cat+" "+(s.desc||"")).toLowerCase())}" onclick="Beauty.openService(${s.id})">
+      <img class="lux-feature-image" src="${esc(s.img||"")}" alt="${esc(s.name)}" loading="eager" fetchpriority="high" decoding="async">
+      <div class="lux-feature-shade"></div>
+      <div class="lux-feature-copy">
+        <h2>${esc(s.name)}</h2>
+        <p>${esc(s.desc||"")}</p>
+        <div class="lux-feature-meta">
+          <span class="lux-time">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3.2 2"/></svg>
+            ${durationLabel(s)}
+          </span>
+          <span class="lux-price">${priceLabel(s)}</span>
+        </div>
+      </div>
+      <button class="lux-favorite" onclick="event.stopPropagation();Beauty.toast('Добавлено в избранное')" aria-label="Добавить в избранное">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.5 5.1 5.6.8-4 4 1 5.6-5.1-2.7-5.1 2.7 1-5.6-4-4 5.6-.8L12 3Z"/></svg>
+      </button>
+      <div class="lux-feature-dots"><i class="active"></i><i></i><i></i></div>
+    </article>`;
+  }
+
+  function serviceGridCard(s){
+    return `<button class="lux-service-card" data-service-id="${s.id}" data-service-search="${esc((s.name+" "+s.cat+" "+(s.desc||"")).toLowerCase())}" onclick="Beauty.openService(${s.id})">
+      <div class="lux-card-photo">
+        <img src="${esc(s.img||"")}" alt="${esc(s.name)}" loading="lazy" decoding="async">
+        <span class="lux-card-icon">${serviceCatalogIcon(s.cat)}</span>
+      </div>
+      <div class="lux-card-copy">
+        <h3>${esc(s.name)}</h3>
+        <p>${esc(s.desc||"")}</p>
+        <div class="lux-card-meta">
+          <span class="lux-time">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3.2 2"/></svg>
+            ${durationLabel(s)}
+          </span>
+          <span class="lux-price">${priceLabel(s)}</span>
+        </div>
+      </div>
+    </button>`;
+  }
+
+  function servicesView(){
+    const cats=["Все",...new Set(services.map(x=>x.cat))];
+    const list=S.category==="Все"?services:services.filter(x=>x.cat===S.category);
+    const featured=list[0]||null;
+    const rest=list.slice(1);
+
+    return `<main class="page page-services services-catalog">${topbar({phone:true})}
+      <section class="lux-services-head">
+        <h1>Услуги</h1>
+        <p>Выберите направление и узнайте больше о процедурах.</p>
+      </section>
+
+      <div class="lux-search">
+        <svg class="lux-search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>
+        <input id="serviceSearch" placeholder="Найти услугу, процедуру или зону" oninput="Beauty.filterServices(this.value)">
+        <button onclick="Beauty.toast('Выберите нужную категорию ниже')" aria-label="Фильтры">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+        </button>
+      </div>
+
+      ${servicesLoaded?`
+        <div class="lux-category-strip">
+          ${cats.map(c=>`<button class="lux-category ${S.category===c?"active":""}" onclick="Beauty.setCategory('${esc(c)}')">
+            <span>${serviceCatalogIcon(c)}</span>
+            <b>${esc(c==="Все"?"Все":serviceCatalogCategoryLabel(c))}</b>
+          </button>`).join("")}
+        </div>
+
+        <div id="serviceList" class="lux-service-catalog">
+          ${featured?serviceFeaturedCard(featured):`<div class="lux-services-empty">В этой категории пока нет услуг.</div>`}
+          ${rest.length?`<div class="lux-service-grid">${rest.map(serviceGridCard).join("")}</div>`:""}
+        </div>
+      `:`
+        <div class="lux-category-strip">
+          <button class="lux-category active" disabled>
+            <span>${serviceCatalogIcon("Все")}</span><b>Все</b>
+          </button>
+        </div>
+        <div id="serviceList" class="lux-service-catalog">
+          <div class="lux-services-empty">Загружаем актуальные услуги…</div>
+        </div>
+      `}
+    </main>${nav("services")}`;
+  }
+
+  function serviceRow(s){
+    return serviceGridCard(s);
+  }
+
+  function serviceDetail(){
+    const s=S.service || services[0];
+    return `<main class="page page-services service-detail-page">
+      <div class="detail-cover"><img src="${s.fullImg||s.img}" alt="" fetchpriority="high" decoding="async">
+        <button class="icon-btn back-float" onclick="Beauty.backToServices()">‹</button>
+        <button class="icon-btn heart-float gold" onclick="Beauty.toast('Добавлено в избранное')">♡</button>
+      </div>
+      <div class="detail-box">
+        <h1>${esc(s.name)}</h1>
+        <div class="detail-price">${priceLabel(s)} <span>${durationLabel(s)}</span></div>
+        <p class="detail-copy">${esc(s.desc)}</p>
+        <div class="includes"><h3>Что входит</h3>${s.includes.map(x=>`<div>${esc(x)}</div>`).join("")}</div>
+        <div class="sticky-action"><button class="btn-primary" onclick="Beauty.startBooking(${s.id})">Выбрать дату и время</button></div>
+      </div>
+    </main>${nav("services")}`;
+  }
+
+  /* ===== CLIENT BOOKING MODULE — css/booking.css ===== */
+  function mastersView(){
+    return `<main class="page page-booking">${topbar({back:S.service?"Beauty.openService("+S.service.id+")":"Beauty.go('home')"})}
+      <h1 class="page-title">Выбор мастера</h1><p class="page-sub">${S.service?esc(S.service.name):"Выберите специалиста"}</p>
+      <div class="master-list">${masters.map(m=>`<div class="master-card ${S.master?.id===m.id?"selected":""}">
+        <img src="${m.img}" alt=""><div><h3>${m.name}</h3><p>${m.role}</p>${m.exp?`<p>Опыт ${m.exp}</p>`:""}${m.rating?`<div class="rating">★ ${m.rating}</div>`:""}</div>
+        <button class="select-btn" onclick="Beauty.selectMaster(${m.id})">${S.master?.id===m.id?"Выбран":"Выбрать"}</button>
+      </div>`).join("")}</div>
+      ${S.service&&S.master?`<div class="sticky-action"><button class="btn-primary" onclick="Beauty.go('datetime')">Выбрать дату и время</button></div>`:""}
+    </main>${nav("services")}`;
+  }
+
+  function dates(){
+    const a=[]; const weekdays=["Вс","Пн","Вт","Ср","Чт","Пт","Сб"];
+    const months=["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
+    for(let i=1;i<=14;i++){
+      const d=new Date();d.setDate(d.getDate()+i);
+      const iso=d.toISOString().slice(0,10);
+      a.push({iso,day:d.getDate(),w:weekdays[d.getDay()],m:months[d.getMonth()]});
+    }
+    return a;
+  }
+
+  function datetimeView(){
+    const ds=dates(), times=["10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00","19:00","20:00"];
+    if(!S.date)S.date=ds[1].iso;
+    if(!S.master)S.master=masters[0];
+
+    return `<main class="page page-booking">${topbar({back:S.service?"Beauty.openService("+S.service.id+")":"Beauty.go('services')"})}
+      <h1 class="page-title">Выбор времени</h1>
+      <p class="page-sub">Выберите удобную дату и время для записи.</p>
+
+      <div class="calendar-card">
+        <div class="date-strip" id="bookingDateStrip">${ds.map(d=>`<button class="date-btn ${S.date===d.iso?"active":""}" data-booking-date="${d.iso}" aria-pressed="${S.date===d.iso?"true":"false"}" onclick="Beauty.pickDate('${d.iso}',this)"><span>${d.w}</span><b>${d.day}</b><small>${d.m}</small></button>`).join("")}</div>
+        <div class="booking-selected-date" id="bookingSelectedDate">Выбрано: <b>${esc(bookingPrettyDate(S.date))}</b></div>
+        <div class="time-title">Доступное время</div>
+        <div class="time-grid" id="bookingTimeGrid">${times.map(t=>{const unavailable=(bookingAvailabilityByDate.get(S.date)||new Set()).has(t);return `<button class="time-btn ${S.time===t?"active":""} ${unavailable?"unavailable":""}" data-booking-time="${t}" aria-pressed="${S.time===t?"true":"false"}" ${unavailable?"disabled aria-disabled='true'":""} onclick="Beauty.pickTime('${t}',this)">${t}${unavailable?`<small>занято</small>`:""}</button>`}).join("")}</div>
+      </div>
+
+      <div class="summary">
+        <h3>Ваш выбор</h3>
+        <div class="summary-line"><span>Услуга</span><b>${esc(S.service?.name||"—")}</b></div>
+        <div class="summary-line"><span>Специалист</span><b>Людмила</b></div>
+        <div class="summary-line"><span>Дата</span><b id="bookingSummaryDate">${esc(bookingPrettyDate(S.date))}${S.time?` · ${esc(S.time)}`:""}</b></div>
+        <div class="summary-line"><span>Стоимость</span><b>${S.service?priceLabel(S.service):"—"}</b></div>
+      </div>
+
+      <div class="sticky-action">
+        <button id="bookingDateOkBtn" class="btn-primary" ${!S.time?"disabled style='opacity:.45'":""} onclick="Beauty.openBookingContact()">ОК</button>
+      </div>
+    </main>${nav("booking")}`;
+  }
+
+  function bookingContactView(){
+    if(!S.master)S.master=masters[0];
+
+    return `<main class="page page-booking">${topbar({back:"Beauty.go('datetime')"})}
+      <h1 class="page-title">Контактные данные</h1>
+      <p class="page-sub">Оставьте имя и номер телефона для связи по вашей записи.</p>
+
+      <div class="summary">
+        <div class="summary-line"><span>Услуга</span><b>${esc(S.service?.name||"—")}</b></div>
+        <div class="summary-line"><span>Дата / время</span><b>${esc(S.date||"—")} · ${esc(S.time||"—")}</b></div>
+      </div>
+
+      <section class="booking-contact-card">
+        <label class="booking-contact-field">
+          <span>Ваше имя</span>
+          <input
+            id="bookingClientName"
+            type="text"
+            maxlength="120"
+            autocomplete="name"
+            enterkeyhint="next"
+            placeholder="Например, Алина"
+            value="${esc(S.bookingName||"")}"
+            onfocus="Beauty.bookingFieldFocus(this)"
+            onblur="Beauty.bookingFieldBlur(this)"
+            oninput="Beauty.setBookingContact('name',this.value)"
+          >
+        </label>
+
+        <label class="booking-contact-field">
+          <span>Номер телефона</span>
+          <input
+            id="bookingClientPhone"
+            type="tel"
+            maxlength="16"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            autocomplete="tel"
+            enterkeyhint="done"
+            placeholder=""
+            value="${esc(S.bookingPhone||"")}"
+            onfocus="Beauty.focusBookingPhone(this)"
+            onblur="Beauty.bookingFieldBlur(this)"
+            oninput="Beauty.inputBookingPhone(this)"
+          >
+        </label>
+
+        <div class="booking-contact-note">Telegram также останется привязан к заявке — администратор сможет написать вам напрямую.</div>
+      </section>
+
+      <div class="sticky-action">
+        <button id="bookingSubmitBtn" class="btn-primary" onclick="Beauty.confirmBooking(this)">Записаться</button>
+      </div>
+    </main>${nav("booking")}`;
+  }
+
+  function confirmView(){
+    return `<main class="page page-booking">${topbar()}
+      <div class="confirm-wrap"><div class="confirm-icon">⌛</div><h1>Заявка отправлена</h1>
+      <p>Запись ожидает подтверждения администратора.<br>После решения вам придёт уведомление в Telegram.</p></div>
+      <div class="summary">
+        <div class="summary-line"><span>Услуга</span><b>${esc(S.service.name)}</b></div>
+        <div class="summary-line"><span>Специалист</span><b>Людмила</b></div>
+        <div class="summary-line"><span>Дата / время</span><b>${esc(S.date)} · ${esc(S.time)}</b></div>
+        <div class="summary-line"><span>Имя</span><b>${esc(S.bookingName||"—")}</b></div>
+        <div class="summary-line"><span>Телефон</span><b>${esc(S.bookingPhone||"—")}</b></div>
+        <div class="summary-line"><span>Стоимость</span><b>${priceLabel(S.service)}</b></div>
+      </div>
+      <div class="sticky-action"><button class="btn-primary" onclick="Beauty.go('booking')">Мои записи</button></div>
+    </main>${nav("booking")}`;
+  }
+
+  function bookingMetaIcon(type){
+    if(type==="calendar"){
+      return `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="15" rx="2.5"/><path d="M7.5 3.5v4M16.5 3.5v4M3.5 10h17"/></svg>`;
+    }
+    if(type==="person"){
+      return `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7.5" r="3.5"/><path d="M5.5 20c.5-4.1 2.8-6.2 6.5-6.2s6 2.1 6.5 6.2"/></svg>`;
+    }
+    return `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.8"/><path d="M7 9.5h10M8 14h2.5"/></svg>`;
+  }
+
+  function bookingPrettyDate(date){
+    if(!date)return "Дата не указана";
+    try{
+      return new Intl.DateTimeFormat("ru-RU",{
+        day:"numeric",
+        month:"long",
+        year:"numeric"
+      }).format(new Date(`${date}T12:00:00`)).replace(/\s*г\.$/,"");
+    }catch(e){
+      return String(date);
+    }
+  }
+
+  function bookingDisplayData(b){
+    const s=services.find(x=>Number(x.id)===Number(b.serviceId)) || null;
+    const m=masters.find(x=>Number(x.id)===Number(b.masterId)) || masters[0] || null;
+    const status=String(b.status||"confirmed");
+    const statusText=({
+      pending:"Ожидает подтверждения",
+      confirmed:"Подтверждена",
+      completed:"Завершено",
+      cancelled:"Отменено",
+      no_show:"Не состоялась"
+    })[status] || "Предстоит";
+
+    return {
+      s,
+      serviceName:b.serviceName || s?.name || "Услуга",
+      masterName:b.masterName || m?.name || "Людмила",
+      image:s?.img || "",
+      price:s ? priceLabel(s) : "—",
+      date:bookingPrettyDate(b.date),
+      time:String(b.time||"").slice(0,5),
+      status,
+      statusText
+    };
+  }
+
+  function bookingFeaturedCard(b){
+    const d=bookingDisplayData(b);
+    return `<article class="records-featured" onclick="Beauty.bookingInfo('${b.id}')">
+      <div class="records-nearest-chip">
+        <span>${bookingMetaIcon("calendar")}</span>
+        БЛИЖАЙШАЯ ЗАПИСЬ
+      </div>
+
+      <div class="records-featured-photo">
+        ${d.image?`<img src="${esc(d.image)}" alt="${esc(d.serviceName)}" loading="lazy" decoding="async">`:`<div class="records-photo-empty">MED</div>`}
+      </div>
+
+      <div class="records-featured-copy">
+        <h2>${esc(d.serviceName)}</h2>
+
+        <div class="records-meta-row">
+          <span>${bookingMetaIcon("calendar")}</span>
+          <b>${esc(d.date)} · ${esc(d.time)}</b>
+        </div>
+        <div class="records-meta-row">
+          <span>${bookingMetaIcon("person")}</span>
+          <b>Мастер: ${esc(d.masterName)}</b>
+        </div>
+        <div class="records-meta-row">
+          <span>${bookingMetaIcon("price")}</span>
+          <b>${esc(d.price)}</b>
+        </div>
+      </div>
+
+      <span class="records-status ${d.status==="pending"?"pending":""}">${esc(d.statusText)}</span>
+
+      <button class="records-more" onclick="event.stopPropagation();Beauty.bookingInfo('${b.id}')">
+        Подробнее
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+      </button>
+    </article>`;
+  }
+
+  function bookingListCard(b){
+    const d=bookingDisplayData(b);
+    return `<button class="records-card" onclick="Beauty.bookingInfo('${b.id}')">
+      <div class="records-card-photo">
+        ${d.image?`<img src="${esc(d.image)}" alt="${esc(d.serviceName)}" loading="lazy" decoding="async">`:`<div class="records-photo-empty">MED</div>`}
+      </div>
+
+      <div class="records-card-copy">
+        <h3>${esc(d.serviceName)}</h3>
+
+        <div class="records-card-line">
+          <span>${bookingMetaIcon("calendar")}</span>
+          <b>${esc(d.date)} · ${esc(d.time)}</b>
+        </div>
+        <div class="records-card-line">
+          <span>${bookingMetaIcon("person")}</span>
+          <b>Мастер: ${esc(d.masterName)}</b>
+        </div>
+        <div class="records-card-line">
+          <span>${bookingMetaIcon("price")}</span>
+          <b>${esc(d.price)}</b>
+        </div>
+      </div>
+
+      <span class="records-status compact ${d.status==="pending"?"pending":""}">${esc(d.statusText)}</span>
+      <span class="records-chevron" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg>
+      </span>
+    </button>`;
+  }
+
+  function bookingView(){
+    const bookings=serverBookings
+      .filter(b=>!["completed","cancelled","no_show"].includes(String(b.status||"")))
+      .slice()
+      .sort((a,b)=>`${a.date||""}T${a.time||""}`.localeCompare(`${b.date||""}T${b.time||""}`));
+
+    const nearest=bookings[0]||null;
+    const rest=bookings.slice(1);
+
+    return `<main class="page page-booking booking-records-page">${topbar()}
+      <section class="records-heading">
+        <h1>Мои записи</h1>
+        <p>Все ваши записи и статусы в одном месте.</p>
+      </section>
+
+      ${nearest
+        ? `${bookingFeaturedCard(nearest)}
+           ${rest.length
+             ? `<div class="records-section-title"><b>Все записи</b><span></span></div>
+                <div class="records-list">${rest.map(bookingListCard).join("")}</div>`
+             : ""}`
+        : `<div class="records-empty">
+            <div class="records-empty-mark">◇</div>
+            <h2>Записей пока нет</h2>
+            <p>Выберите услугу и удобное время.</p>
+            <button class="btn-primary" onclick="Beauty.go('services')">Выбрать услугу</button>
+          </div>`
+      }
+    </main>${nav("booking")}`;
+  }
+
+  function bookingCard(b,done){
+    const s=services.find(x=>x.id===b.serviceId)||services[0];
+    const m=masters.find(x=>x.id===b.masterId)||masters[0];
+    const serviceName=b.serviceName||s.name;
+    const masterName=b.masterName||m.name;
+    const status=String(b.status||"confirmed");
+    const statusText=({pending:"Ожидает подтверждения",confirmed:"Подтверждена",completed:"Завершено",cancelled:"Отменено",no_show:"Не состоялась"})[status] || "Предстоит";
+    const doneClass=["completed","cancelled","no_show"].includes(status) || done;
+    return `<button class="booking-card" onclick="Beauty.bookingInfo('${b.id}')"><img src="${s.img}" alt=""><div><h3>${esc(serviceName)}</h3><p>${esc(b.date)} · ${esc(b.time)}</p><p>Мастер: ${esc(masterName)} · ${priceLabel(s)}</p></div><span class="status-pill ${doneClass?"done":""}">${esc(statusText)}</span></button>`;
+  }
+
+  /* ===== CLIENT HISTORY MODULE — css/history.css ===== */
+  function historyView(){
+    const done=serverBookings.filter(b=>["completed","cancelled","no_show"].includes(String(b.status||"")));
+    return `<main class="page page-history">${topbar()}
+      <h1 class="page-title">История</h1><p class="page-sub">Прошлые посещения и изменения записей.</p>
+      ${done.length?done.map(b=>bookingCard(b,true)).join(""):`<div class="empty">История пока пуста.</div>`}
+    </main>${nav("history")}`;
+  }
+
+  /* ===== CLIENT PROFILE MODULE — css/profile.css ===== */
+  function profileView(){
+    const user=tg?.initDataUnsafe?.user;
+    const name=[user?.first_name,user?.last_name].filter(Boolean).join(" ") || "Алина";
+    const avatar=user?.photo_url || masters[0].img;
+    return `<main class="page page-profile">${topbar()}
+      <div class="profile-head"><img class="profile-avatar" src="${avatar}" alt=""><div><h2>${esc(name)}</h2><p>${user?.username?"@"+esc(user.username):"+7 (999) 123-45-67"}</p><div class="badge">♔ Gold клиент</div></div></div>
+      <div class="menu-list">
+        <button class="menu-item" onclick="Beauty.toast('Редактирование профиля подключим позже')"><span class="mi">♙</span><b>Личные данные</b><span>›</span></button>
+        <button class="menu-item" onclick="Beauty.go('masters')"><span class="mi">♡</span><b>Мои мастера</b><span>›</span></button>
+        <button class="menu-item" onclick="Beauty.go('bonus')"><span class="mi">♢</span><b>Бонусы</b><span>1 250 ₸ ›</span></button>
+        <button class="menu-item" onclick="Beauty.toast('Сертификаты появятся позже')"><span class="mi">▣</span><b>Подарочные сертификаты</b><span>›</span></button>
+        <button class="menu-item" onclick="Beauty.toast('Уведомления включены')"><span class="mi">♧</span><b>Уведомления</b><span>›</span></button>
+        <button class="menu-item" onclick="Beauty.toast('Раздел поддержки подключим позже')"><span class="mi">?</span><b>Помощь и поддержка</b><span>›</span></button>
+      </div>
+    </main>${nav("profile")}`;
+  }
+
+  function bonusView(){
+    return `<main class="page page-profile">${topbar({back:"Beauty.go('profile')"})}
+      <h1 class="page-title">Бонусная программа</h1><p class="page-sub">Копите бонусы и оплачивайте ими услуги.</p>
+      <div class="bonus-card"><small>Ваши бонусы</small><strong>1 250 ₸</strong><small>Доступно для оплаты услуг</small>
+        <div class="bonus-status"><span>Ваш статус: <b style="color:var(--gold2)">Gold</b></span><span>до Platinum 2 750 ₸</span></div>
+      </div>
+      <div class="menu-list">
+        <div class="menu-item"><span class="mi">▣</span><b>За каждую запись</b><span>5% от суммы</span></div>
+        <div class="menu-item"><span class="mi">★</span><b>За отзыв о мастере</b><span>100 ₸</span></div>
+        <div class="menu-item"><span class="mi">♙</span><b>За приглашённую подругу</b><span>200 ₸</span></div>
+      </div>
+    </main>${nav("profile")}`;
+  }
+
+
+
+  function ruRole(role){
+    return ({creator:"Создатель",admin:"Администратор",client:"Покупатель"})[role] || "Покупатель";
+  }
+
+  function isStaffMode(){ return S.roleMode === "creator" || S.roleMode === "admin"; }
+
+  function adminPendingCount(){
+    return adminBookings.filter(b=>String(b.status||"")==="pending").length;
+  }
+
+  function adminIsDesktopLayout(){ return false; }
+
+  function syncAdminLayoutClass(){
+    document.body?.classList.remove("admin-layout-mobile","admin-layout-desktop","admin-mobile-light");
+    document.body?.classList.add("client-layout");
+    return false;
+  }
+
+  function adminNav(active){
+    const pending=adminPendingCount();
+    const desktop=adminIsDesktopLayout();
+    const items=desktop
+      ? [
+          ["admin-home","⌂","Главная"],
+          ["admin-bookings","▣","Записи"],
+          ["admin-calendar","□","Календарь"],
+          ["admin-clients","♙","Клиенты"],
+          ["admin-services","◇","Услуги"],
+          ["admin-finance","₸","Финансы"],
+          ["admin-access","♛","Доступ"],
+          ["admin-more","☷","Ещё"]
+        ]
+      : [
+          ["admin-home","⌂","Главная"],
+          ["admin-bookings","▣","Записи"],
+          ["admin-calendar","□","Календарь"],
+          ["admin-clients","♙","Клиенты"],
+          ["admin-more","☷","Ещё"]
+        ];
+
+    const buttons=items.map(([v,i,l])=>`<button class="nav-btn ${active===v?"active":""}" onclick="Beauty.go('${v}')"><div class="nav-icon">${i}${v==="admin-bookings"&&pending?`<em class="admin-nav-badge">${pending>99?"99+":pending}</em>`:""}</div><span>${l}</span></button>`).join("");
+
+    if(!desktop){
+      // Pure mobile DOM: only five direct buttons, exactly as the original
+      // mobile bottom navigation expects. No desktop nodes exist here.
+      return `<nav class="bottom-nav admin-bottom admin-mobile-bottom"><div class="nav-inner">${buttons}</div></nav>`;
+    }
+
+    // Pure desktop DOM: no mobile bottom-navigation nodes inside the sidebar.
+    return `<aside class="admin-desktop-sidebar">
+      <div class="admin-desktop-sidebar-inner">
+        <div class="admin-nav-brand"><strong>MED <span>AESTHETIC</span></strong><small>Панель управления</small></div>
+        <nav class="admin-nav-menu">${buttons}</nav>
+        <div class="admin-nav-foot">MED AESTHETIC · admin</div>
+      </div>
+    </aside>`;
+  }
+
+  function adminHeader(){
+    const user=tg?.initDataUnsafe?.user;
+    const name=user?.first_name || "MED AESTHETIC";
+    const avatar=user?.photo_url || "";
+    return `<div class="admin-safe"></div><header class="admin-header">
+      <div class="admin-brand"><div class="admin-brand-title">MED <span>AESTHETIC</span></div><div class="admin-role">${esc(ruRole(S.roleMode))} · ${esc(name)}</div></div>
+      <div class="admin-head-actions">
+        <button class="admin-round" onclick="Beauty.openAdminSearch()" aria-label="Поиск">⌕</button>
+        ${S.actualRole==="creator"?`<button class="admin-round" onclick="Beauty.openRoleSheet()" aria-label="Переключить роль">♛</button>`:""}
+        ${avatar?`<img class="admin-avatar" src="${avatar}" alt="">`:`<div class="admin-avatar" style="display:grid;place-items:center;color:var(--admin-purple);font-weight:800">${esc((name||"A").slice(0,1).toUpperCase())}</div>`}
+      </div>
+    </header>`;
+  }
+
+  function roleSheet(){
+    if(!S.roleSheet || S.actualRole!=="creator")return "";
+    const labels={creator:["♛","Создатель","Полный доступ и управление ролями"],admin:["◇","Администратор","Полный рабочий функционал администратора"],client:["♡","Покупатель","Полный клиентский сценарий для теста"]};
+    return `<div class="role-sheet-backdrop" onclick="if(event.target===this)Beauty.closeRoleSheet()"><div class="role-sheet"><h3>♛ Переключить роль</h3><p>Вы получаете полноценный функционал выбранной роли. Ваши реальные права создателя не меняются.</p>${S.roleSwitch.map(role=>{const x=labels[role]||labels.client;return `<button class="role-choice ${S.roleMode===role?"active":""}" onclick="Beauty.switchRole('${role}')"><div><b>${x[0]} ${x[1]}</b><span>${x[2]}</span></div><strong>${S.roleMode===role?"✓":"›"}</strong></button>`}).join("")}</div></div>`;
+  }
+
+  function testModeBar(){
+    if(S.roleMode!=="client" || S.actualRole!=="creator")return "";
+    return `<div class="test-mode-bar"><span>${S.actualRole==="creator"?"♛":"◇"} Тест: клиент</span><button onclick="Beauty.switchRole('${S.actualRole}')">Вернуться в ${S.actualRole==="creator"?"создателя":"админку"}</button></div>`;
+  }
+
+  function localISODate(d=new Date()){
+    const y=d.getFullYear();
+    const m=String(d.getMonth()+1).padStart(2,"0");
+    const day=String(d.getDate()).padStart(2,"0");
+    return `${y}-${m}-${day}`;
+  }
+  function todayISO(){ return localISODate(new Date()); }
+  function addDaysISO(days){const d=new Date();d.setDate(d.getDate()+days);return localISODate(d)}
+  function bookingStatusRu(status){
+    return ({pending:"Ожидает подтверждения",confirmed:"Подтверждена",completed:"Завершена",cancelled:"Отменена",no_show:"Не пришёл"})[status] || "Запись";
+  }
+  function isActiveAdminBooking(b){ return ["pending","confirmed"].includes(String(b.status||"confirmed")); }
+  function adminBookingDateTime(b){
+    const d=new Date(`${String(b?.date||"").slice(0,10)}T${String(b?.time||"00:00").slice(0,5)}:00`);
+    return Number.isFinite(d.getTime())?d:null;
+  }
+  function sortedAdminBookings(){
+    return [...adminBookings].sort((a,b)=>String((a.date||"")+(a.time||"")).localeCompare(String((b.date||"")+(b.time||""))));
+  }
+  function filteredAdminBookings(){
+    const all=sortedAdminBookings();
+    if(S.adminFilter==="Все")return all;
+    const active=all.filter(isActiveAdminBooking);
+    if(S.adminFilter==="Сегодня")return active.filter(b=>String(b.date||"").slice(0,10)===todayISO());
+    if(S.adminFilter==="Завтра")return active.filter(b=>String(b.date||"").slice(0,10)===addDaysISO(1));
+    if(S.adminFilter==="Неподтверждённые")return all.filter(b=>String(b.status||"")==="pending");
+    if(S.adminFilter==="Неделя"){
+      const from=todayISO(),to=addDaysISO(7);
+      return active.filter(b=>{const d=String(b.date||"").slice(0,10);return d>=from&&d<=to});
+    }
+    return all;
+  }
+  function adminTodayBookings(){return adminBookings.filter(b=>isActiveAdminBooking(b)&&String(b.date||"").slice(0,10)===todayISO())}
+  function adminNearest(){
+    const now=Date.now();
+    const active=sortedAdminBookings().filter(isActiveAdminBooking);
+    const overdueToday=active.filter(b=>{const d=adminBookingDateTime(b);return d&&String(b.date||"").slice(0,10)===todayISO()&&d.getTime()<now});
+    if(overdueToday.length)return overdueToday[overdueToday.length-1];
+    return active.find(b=>{const d=adminBookingDateTime(b);return d&&d.getTime()>=now}) || null;
+  }
+  function adminRelativeBookingText(b){
+    const d=adminBookingDateTime(b);
+    if(!d)return "";
+    const diff=Math.round((d.getTime()-Date.now())/60000);
+    if(diff<0 && String(b.date||"").slice(0,10)===todayISO())return `Опаздывает ${Math.abs(diff)} мин`;
+    if(diff===0)return "Сейчас";
+    if(diff>0&&diff<60)return `Через ${diff} мин`;
+    if(diff>=60&&diff<180)return `Через ${Math.floor(diff/60)} ч ${diff%60} мин`;
+    if(String(b.date||"").slice(0,10)===todayISO())return `Сегодня в ${String(b.time||"").slice(0,5)}`;
+    if(String(b.date||"").slice(0,10)===addDaysISO(1))return `Завтра в ${String(b.time||"").slice(0,5)}`;
+    return `${adminHomeDateLabel(b.date)} · ${String(b.time||"").slice(0,5)}`;
+  }
+  function niceToday(){return new Intl.DateTimeFormat("ru-RU",{weekday:"long",day:"numeric",month:"long"}).format(new Date())}
+  function adminBookingRow(b){
+    const client=b.clientName||(b.clientUsername?`@${b.clientUsername}`:"Клиент");
+    const status=String(b.status||"confirmed");
+    return `<button class="admin-book-row" onclick="Beauty.openAdminBooking('${b.id}')"><div class="t">${esc(b.time||"—")}</div><div><h3>${esc(b.serviceName||"Запись")}</h3><p>${esc(client)} · ${esc(adminHomeDateLabel(b.date))}</p></div><span class="admin-row-status status-${esc(status)}">${esc(bookingStatusRu(status))}</span></button>`;
+  }
+  function adminClientKeyFromBooking(b){
+    const phone=String(b?.clientPhone||"").replace(/\D/g,"");
+    if(phone)return `phone:${phone}`;
+    if(b?.telegramUserId)return `tg:${b.telegramUserId}`;
+    return `name:${String(b?.clientName||b?.clientTelegramName||"клиент").trim().toLowerCase()}`;
+  }
+  function adminClientToken(key){return encodeURIComponent(String(key||""))}
+  function adminClientKeyFromToken(token){try{return decodeURIComponent(String(token||""))}catch(e){return String(token||"")}}
+  function adminClientsData(){
+    const map=new Map();
+    adminBookings.forEach(b=>{
+      const key=adminClientKeyFromBooking(b);
+      if(!map.has(key))map.set(key,{key,bookings:[],name:b.clientName||b.clientTelegramName||(b.clientUsername?`@${b.clientUsername}`:"Клиент"),phone:b.clientPhone||"",username:b.clientUsername||"",telegramUserId:b.telegramUserId||null});
+      const c=map.get(key);c.bookings.push(b);
+      if(!c.phone&&b.clientPhone)c.phone=b.clientPhone;
+      if(!c.username&&b.clientUsername)c.username=b.clientUsername;
+      if(!c.telegramUserId&&b.telegramUserId)c.telegramUserId=b.telegramUserId;
+    });
+    return [...map.values()].map(c=>{
+      c.bookings.sort((a,b)=>String((b.date||"")+(b.time||"")).localeCompare(String((a.date||"")+(a.time||""))));
+      c.completed=c.bookings.filter(b=>String(b.status)==="completed").length;
+      c.noShows=c.bookings.filter(b=>String(b.status)==="no_show").length;
+      c.cancelled=c.bookings.filter(b=>String(b.status)==="cancelled").length;
+      c.upcoming=c.bookings.filter(isActiveAdminBooking).sort((a,b)=>String((a.date||"")+(a.time||"")).localeCompare(String((b.date||"")+(b.time||""))))[0]||null;
+      c.lastVisit=c.bookings.find(b=>String(b.status)==="completed")||null;
+      c.note=adminClientNotes[c.key]||"";
+      return c;
+    }).sort((a,b)=>String(b.bookings[0]?.date||"").localeCompare(String(a.bookings[0]?.date||"")));
+  }
+  function adminClientByKey(key){return adminClientsData().find(c=>c.key===key)||null}
+  function adminServicePriceForBooking(b){
+    if(Number.isFinite(Number(b?.priceSnapshot)))return Number(b.priceSnapshot);
+    const s=services.find(x=>Number(x.id)===Number(b?.serviceId));
+    return Number.isFinite(Number(s?.price))?Number(s.price):0;
+  }
+  function clockToMinutes(value){
+    const [h,m]=String(value||"00:00").slice(0,5).split(":").map(Number);
+    return (Number(h)||0)*60+(Number(m)||0);
+  }
+  function bookingDurationMinutes(b){
+    if(Number.isFinite(Number(b?.durationMinutes))&&Number(b.durationMinutes)>0)return Number(b.durationMinutes);
+    const service=adminServices.find(x=>Number(x.id)===Number(b?.serviceId))
+      || services.find(x=>Number(x.id)===Number(b?.serviceId));
+    return Number.isFinite(Number(service?.duration))&&Number(service.duration)>0?Number(service.duration):60;
+  }
+  function serviceDurationMinutes(serviceId){
+    const service=adminServices.find(x=>Number(x.id)===Number(serviceId))
+      || services.find(x=>Number(x.id)===Number(serviceId));
+    return Number.isFinite(Number(service?.duration))&&Number(service.duration)>0?Number(service.duration):60;
+  }
+  function intervalsOverlap(startA,durationA,startB,durationB){
+    return startA<startB+durationB && startA+durationA>startB;
+  }
+  function adminTimeIsUnavailable(dateValue,timeValue,candidateDuration=60,excludeBookingId=null){
+    const start=clockToMinutes(timeValue);
+    const duration=Math.max(1,Number(candidateDuration)||60);
+    if(start<600||start+duration>1260)return true;
+
+    for(const b of adminBookings.filter(isActiveAdminBooking)){
+      if(String(b.date||"").slice(0,10)!==dateValue)continue;
+      if(String(b.id)===String(excludeBookingId||""))continue;
+      if(intervalsOverlap(start,duration,clockToMinutes(b.time),bookingDurationMinutes(b)))return true;
+    }
+
+    for(const block of adminBlocks){
+      if(String(block.date||"").slice(0,10)!==dateValue)continue;
+      if(intervalsOverlap(start,duration,clockToMinutes(block.time),60))return true;
+    }
+    return false;
+  }
+  function adminUnavailableTimes(dateValue,excludeBookingId=null,candidateDuration=60){
+    const busy=new Set();
+    const times=["10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00","19:00","20:00"];
+    times.forEach(t=>{
+      if(adminTimeIsUnavailable(dateValue,t,candidateDuration,excludeBookingId))busy.add(t);
+    });
+    return busy;
+  }
+  function adminTimeOptionsHtml(dateValue,selected="",excludeBookingId=null,serviceId=null){
+    const booking=excludeBookingId
+      ? adminBookings.find(b=>String(b.id)===String(excludeBookingId))
+      : null;
+    const duration=booking
+      ? bookingDurationMinutes(booking)
+      : serviceDurationMinutes(serviceId);
+    const busy=adminUnavailableTimes(dateValue,excludeBookingId,duration);
+    const times=["10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00","19:00","20:00"];
+    return `<option value="">Выберите время</option>`+times.map(t=>`<option value="${t}" ${selected===t?"selected":""} ${busy.has(t)&&selected!==t?"disabled":""}>${t}${busy.has(t)&&selected!==t?" · недоступно":""}</option>`).join("");
+  }
+
+  function adminHomeTimeValue(b){
+    return String(b?.time||"—").slice(0,5);
+  }
+
+  function adminHomeDateLabel(dateValue){
+    const raw=String(dateValue||"").slice(0,10);
+    if(!raw)return "—";
+    if(raw===todayISO())return "Сегодня";
+    if(raw===addDaysISO(1))return "Завтра";
+    const d=new Date(raw+"T12:00:00");
+    if(!Number.isFinite(d.getTime()))return raw;
+    return new Intl.DateTimeFormat("ru-RU",{day:"numeric",month:"short"}).format(d).replace(".","");
+  }
+
+  function adminHomeClient(b){
+    return b?.clientName || (b?.clientUsername?`@${b.clientUsername}`:"Клиент");
+  }
+
+  function adminHomeStatusClass(status){
+    return ({
+      pending:"pending",
+      confirmed:"confirmed",
+      completed:"completed",
+      cancelled:"cancelled",
+      no_show:"no-show"
+    })[String(status||"")] || "default";
+  }
+
+  function adminHomeRow(b,{showDate=false,compact=false}={}){
+    const status=String(b.status||"confirmed");
+    return `<button class="v3-admin-row ${compact?"compact":""}" onclick="Beauty.openAdminBooking('${b.id}')">
+      <div class="v3-admin-row-time">
+        ${showDate?`<small>${esc(adminHomeDateLabel(b.date))}</small>`:""}
+        <strong>${esc(adminHomeTimeValue(b))}</strong>
+      </div>
+      <div class="v3-admin-row-main">
+        <b>${esc(adminHomeClient(b))}</b>
+        <span>${esc(b.serviceName||"Запись")}</span>
+      </div>
+      <span class="v3-admin-status ${adminHomeStatusClass(status)}">${esc(bookingStatusRu(status))}</span>
+      <i>›</i>
+    </button>`;
+  }
+
+  function adminHomePendingRow(b){
+    return `<div class="v3-pending-row">
+      <button class="v3-pending-info" onclick="Beauty.openAdminBooking('${b.id}')">
+        <span class="v3-pending-avatar">${esc((adminHomeClient(b)||"К").slice(0,1).toUpperCase())}</span>
+        <span class="v3-pending-copy">
+          <b>${esc(adminHomeClient(b))}</b>
+          <small>${esc(adminHomeDateLabel(b.date))} · ${esc(adminHomeTimeValue(b))} · ${esc(b.serviceName||"Запись")}</small>
+        </span>
+      </button>
+      <div class="v3-pending-actions">
+        <button class="v3-confirm-btn" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','confirmed',this);event.stopPropagation()">Подтвердить</button>
+        <button class="v3-reject-btn" data-admin-status-action aria-label="Отклонить" onclick="Beauty.updateAdminBookingStatus('${b.id}','cancelled',this);event.stopPropagation()">×</button>
+      </div>
+    </div>`;
+  }
+
+  /* ===== ADMIN MODULE — visual styles are isolated in css/admin/*.css by screen ===== */
+  function adminHome(){
+    const loaded=adminBookingsLoaded;
+    const next=adminNearest();
+    const today=adminTodayBookings().sort((a,b)=>String(a.time||"").localeCompare(String(b.time||"")));
+    const upcomingAll=sortedAdminBookings().filter(isActiveAdminBooking).filter(b=>{
+      const d=adminBookingDateTime(b);return d&&d.getTime()>=Date.now();
+    });
+    const upcoming=upcomingAll.filter(b=>String(b.id)!==String(next?.id||""));
+    const pending=sortedAdminBookings().filter(b=>String(b.status||"")==="pending");
+    const phone=String(next?.clientPhone||"").trim();
+    return `<main class="admin-page admin-dashboard-page v3-admin-home">${adminHeader()}
+      <div class="v3-admin-title"><div><h1>Главная</h1><p>${esc(niceToday())}</p></div><button onclick="Beauty.openAdminCreateBooking()">＋ Новая запись</button></div>
+
+      <section class="admin-next-card ${next&&adminRelativeBookingText(next).startsWith("Опаздывает")?"late":""}">
+        <div class="admin-next-top"><span>Следующая запись</span>${next?`<b id="adminNextRelative">${esc(adminRelativeBookingText(next))}</b>`:""}</div>
+        ${!loaded?`<div class="v3-admin-empty">Загружаем расписание…</div>`:next?`
+          <button class="admin-next-main" onclick="Beauty.openAdminBooking('${next.id}')">
+            <strong>${esc(String(next.time||"").slice(0,5))}</strong>
+            <div><h2>${esc(next.clientName||next.clientTelegramName||(next.clientUsername?`@${next.clientUsername}`:"Клиент"))}</h2><p>${esc(next.serviceName||"Запись")}</p></div>
+            <i>›</i>
+          </button>
+          <div class="admin-next-actions">
+            ${phone?`<button onclick="Beauty.callBookingClient('${next.id}')">Позвонить</button>`:""}
+            ${next.clientUsername?`<button onclick="Beauty.messageBookingClient('${next.id}')">Telegram</button>`:""}
+            <button onclick="Beauty.openAdminBooking('${next.id}')">Открыть</button>
+          </div>`:`<div class="admin-next-empty"><b>Ближайших записей нет</b><span>Можно добавить запись вручную.</span></div>`}
+      </section>
+
+      <div class="v3-admin-stats">
+        <button class="v3-stat-card" onclick="Beauty.setAdminFilter('Сегодня');Beauty.go('admin-bookings')"><span class="v3-stat-icon">□</span><small>Записи сегодня</small><strong>${loaded?today.length:"—"}</strong></button>
+        <button class="v3-stat-card" onclick="Beauty.go('admin-bookings')"><span class="v3-stat-icon">◷</span><small>Ближайшие</small><strong>${loaded?upcomingAll.length:"—"}</strong></button>
+        <button class="v3-stat-card attention" onclick="Beauty.openAdminPending()"><span class="v3-stat-icon">!</span><small>Неподтверждённые</small><strong>${loaded?pending.length:"—"}</strong></button>
+      </div>
+
+      <section class="v3-admin-section v3-pending-section">
+        <div class="v3-section-head"><div><h2>Неподтверждённые</h2><span>${pending.length?`${pending.length} требуют решения`:"Всё обработано"}</span></div>${pending.length?`<span class="v3-count-badge">${pending.length}</span>`:""}</div>
+        <div class="v3-pending-list admin-booking-actions">${!loaded?`<div class="v3-admin-empty">Проверяем заявки…</div>`:pending.length?pending.slice(0,3).map(adminHomePendingRow).join(""):`<div class="v3-admin-empty success">Новых заявок нет.</div>`}</div>
+        ${pending.length>3?`<button class="v3-more-pending" onclick="Beauty.openAdminPending()">Показать остальные ›</button>`:""}
+      </section>
+
+      <section class="v3-admin-section"><div class="v3-section-head"><div><h2>Сегодня</h2><span>${today.length?`${today.length} записей`:"Записей нет"}</span></div><button onclick="Beauty.setAdminFilter('Сегодня');Beauty.go('admin-bookings')">Все записи ›</button></div><div class="v3-today-list">${today.length?today.slice(0,5).map(b=>adminHomeRow(b)).join(""):`<div class="v3-admin-empty">На сегодня записей пока нет.</div>`}</div></section>
+
+      <section class="v3-admin-section"><div class="v3-section-head"><div><h2>Ближайшие</h2><span>После следующей записи</span></div><button onclick="Beauty.go('admin-bookings')">Смотреть все ›</button></div><div class="v3-upcoming-list">${upcoming.length?upcoming.slice(0,4).map(b=>adminHomeRow(b,{showDate:true,compact:true})).join(""):`<div class="v3-admin-empty">Ближайших записей пока нет.</div>`}</div></section>
+    </main>${adminNav("admin-home")}${roleSheet()}`;
+  }
+
+  function adminBookingsView(){
+    const list=filteredAdminBookings();
+    return `<main class="admin-page admin-bookings-page">${adminHeader()}<div class="admin-date-row"><div><h1>Записи</h1><p>Расписание и работа с клиентами</p></div><button class="admin-link" onclick="Beauty.openAdminSearch()">⌕ Поиск</button></div>
+      <button class="admin-create-main" onclick="Beauty.openAdminCreateBooking()">＋ Новая запись вручную</button>
+      <div class="admin-filter">${["Сегодня","Завтра","Неделя","Неподтверждённые","Все"].map(x=>`<button class="${S.adminFilter===x?"active":""}" onclick="Beauty.setAdminFilter('${x}')">${x}</button>`).join("")}</div>
+      <div class="admin-list">${list.length?list.map(adminBookingRow).join(""):`<div class="admin-empty">Записей пока нет.</div>`}</div>
+    </main>${adminNav("admin-bookings")}${roleSheet()}`;
+  }
+
+  function adminCalendarView(){
+    const ds=[],w=["Вс","Пн","Вт","Ср","Чт","Пт","Сб"];
+    for(let i=0;i<14;i++){const d=new Date();d.setDate(d.getDate()+i);ds.push({iso:localISODate(d),day:d.getDate(),w:w[d.getDay()]})}
+    if(!S.adminDate)S.adminDate=ds[0].iso;
+    const times=["10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00","19:00","20:00"];
+    const active=adminBookings.filter(b=>isActiveAdminBooking(b)&&String(b.date||"").slice(0,10)===S.adminDate);
+    const blocks=adminBlocks.filter(b=>String(b.date||"").slice(0,10)===S.adminDate);
+    const slotHtml=times.map(t=>{
+      const slotStart=clockToMinutes(t);
+      const booking=active.find(b=>{
+        const start=clockToMinutes(b.time);
+        return slotStart>=start && slotStart<start+bookingDurationMinutes(b);
+      });
+      const exactBooking=booking&&String(booking.time||"").slice(0,5)===t;
+      const block=blocks.find(b=>String(b.time||"").slice(0,5)===t);
+      if(booking){
+        const end=clockToMinutes(booking.time)+bookingDurationMinutes(booking);
+        const endText=`${String(Math.floor(end/60)).padStart(2,"0")}:${String(end%60).padStart(2,"0")}`;
+        return `<div class="admin-slot"><div class="admin-slot-time">${t}</div><button class="admin-slot-card" onclick="Beauty.openAdminBooking('${booking.id}')"><b>${exactBooking?esc(booking.clientName||"Клиент"):"Продолжается запись"}</b><span>${esc(booking.serviceName||"Запись")} · до ${endText}</span></button></div>`;
+      }
+      if(block)return `<div class="admin-slot"><div class="admin-slot-time">${t}</div><button class="admin-slot-blocked" onclick="Beauty.unblockAdminSlot('${block.id}')"><b>${esc(block.label||"Закрыто")}</b><span>Нажмите, чтобы открыть время</span></button></div>`;
+      return `<div class="admin-slot"><div class="admin-slot-time">${t}</div><button class="admin-slot-free" onclick="Beauty.openAdminSlot('${S.adminDate}','${t}')"><b>Свободно</b><span>Добавить запись или закрыть время</span></button></div>`;
+    }).join("");
+    return `<main class="admin-page admin-calendar-page">${adminHeader()}<div class="admin-date-row"><div><h1>Календарь</h1><p>Записи, свободные и закрытые окна</p></div><button class="admin-link" onclick="Beauty.openAdminCreateBooking('${S.adminDate||todayISO()}')">＋ Запись</button></div>
+      <div class="admin-calendar"><div class="admin-week admin-week-scroll">${ds.map(d=>`<button class="admin-day ${S.adminDate===d.iso?"active":""}" onclick="Beauty.pickAdminDate('${d.iso}')"><span>${d.w}</span><b>${d.day}</b></button>`).join("")}</div><div class="admin-calendar-date-label">${esc(bookingPrettyDate(S.adminDate))}</div><div class="admin-timeline">${S.adminBlocksLoading?`<div class="admin-empty">Обновляем календарь…</div>`:slotHtml}</div></div>
+      <div class="admin-calendar-hint">Нажмите на свободное время, чтобы добавить запись или закрыть окно для клиентов.</div>
+    </main>${adminNav("admin-calendar")}${roleSheet()}`;
+  }
+
+  function adminClientsView(){
+    const clients=adminClientsData();
+    const month=todayISO().slice(0,7);
+    const newThisMonth=clients.filter(c=>c.bookings.some(b=>String(b.createdAt||"").slice(0,7)===month)).length;
+    return `<main class="admin-page admin-clients-page">${adminHeader()}<div class="admin-date-row"><div><h1>Клиенты</h1><p>Контакты, заметки и история визитов</p></div><button class="admin-link" onclick="Beauty.openAdminCreateBooking()">＋ Запись</button></div>
+      <div class="search-box">⌕ <input id="adminClientSearch" placeholder="Имя, Telegram, телефон" oninput="Beauty.filterAdminClients(this.value)"></div>
+      <div class="admin-kpis"><div class="admin-kpi"><small>Клиентов</small><strong>${clients.length}</strong></div><div class="admin-kpi"><small>Новых за месяц</small><strong>${newThisMonth}</strong></div></div>
+      <div class="admin-client-list" id="adminClientList">${clients.length?clients.map(c=>`<button class="admin-client-row" data-admin-client-search="${esc(`${c.name} ${c.phone} ${c.username}`.toLowerCase())}" onclick="Beauty.openAdminClient('${adminClientToken(c.key)}')"><span class="admin-client-avatar">${esc(String(c.name||"К").slice(0,1).toUpperCase())}</span><span class="admin-client-copy"><b>${esc(c.name)}</b><small>${esc(c.phone||c.username||"Без контакта")}</small><em>${c.upcoming?`Ближайшая: ${esc(adminHomeDateLabel(c.upcoming.date))} · ${esc(c.upcoming.time)}`:`Визитов завершено: ${c.completed}`}</em></span><i>›</i></button>`).join(""):`<div class="admin-empty">Клиенты появятся здесь после первой записи.</div>`}</div>
+    </main>${adminNav("admin-clients")}${roleSheet()}`;
+  }
+
+  function adminAccessView(){
+    if(S.actualRole!=="creator"){
+      return adminMoreView();
+    }
+    const admins=Array.isArray(S.admins)?S.admins:[];
+    return `<main class="admin-page admin-access-page">${adminHeader()}
+      <div class="admin-date-row">
+        <div><h1>Администраторы</h1><p>Постоянная привязка по Telegram ID</p></div>
+        <button class="admin-link" onclick="Beauty.go('admin-more')">Назад</button>
+      </div>
+
+      <div class="access-hero">
+        <h2>Добавить администратора</h2>
+        <p>Введите Telegram ID человека. После добавления роль сохранится в базе и при открытии MED AESTHETIC у него сразу будет открываться админка — до тех пор, пока вы не уберёте доступ.</p>
+        <div class="admin-id-form">
+          <input id="adminTelegramId" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="Telegram ID">
+          <button id="addAdminByIdBtn" class="access-primary" onclick="Beauty.addAdminById()">＋ Добавить</button>
+        </div>
+        <div class="admin-id-help">ID можно узнать у бота командой <b>/id</b>.</div>
+      </div>
+
+      <div class="admins-head">
+        <h2>Действующие администраторы</h2>
+        <button onclick="Beauty.loadAdmins()">↻ Обновить</button>
+      </div>
+
+      ${S.adminsLoading
+        ? `<div class="admin-empty-mini">Обновляем список…</div>`
+        : admins.length
+          ? admins.map(a=>{
+              const name=[a.firstName,a.lastName].filter(Boolean).join(" ") || (a.username?"@"+a.username:"Telegram "+a.telegramUserId);
+              const sub=a.username?"@"+a.username:`ID ${a.telegramUserId}`;
+              return `<div class="admin-person">
+                <div class="admin-person-avatar">${esc((name||"A").slice(0,1).toUpperCase())}</div>
+                <div><h3>${esc(name)}</h3><p>${esc(sub)}</p></div>
+                <button class="admin-remove" onclick="Beauty.removeAdmin('${a.telegramUserId}')">Убрать</button>
+              </div>`;
+            }).join("")
+          : `<div class="admin-empty-mini">Администраторов пока нет. Введите Telegram ID выше.</div>`
+      }
+    </main>${adminNav("admin-more")}${roleSheet()}`;
+  }
+
+  function adminServicesView(){
+    const list=adminServices;
+    return `<main class="admin-page admin-services-page">${adminHeader()}
+      <div class="admin-date-row">
+        <div><h1>Услуги</h1><p>Каталог, цены и доступность</p></div>
+        <button class="admin-link" onclick="Beauty.openAdminServiceEditor('new')">＋ Добавить</button>
+      </div>
+
+      <div class="admin-services-summary">
+        <div><strong>${list.filter(x=>x.isActive).length}</strong><span>доступно клиентам</span></div>
+        <div><strong>${list.filter(x=>!x.isActive).length}</strong><span>временно скрыто</span></div>
+      </div>
+
+      <div class="admin-services-list">
+        ${S.adminServicesLoading&&!list.length
+          ? `<div class="admin-empty">Загружаем услуги…</div>`
+          : list.length
+            ? list.map(s=>`<article class="admin-service-card ${s.isActive?"":"disabled"}">
+                <div class="admin-service-photo">
+                  ${s.img?`<img src="${esc(s.img)}" alt="" loading="lazy" decoding="async">`:`<div class="admin-service-no-photo">⌘</div>`}
+                  <span class="admin-service-state ${s.isActive?"on":"off"}">${s.isActive?"В каталоге":"Скрыта"}</span>
+                </div>
+                <div class="admin-service-body">
+                  <small>${esc(s.cat||"Без категории")}</small>
+                  <h3>${esc(s.name||"Услуга")}</h3>
+                  <p>${esc(s.desc||"Описание не заполнено")}</p>
+                  <div class="admin-service-meta">
+                    <span>${Number.isFinite(Number(s.price))?fmt(Number(s.price)):"Цена по записи"}</span>
+                    <span>${Number.isFinite(Number(s.duration))?`${Number(s.duration)} мин`:"Время индивидуально"}</span>
+                  </div>
+                  <div class="admin-service-buttons">
+                    <button onclick="Beauty.openAdminServiceEditor('${s.id}')">Редактировать</button>
+                    <button class="${s.isActive?"hide":"show"}" onclick="Beauty.toggleAdminService('${s.id}')">${s.isActive?"Скрыть":"Вернуть"}</button>
+                  </div>
+                </div>
+              </article>`).join("")
+            : `<div class="admin-empty">Услуг пока нет. Добавьте первую услугу.</div>`
+        }
+      </div>
+    </main>${adminNav("admin-more")}${roleSheet()}`;
+  }
+
+  function adminServiceSheet(){
+    if(!S.adminServiceId)return "";
+    const isNew=S.adminServiceId==="new";
+    const s=isNew?null:adminServices.find(x=>String(x.id)===String(S.adminServiceId));
+    if(!isNew&&!s)return "";
+
+    const includes=(s?.includes||[]).join("\n");
+    const active=isNew?true:Boolean(s?.isActive);
+
+    return `<div class="admin-service-backdrop" onclick="if(event.target===this)Beauty.closeAdminServiceEditor()">
+      <section class="admin-service-sheet">
+        <div class="admin-service-sheet-head">
+          <div><small>${isNew?"Новая услуга":"Редактирование"}</small><h3>${isNew?"Добавить услугу":esc(s?.name||"Услуга")}</h3></div>
+          <button onclick="Beauty.closeAdminServiceEditor()" aria-label="Закрыть">×</button>
+        </div>
+
+        <div class="service-static-photo-note">
+          <b>Фото услуги закреплено</b>
+          <span>Фото закреплено в assets/services как лёгкие WebP-файлы и не меняется через админку.</span>
+        </div>
+
+        <div class="service-edit-grid">
+          <label><span>Название</span><input id="serviceEditName" maxlength="180" value="${esc(s?.name||"")}" placeholder="Название услуги"></label>
+          <label><span>Категория</span><input id="serviceEditCategory" maxlength="100" value="${esc(s?.cat||"")}" placeholder="Косметология"></label>
+          <label><span>Цена, ₸</span><input id="serviceEditPrice" type="number" min="0" inputmode="numeric" value="${s?.price??""}" placeholder="Оставьте пустым"></label>
+          <label><span>Длительность, минут</span><input id="serviceEditDuration" type="number" min="1" inputmode="numeric" value="${s?.duration??""}" placeholder="Оставьте пустым"></label>
+        </div>
+
+        <label class="service-edit-wide">
+          <span>Описание</span>
+          <textarea id="serviceEditDescription" maxlength="5000" rows="4" placeholder="Кратко расскажите об услуге">${esc(s?.desc||"")}</textarea>
+        </label>
+
+        <label class="service-edit-wide">
+          <span>Что входит · каждый пункт с новой строки</span>
+          <textarea id="serviceEditIncludes" rows="5" placeholder="Консультация&#10;Проведение процедуры&#10;Рекомендации по уходу">${esc(includes)}</textarea>
+        </label>
+
+        <label class="service-active-row">
+          <div><b>Показывать покупателям</b><small>Выключите, чтобы временно убрать услугу из каталога</small></div>
+          <input id="serviceEditActive" type="checkbox" ${active?"checked":""}>
+        </label>
+
+        <div class="service-sheet-actions">
+          <button id="saveAdminServiceBtn" class="save" onclick="Beauty.saveAdminService()">Сохранить</button>
+          ${!isNew?`<button class="delete" onclick="Beauty.deleteAdminService('${s.id}')">Удалить услугу</button>`:""}
+        </div>
+      </section>
+    </div>`;
+  }
+
+  function adminMoreView(){
+    const creatorItem=S.actualRole==="creator"?`<button onclick="Beauty.openAdminAccess()"><span class="ico">♛</span><div><b>Администраторы</b><small>Telegram ID и права доступа</small></div><span class="go">›</span></button>`:"";
+    return `<main class="admin-page admin-more-page">${adminHeader()}<div class="admin-date-row"><div><h1>Ещё</h1><p>Управление студией</p></div></div><div class="admin-menu">
+      <button onclick="Beauty.openAdminServices()"><span class="ico">⌘</span><div><b>Услуги</b><small>Описание, цены и доступность</small></div><span class="go">›</span></button>
+      <button onclick="Beauty.go('admin-finance')"><span class="ico">₸</span><div><b>Выручка и аналитика</b><small>Отдельно от рабочей главной</small></div><span class="go">›</span></button>
+      <button onclick="Beauty.go('admin-calendar')"><span class="ico">□</span><div><b>Расписание</b><small>Записи и закрытые окна</small></div><span class="go">›</span></button>
+      ${creatorItem}
+    </div>${S.actualRole==="creator"?`<div class="admin-client-switch"><div><b>Режим клиента</b><p>Открыть клиентскую часть для проверки</p></div><button class="switch-pill" onclick="Beauty.switchRole('client')"></button></div>`:""}</main>${adminNav("admin-more")}${roleSheet()}`;
+  }
+
+  function adminFinanceView(){
+    const month=todayISO().slice(0,7);
+    const completed=adminBookings.filter(b=>String(b.status)==="completed");
+    const monthRows=completed.filter(b=>String(b.date||"").slice(0,7)===month);
+    const todayRows=completed.filter(b=>String(b.date||"").slice(0,10)===todayISO());
+    const sum=rows=>rows.reduce((acc,b)=>acc+adminServicePriceForBooking(b),0);
+    const serviceMap=new Map();
+    monthRows.forEach(b=>{const key=b.serviceName||"Услуга";const x=serviceMap.get(key)||{name:key,count:0,total:0};x.count++;x.total+=adminServicePriceForBooking(b);serviceMap.set(key,x)});
+    const top=[...serviceMap.values()].sort((a,b)=>b.count-a.count||b.total-a.total).slice(0,5);
+    const monthAll=adminBookings.filter(b=>String(b.date||"").slice(0,7)===month);
+    const noShows=monthAll.filter(b=>String(b.status)==="no_show").length;
+    const cancelled=monthAll.filter(b=>String(b.status)==="cancelled").length;
+    return `<main class="admin-page admin-finance-page">${adminHeader()}<div class="admin-date-row"><div><h1>Выручка</h1><p>Отдельная аналитика по завершённым записям</p></div><button class="admin-link" onclick="Beauty.go('admin-more')">Назад</button></div>
+      <div class="finance-kpis"><div><small>За сегодня</small><strong>${fmt(sum(todayRows))}</strong><span>${todayRows.length} завершено</span></div><div><small>За месяц</small><strong>${fmt(sum(monthRows))}</strong><span>${monthRows.length} завершено</span></div></div>
+      <section class="finance-panel"><div class="finance-head"><h2>Популярные услуги</h2><span>текущий месяц</span></div>${top.length?`<div class="finance-list">${top.map((x,i)=>`<div><b>${i+1}</b><span><strong>${esc(x.name)}</strong><small>${x.count} записей</small></span><em>${fmt(x.total)}</em></div>`).join("")}</div>`:`<div class="admin-empty">Завершённых записей в этом месяце пока нет.</div>`}</section>
+      <section class="finance-panel"><div class="finance-head"><h2>Сводка месяца</h2></div><div class="finance-mini"><div><strong>${monthRows.length}</strong><span>завершено</span></div><div><strong>${cancelled}</strong><span>отменено</span></div><div><strong>${noShows}</strong><span>неявок</span></div></div></section>
+      <div class="finance-note">Сумма считается по цене услуги, сохранённой в записи. Это рабочая аналитика завершённых услуг, а не банковская касса.</div>
+    </main>${adminNav("admin-more")}${roleSheet()}`;
+  }
+
+  function adminBookingSheet(){
+    if(!S.adminBookingId)return "";
+    const b=adminBookings.find(x=>String(x.id)===String(S.adminBookingId));
+    if(!b)return "";
+    const client=b.clientName||b.clientTelegramName||(b.clientUsername?`@${b.clientUsername}`:"Клиент");
+    const username=b.clientUsername?`@${b.clientUsername}`:(b.telegramUserId?`Telegram ID ${b.telegramUserId}`:"Telegram не привязан");
+    const phone=String(b.clientPhone||"").trim();
+    const status=String(b.status||"confirmed");
+    const clientKey=adminClientKeyFromBooking(b);
+    return `<div class="admin-booking-backdrop" onclick="if(event.target===this)Beauty.closeAdminBooking()"><section class="admin-booking-sheet">
+      <div class="admin-booking-sheet-head"><div><small>Запись #${esc(b.id)}${b.bookingSource==="admin"?" · создана администратором":""}</small><h3>${esc(b.serviceName||"Услуга")}</h3></div><button onclick="Beauty.closeAdminBooking()" aria-label="Закрыть">×</button></div>
+      <button class="admin-booking-client admin-booking-client-button" onclick="Beauty.openAdminClient('${adminClientToken(clientKey)}')"><b>${esc(client)}</b>${phone?`<span>Телефон: ${esc(phone)}</span>`:""}<span>Telegram: ${esc(username)}</span><em>История клиента ›</em></button>
+      <div class="admin-booking-details"><div><span>Дата</span><b>${esc(bookingPrettyDate(b.date))}</b></div><div><span>Время</span><b>${esc(b.time||"—")}</b></div><div><span>Мастер</span><b>${esc(b.masterName||"Людмила")}</b></div><div><span>Статус</span><b>${esc(bookingStatusRu(status))}</b></div></div>
+      <label class="admin-booking-note"><span>Заметка к этой записи</span><textarea id="adminBookingNote" maxlength="2000" rows="3" placeholder="Например: просила позвонить перед визитом">${esc(b.note||"")}</textarea><button onclick="Beauty.saveAdminBookingNote('${b.id}',this)">Сохранить заметку</button></label>
+      <div class="admin-booking-actions">
+        ${phone?`<button class="booking-action contact" onclick="Beauty.callBookingClient('${b.id}')">Позвонить · ${esc(phone)}</button>`:""}
+        ${b.clientUsername?`<button class="booking-action contact" onclick="Beauty.messageBookingClient('${b.id}')">Написать в Telegram</button>`:""}
+        ${isActiveAdminBooking(b)?`<button class="booking-action neutral" onclick="Beauty.openAdminReschedule('${b.id}')">Перенести запись</button>`:""}
+        ${status==="pending"?`<button class="booking-action confirm" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','confirmed',this)">Подтвердить запись</button><button class="booking-action danger" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','cancelled',this)">Отклонить заявку</button>`:""}
+        ${status==="confirmed"?`<button class="booking-action done" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','completed',this)">Отметить как завершённую</button><button class="booking-action neutral" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','no_show',this)">Клиент не пришёл</button><button class="booking-action danger" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','cancelled',this)">Отменить запись</button>`:""}
+      </div>
+    </section></div>`;
+  }
+
+  function adminCreateBookingSheet(){
+    if(!S.adminCreateOpen)return "";
+    const preset=S.adminCreatePreset||{};
+    const dateValue=preset.date||todayISO();
+    const timeValue=preset.time||"";
+    const client=preset.clientKey?adminClientByKey(preset.clientKey):null;
+    const serviceOptions=services.filter(s=>s.isActive!==false).map(s=>`<option value="${s.id}" ${String(preset.serviceId||"")===String(s.id)?"selected":""}>${esc(s.name)}${Number.isFinite(Number(s.price))?` · ${fmt(Number(s.price))}`:""}</option>`).join("");
+    return `<div class="admin-form-backdrop" onclick="if(event.target===this)Beauty.closeAdminCreateBooking()"><section class="admin-form-sheet"><div class="admin-form-head"><div><small>Ручная запись</small><h3>Новая запись</h3></div><button onclick="Beauty.closeAdminCreateBooking()">×</button></div>
+      <div class="admin-form-grid"><label><span>Имя клиента</span><input id="adminCreateName" maxlength="120" value="${esc(client?.name||preset.name||"")}" placeholder="Имя"></label><label><span>Телефон</span><input id="adminCreatePhone" maxlength="32" inputmode="tel" value="${esc(client?.phone||preset.phone||"")}" placeholder="+7 ..."></label></div>
+      <label class="admin-form-field"><span>Услуга</span><select id="adminCreateService" onchange="Beauty.adminManualServiceChanged(this.value)"><option value="">Выберите услугу</option>${serviceOptions}</select></label>
+      <div class="admin-form-grid"><label><span>Дата</span><input id="adminCreateDate" type="date" min="${todayISO()}" value="${esc(dateValue)}" onchange="Beauty.adminManualDateChanged(this.value)"></label><label><span>Время</span><select id="adminCreateTime">${adminTimeOptionsHtml(dateValue,timeValue,null,preset.serviceId||null)}</select></label></div>
+      <label class="admin-form-field"><span>Заметка к записи</span><textarea id="adminCreateNote" maxlength="2000" rows="3" placeholder="Необязательно"></textarea></label>
+      <input id="adminCreateTelegramId" type="hidden" value="${esc(client?.telegramUserId||preset.telegramUserId||"")}">
+      <button id="adminCreateSubmit" class="admin-form-primary" onclick="Beauty.submitAdminCreateBooking(this)">Создать запись</button>
+    </section></div>`;
+  }
+
+  function adminRescheduleSheet(){
+    if(!S.adminRescheduleId)return "";
+    const b=adminBookings.find(x=>String(x.id)===String(S.adminRescheduleId));
+    if(!b)return "";
+    return `<div class="admin-form-backdrop" onclick="if(event.target===this)Beauty.closeAdminReschedule()"><section class="admin-form-sheet compact"><div class="admin-form-head"><div><small>${esc(b.clientName||"Клиент")}</small><h3>Перенести запись</h3></div><button onclick="Beauty.closeAdminReschedule()">×</button></div><div class="admin-form-grid"><label><span>Новая дата</span><input id="adminMoveDate" type="date" min="${todayISO()}" value="${esc(b.date)}" onchange="Beauty.adminMoveDateChanged(this.value,'${b.id}')"></label><label><span>Новое время</span><select id="adminMoveTime">${adminTimeOptionsHtml(b.date,b.time,b.id,b.serviceId)}</select></label></div><div class="admin-form-note">Клиент получит сообщение в Telegram о новой дате и времени, если Telegram привязан.</div><button id="adminMoveSubmit" class="admin-form-primary" onclick="Beauty.submitAdminReschedule('${b.id}',this)">Перенести</button></section></div>`;
+  }
+
+  function adminSlotSheet(){
+    if(!S.adminSlotDate||!S.adminSlotTime)return "";
+    return `<div class="admin-form-backdrop" onclick="if(event.target===this)Beauty.closeAdminSlot()"><section class="admin-form-sheet compact"><div class="admin-form-head"><div><small>${esc(bookingPrettyDate(S.adminSlotDate))} · ${esc(S.adminSlotTime)}</small><h3>Свободное время</h3></div><button onclick="Beauty.closeAdminSlot()">×</button></div><button class="admin-slot-choice" onclick="Beauty.slotCreateBooking()"><b>＋ Добавить запись</b><span>Записать клиента вручную на это время</span></button><label class="admin-form-field"><span>Причина закрытия</span><input id="adminBlockLabel" maxlength="120" placeholder="Обед, личное время, обучение..."></label><button id="adminBlockSubmit" class="admin-form-secondary" onclick="Beauty.blockAdminSlot(this)">Закрыть это время</button></section></div>`;
+  }
+
+  function adminClientSheet(){
+    if(!S.adminClientKey)return "";
+    const c=adminClientByKey(S.adminClientKey);if(!c)return "";
+    const history=c.bookings;
+    return `<div class="admin-client-backdrop" onclick="if(event.target===this)Beauty.closeAdminClient()"><section class="admin-client-sheet"><div class="admin-form-head"><div><small>Карточка клиента</small><h3>${esc(c.name)}</h3></div><button onclick="Beauty.closeAdminClient()">×</button></div><div class="admin-client-contact">${c.phone?`<button onclick="Beauty.callClientByKey('${adminClientToken(c.key)}')">☎ ${esc(c.phone)}</button>`:""}${c.username?`<button onclick="Beauty.messageClientByKey('${adminClientToken(c.key)}')">Telegram · @${esc(c.username)}</button>`:""}</div><div class="admin-client-stats"><div><strong>${c.completed}</strong><span>визитов</span></div><div><strong>${c.noShows}</strong><span>неявок</span></div><div><strong>${c.cancelled}</strong><span>отмен</span></div></div><label class="admin-client-note"><span>Постоянная заметка о клиенте</span><textarea id="adminClientNote" maxlength="3000" rows="3" placeholder="Аллергия, особенности, просьбы клиента...">${esc(c.note||"")}</textarea><button onclick="Beauty.saveAdminClientNote('${adminClientToken(c.key)}',this)">Сохранить</button></label><button class="admin-form-primary" onclick="Beauty.createBookingForClient('${adminClientToken(c.key)}')">＋ Новая запись этому клиенту</button><div class="admin-client-history-title"><h4>История</h4><span>${history.length} записей</span></div><div class="admin-client-history">${history.map(b=>`<button onclick="Beauty.openBookingFromClient('${b.id}')"><span><b>${esc(b.serviceName||"Запись")}</b><small>${esc(adminHomeDateLabel(b.date))} · ${esc(b.time)}</small></span><em class="status-${esc(b.status||"")}">${esc(bookingStatusRu(b.status))}</em></button>`).join("")}</div></section></div>`;
+  }
+
+  function adminSearchSheet(){
+    if(!S.adminSearchOpen)return "";
+    const q=String(S.adminSearchQuery||"").trim().toLowerCase();
+    const clients=adminClientsData().filter(c=>!q||`${c.name} ${c.phone} ${c.username}`.toLowerCase().includes(q)).slice(0,8);
+    const bookings=sortedAdminBookings().filter(b=>!q||`${b.clientName||""} ${b.clientPhone||""} ${b.clientUsername||""} ${b.serviceName||""} ${b.date||""}`.toLowerCase().includes(q)).slice(0,10);
+    return `<div class="admin-search-backdrop" onclick="if(event.target===this)Beauty.closeAdminSearch()"><section class="admin-search-sheet"><div class="admin-search-head"><div class="admin-search-input">⌕ <input id="adminGlobalSearch" value="${esc(S.adminSearchQuery||"")}" placeholder="Имя, телефон, Telegram, услуга" oninput="Beauty.adminGlobalSearch(this.value)"></div><button onclick="Beauty.closeAdminSearch()">×</button></div>${q?`<div class="admin-search-group"><h4>Клиенты <span>${clients.length}</span></h4>${clients.length?clients.map(c=>`<button onclick="Beauty.openClientFromSearch('${adminClientToken(c.key)}')"><b>${esc(c.name)}</b><small>${esc(c.phone||c.username||"Без контакта")}</small><i>›</i></button>`).join(""):`<p>Клиентов не найдено</p>`}</div><div class="admin-search-group"><h4>Записи <span>${bookings.length}</span></h4>${bookings.length?bookings.map(b=>`<button onclick="Beauty.openBookingFromSearch('${b.id}')"><b>${esc(b.serviceName||"Запись")}</b><small>${esc(b.clientName||"Клиент")} · ${esc(adminHomeDateLabel(b.date))} ${esc(b.time||"")}</small><i>›</i></button>`).join(""):`<p>Записей не найдено</p>`}</div>`:`<div class="admin-search-empty"><b>Глобальный поиск</b><span>Находит клиента или запись по имени, телефону, Telegram и услуге.</span></div>`}</section></div>`;
+  }
+
+  function openAdminPending(){S.adminFilter="Неподтверждённые";S.view="admin-bookings";render();haptic()}
+
+  function openAdminSearch(){S.adminSearchOpen=true;S.adminSearchQuery="";render();setTimeout(()=>document.querySelector("#adminGlobalSearch")?.focus(),60);haptic()}
+  function closeAdminSearch(){S.adminSearchOpen=false;S.adminSearchQuery="";render()}
+  function adminGlobalSearch(value){S.adminSearchQuery=String(value||"");const input=document.querySelector("#adminGlobalSearch");const pos=input?.selectionStart;render();requestAnimationFrame(()=>{const next=document.querySelector("#adminGlobalSearch");if(next){next.focus();try{next.setSelectionRange(pos,pos)}catch(e){}}})}
+  function openClientFromSearch(token){S.adminSearchOpen=false;S.adminClientKey=adminClientKeyFromToken(token);render()}
+  function openBookingFromSearch(id){S.adminSearchOpen=false;S.adminBookingId=String(id);render()}
+
+  function filterAdminClients(q){q=String(q||"").trim().toLowerCase();document.querySelectorAll("#adminClientList [data-admin-client-search]").forEach(el=>{el.hidden=Boolean(q)&&!String(el.dataset.adminClientSearch||"").includes(q)})}
+  function openAdminClient(token){S.adminBookingId=null;S.adminClientKey=adminClientKeyFromToken(token);render();haptic()}
+  function closeAdminClient(){S.adminClientKey=null;render()}
+  function openBookingFromClient(id){S.adminClientKey=null;S.adminBookingId=String(id);render()}
+  function createBookingForClient(token){const key=adminClientKeyFromToken(token);S.adminClientKey=null;openAdminCreateBooking("","",key)}
+  function callClientByKey(token){const key=adminClientKeyFromToken(token);const c=adminClientByKey(key);if(!c?.phone){toast("Номер телефона не указан");return}window.location.href="tel:"+String(c.phone).replace(/[^+\d]/g,"");haptic()}
+  function messageClientByKey(token){const key=adminClientKeyFromToken(token);const c=adminClientByKey(key);if(!openClientTelegram(c?.username,c?.telegramUserId)){toast("Telegram клиента не привязан");return}haptic()}
+  async function saveAdminClientNote(token,button=null){const key=adminClientKeyFromToken(token);const note=String(document.querySelector("#adminClientNote")?.value||"").trim();setActionButtonBusy(button,"Сохраняем…");try{const data=await adminClientNotesApi("/"+encodeURIComponent(key),{method:"PUT",body:JSON.stringify({note})});adminClientNotes[key]=data.note||"";restoreActionButton(button);toast("Заметка клиента сохранена");haptic()}catch(e){restoreActionButton(button);toast(e.message||"Не удалось сохранить заметку")}}
+
+  function openAdminCreateBooking(dateValue="",timeValue="",clientKey=null){S.adminBookingId=null;S.adminSlotDate=null;S.adminSlotTime=null;S.adminCreateOpen=true;S.adminCreatePreset={date:dateValue||todayISO(),time:timeValue||"",clientKey:clientKey||null};render();haptic()}
+  function closeAdminCreateBooking(){S.adminCreateOpen=false;S.adminCreatePreset=null;render()}
+  function adminManualServiceChanged(serviceId){
+    const dateValue=String(document.querySelector("#adminCreateDate")?.value||"");
+    const select=document.querySelector("#adminCreateTime");
+    if(select)select.innerHTML=adminTimeOptionsHtml(dateValue,"",null,Number(serviceId||0));
+  }
+  function adminManualDateChanged(value){
+    const serviceId=Number(document.querySelector("#adminCreateService")?.value||0);
+    const select=document.querySelector("#adminCreateTime");
+    if(select)select.innerHTML=adminTimeOptionsHtml(value,"",null,serviceId);
+  }
+  async function submitAdminCreateBooking(button=null){
+    const name=String(document.querySelector("#adminCreateName")?.value||"").trim();
+    const phone=String(document.querySelector("#adminCreatePhone")?.value||"").trim();
+    const serviceId=Number(document.querySelector("#adminCreateService")?.value||0);
+    const bookingDate=String(document.querySelector("#adminCreateDate")?.value||"");
+    const bookingTime=String(document.querySelector("#adminCreateTime")?.value||"");
+    const note=String(document.querySelector("#adminCreateNote")?.value||"").trim();
+    const telegramIdRaw=String(document.querySelector("#adminCreateTelegramId")?.value||"").trim();
+    if(name.length<2){toast("Введите имя клиента");return}if(!serviceId){toast("Выберите услугу");return}if(!bookingDate||!bookingTime){toast("Выберите дату и время");return}
+    setActionButtonBusy(button,"Создаём…");
+    try{const data=await adminBookingApi("",{method:"POST",body:JSON.stringify({client_name:name,phone:phone||null,telegram_user_id:telegramIdRaw?Number(telegramIdRaw):null,service_id:serviceId,booking_date:bookingDate,booking_time:bookingTime,note:note||null})});if(data.booking){adminBookings.push(data.booking);adminBookingsLoaded=true;saveAdminBookingsCache()}invalidateLocalBookingAvailability();S.adminCreateOpen=false;S.adminCreatePreset=null;render();toast("Запись создана");haptic("medium");loadAdminBookings(true)}catch(e){restoreActionButton(button);toast(e.message||"Не удалось создать запись")}
+  }
+
+  function openAdminReschedule(id){S.adminBookingId=null;S.adminRescheduleId=String(id);render();haptic()}
+  function closeAdminReschedule(){S.adminRescheduleId=null;render()}
+  function adminMoveDateChanged(value,id){
+    const booking=adminBookings.find(b=>String(b.id)===String(id));
+    const select=document.querySelector("#adminMoveTime");
+    if(select)select.innerHTML=adminTimeOptionsHtml(value,"",id,booking?.serviceId||null);
+  }
+  async function submitAdminReschedule(id,button=null){const dateValue=String(document.querySelector("#adminMoveDate")?.value||"");const timeValue=String(document.querySelector("#adminMoveTime")?.value||"");if(!dateValue||!timeValue){toast("Выберите новую дату и время");return}setActionButtonBusy(button,"Переносим…");try{const data=await adminBookingApi("/"+encodeURIComponent(id),{method:"PATCH",body:JSON.stringify({booking_date:dateValue,booking_time:timeValue})});if(data.booking)adminBookings=adminBookings.map(b=>String(b.id)===String(id)?data.booking:b);saveAdminBookingsCache();invalidateLocalBookingAvailability();S.adminRescheduleId=null;render();toast("Запись перенесена");haptic("medium");loadAdminBookings(true)}catch(e){restoreActionButton(button);toast(e.message||"Не удалось перенести запись")}}
+
+  async function saveAdminBookingNote(id,button=null){const note=String(document.querySelector("#adminBookingNote")?.value||"").trim();setActionButtonBusy(button,"Сохраняем…");try{const data=await adminBookingApi("/"+encodeURIComponent(id),{method:"PATCH",body:JSON.stringify({note})});if(data.booking)adminBookings=adminBookings.map(b=>String(b.id)===String(id)?data.booking:b);saveAdminBookingsCache();restoreActionButton(button);toast("Заметка сохранена");haptic()}catch(e){restoreActionButton(button);toast(e.message||"Не удалось сохранить заметку")}}
+
+  function openAdminSlot(dateValue,timeValue){S.adminSlotDate=dateValue;S.adminSlotTime=timeValue;render();haptic()}
+  function closeAdminSlot(){S.adminSlotDate=null;S.adminSlotTime=null;render()}
+  function slotCreateBooking(){const d=S.adminSlotDate,t=S.adminSlotTime;S.adminSlotDate=null;S.adminSlotTime=null;openAdminCreateBooking(d,t)}
+  async function blockAdminSlot(button=null){const label=String(document.querySelector("#adminBlockLabel")?.value||"").trim();const d=S.adminSlotDate,t=S.adminSlotTime;if(!d||!t)return;setActionButtonBusy(button,"Закрываем…");try{const data=await adminBlocksApi("",{method:"POST",body:JSON.stringify({booking_date:d,booking_time:t,label:label||"Закрыто"})});if(data.block)adminBlocks.push(data.block);invalidateLocalBookingAvailability();S.adminSlotDate=null;S.adminSlotTime=null;render();toast("Время закрыто для клиентов");haptic("medium")}catch(e){restoreActionButton(button);toast(e.message||"Не удалось закрыть время")}}
+  async function unblockAdminSlot(id){if(!confirm("Открыть это время для записи клиентов?"))return;try{await adminBlocksApi("/"+encodeURIComponent(id),{method:"DELETE"});adminBlocks=adminBlocks.filter(b=>String(b.id)!==String(id));invalidateLocalBookingAvailability();render();toast("Время снова доступно");haptic()}catch(e){toast(e.message||"Не удалось открыть время")}}
+
+  function openAdminBooking(id){
+    S.adminSearchOpen=false;
+    S.adminClientKey=null;
+    S.adminBookingId=String(id);
+    render();
+    haptic();
+  }
+
+  function closeAdminBooking(){
+    S.adminBookingId=null;
+    render();
+  }
+
+  let bookingSubmitPending=false;
+  let adminBookingActionPending=false;
+
+  function busyButtonHtml(label){
+    return `<span class="action-busy-content"><span class="action-busy-spinner" aria-hidden="true"></span><span>${esc(label)}</span></span>`;
+  }
+
+  function setActionButtonBusy(button,label){
+    if(!button)return;
+    if(!button.dataset.originalHtml)button.dataset.originalHtml=button.innerHTML;
+    button.disabled=true;
+    button.classList.add("is-busy");
+    button.innerHTML=busyButtonHtml(label);
+  }
+
+  function restoreActionButton(button){
+    if(!button)return;
+    button.disabled=false;
+    button.classList.remove("is-busy");
+    if(button.dataset.originalHtml){
+      button.innerHTML=button.dataset.originalHtml;
+      delete button.dataset.originalHtml;
+    }
+  }
+
+  function adminStatusBusyLabel(status,button){
+    const original=String(button?.dataset?.originalHtml || button?.textContent || "").toLowerCase();
+
+    if(status==="confirmed")return "Подтверждаем…";
+    if(status==="completed")return "Завершаем…";
+    if(status==="no_show")return "Сохраняем…";
+    if(status==="cancelled" && original.includes("отклон"))return "Отклоняем…";
+    if(status==="cancelled")return "Отменяем…";
+    return "Сохраняем…";
+  }
+
+  async function updateAdminBookingStatus(id,status,button=null){
+    if(adminBookingActionPending)return;
+
+    adminBookingActionPending=true;
+    haptic("medium");
+
+    const statusButtons=[
+      ...document.querySelectorAll(".admin-booking-actions [data-admin-status-action]")
+    ];
+
+    statusButtons.forEach(btn=>{
+      if(!btn.dataset.originalHtml)btn.dataset.originalHtml=btn.innerHTML;
+      btn.disabled=true;
+    });
+
+    setActionButtonBusy(button,adminStatusBusyLabel(status,button));
+
+    try{
+      const data=await adminBookingApi("/"+encodeURIComponent(id),{
+        method:"PATCH",
+        body:JSON.stringify({status})
+      });
+
+      if(data.booking){
+        adminBookings=adminBookings.map(
+          b=>String(b.id)===String(id)?data.booking:b
+        );
+        adminBookingsLoaded=true;
+        saveAdminBookingsCache();
+        invalidateLocalBookingAvailability();
+      }
+
+      S.adminBookingId=null;
+      adminBookingActionPending=false;
+      render();
+      toast("Статус записи обновлён");
+      haptic("medium");
+    }catch(e){
+      adminBookingActionPending=false;
+
+      statusButtons.forEach(btn=>{
+        btn.disabled=false;
+        btn.classList.remove("is-busy");
+        if(btn.dataset.originalHtml){
+          btn.innerHTML=btn.dataset.originalHtml;
+          delete btn.dataset.originalHtml;
+        }
+      });
+
+      toast(e.message || "Не удалось изменить запись");
+    }
+  }
+
+  function openClientTelegram(username,telegramUserId){
+    const cleanUsername=String(username||"").replace(/^@/,"").trim();
+    if(cleanUsername){
+      const url="https://t.me/"+encodeURIComponent(cleanUsername);
+      try{
+        if(tg?.openTelegramLink)tg.openTelegramLink(url);
+        else window.open(url,"_blank");
+      }catch(e){window.open(url,"_blank")}
+      return true;
+    }
+
+    const uid=Number(telegramUserId||0);
+    if(uid>0){
+      const direct="tg://user?id="+encodeURIComponent(String(uid));
+      try{
+        if(tg?.openLink)tg.openLink(direct);
+        else window.location.href=direct;
+      }catch(e){window.location.href=direct}
+      return true;
+    }
+
+    return false;
+  }
+
+  function messageBookingClient(id){
+    const b=adminBookings.find(x=>String(x.id)===String(id));
+    if(!openClientTelegram(b?.clientUsername,b?.telegramUserId)){
+      toast("Telegram клиента не привязан");
+      return;
+    }
+    haptic();
+  }
+
+  function callBookingClient(id){
+    const b=adminBookings.find(x=>String(x.id)===String(id));
+    const phone=String(b?.clientPhone||"").trim();
+    if(!phone){
+      toast("Номер телефона не указан");
+      return;
+    }
+    const dial=phone.replace(/[^+\d]/g,"");
+    window.location.href="tel:"+dial;
+    haptic();
+  }
+
+  function bookingInfo(id){
+    const b=serverBookings.find(x=>String(x.id)===String(id));
+    if(!b){toast("Запись из истории");return}
+    const s=services.find(x=>x.id===b.serviceId), m=masters.find(x=>x.id===b.masterId);
+    toast(`${b.serviceName||s?.name||"Услуга"} · ${b.masterName||m?.name||"Мастер"} · ${b.date} ${b.time}`);
+  }
+
+
+
+  function initHeroCarouselLoop(){
+    const carousel=document.querySelector('.hero-carousel');
+    if(!carousel) return;
+
+    const originals=Array.from(carousel.children).filter(el=>el.classList.contains('hero-slide'));
+    const count=originals.length;
+    if(count<2) return;
+
+    /*
+      True endless track: repeat the same three banners many times and keep the
+      viewport inside the middle copies. Re-centering changes scrollLeft by an
+      exact whole-cycle width, so the pixels under the finger stay identical —
+      there is no visible end, rewind or jump back to banner 1.
+    */
+    const cycles=9;
+    const middleCycle=4;
+    const fragment=document.createDocumentFragment();
+
+    for(let cycle=0;cycle<cycles;cycle++){
+      originals.forEach((source,realIndex)=>{
+        const slide=source.cloneNode(true);
+        slide.dataset.loopCycle=String(cycle);
+        slide.dataset.loopReal=String(realIndex);
+        fragment.appendChild(slide);
+      });
+    }
+    carousel.replaceChildren(fragment);
+
+    const slides=Array.from(carousel.children).filter(el=>el.classList.contains('hero-slide'));
+    const firstOfCycle=(cycle)=>slides[cycle*count];
+    const centeredLeft=(slide)=>slide.offsetLeft-(carousel.clientWidth-slide.offsetWidth)/2;
+
+    let cycleWidth=0;
+    const measureCycle=()=>{
+      const a=firstOfCycle(middleCycle);
+      const b=firstOfCycle(middleCycle+1);
+      cycleWidth=(a&&b) ? (b.offsetLeft-a.offsetLeft) : 0;
+      return cycleWidth;
+    };
+
+    const jumpInstant=(left)=>{
+      const old=carousel.style.scrollBehavior;
+      carousel.style.scrollBehavior='auto';
+      carousel.scrollLeft=left;
+      void carousel.offsetWidth;
+      carousel.style.scrollBehavior=old;
+    };
+
+    const keepInMiddle=()=>{
+      const w=cycleWidth || measureCycle();
+      if(!w) return;
+
+      // Rebase by whole repeated cycles, preserving the exact visual position.
+      const min=2*w;
+      const max=6*w;
+      if(carousel.scrollLeft < min){
+        jumpInstant(carousel.scrollLeft + 3*w);
+      }else if(carousel.scrollLeft > max){
+        jumpInstant(carousel.scrollLeft - 3*w);
+      }
+    };
+
+    // Never expose scrollLeft=0 to the user. Build and position the
+    // endless track in the same JS task, before the browser paints it.
+    carousel.style.visibility="hidden";
+    measureCycle();
+    const first=firstOfCycle(middleCycle);
+    if(first)jumpInstant(centeredLeft(first));
+    carousel.style.visibility="";
+
+    let raf=0;
+    carousel.addEventListener('scroll',()=>{
+      if(raf) return;
+      raf=requestAnimationFrame(()=>{
+        raf=0;
+        keepInMiddle();
+      });
+    },{passive:true});
+
+    // Telegram frequently emits resize while only the viewport HEIGHT changes.
+    // Horizontal recentering is needed only when the carousel WIDTH truly changes.
+    let lastCarouselWidth=carousel.clientWidth;
+    window.addEventListener('resize',()=>{
+      const nextWidth=carousel.clientWidth;
+      if(Math.abs(nextWidth-lastCarouselWidth)<2)return;
+      lastCarouselWidth=nextWidth;
+
+      const current=slides.reduce((best,slide)=>{
+        const c=carousel.scrollLeft+carousel.clientWidth/2;
+        const d=Math.abs((slide.offsetLeft+slide.offsetWidth/2)-c);
+        return !best||d<best.d ? {slide,d} : best;
+      },null);
+
+      measureCycle();
+      if(current?.slide)jumpInstant(centeredLeft(current.slide));
+    },{passive:true});
+  }
+
+  function roleLoadingView(){
+    return `<main style="min-height:100vh;display:grid;place-items:center;background:#07050c;color:#f7f2ff;padding:24px">
+      <div style="text-align:center">
+        <div style="font-size:20px;font-weight:850;letter-spacing:.08em">MED <span style="color:#e4b75d">AESTHETIC</span></div>
+        <div style="margin-top:8px;font-size:11px;color:#8f8997">Открываем приложение…</div>
+      </div>
+    </main>`;
+  }
+
+  function render(){
+    syncAdminLayoutClass();
+    let html="";
+    if(S.view==="role-loading")html=roleLoadingView();
+    else if(S.view==="admin-home")html=adminHome();
+    else if(S.view==="admin-bookings")html=adminBookingsView();
+    else if(S.view==="admin-calendar")html=adminCalendarView();
+    else if(S.view==="admin-clients")html=adminClientsView();
+    else if(S.view==="admin-more")html=adminMoreView();
+    else if(S.view==="admin-services")html=adminServicesView();
+    else if(S.view==="admin-access")html=adminAccessView();
+    else if(S.view==="admin-finance")html=adminFinanceView();
+    else if(S.view==="home")html=home();
+    else if(S.view==="services")html=servicesView();
+    else if(S.view==="service")html=serviceDetail();
+    else if(S.view==="masters")html=mastersView();
+    else if(S.view==="datetime")html=datetimeView();
+    else if(S.view==="booking-contact")html=bookingContactView();
+    else if(S.view==="confirm")html=confirmView();
+    else if(S.view==="booking")html=bookingView();
+    else if(S.view==="history")html=historyView();
+    else if(S.view==="profile")html=profileView();
+    else if(S.view==="bonus")html=bonusView();
+    else html=isStaffMode()?adminHome():home();
+    document.querySelector("#app").innerHTML=html + testModeBar() + (S.roleMode==="client" ? roleSheet() : "") + (isStaffMode() ? adminBookingSheet() : "") + (isStaffMode() ? adminServiceSheet() : "") + (isStaffMode() ? adminCreateBookingSheet() : "") + (isStaffMode() ? adminRescheduleSheet() : "") + (isStaffMode() ? adminSlotSheet() : "") + (isStaffMode() ? adminClientSheet() : "") + (isStaffMode() ? adminSearchSheet() : "");
+    if(S.view==="home") requestAnimationFrame(initHeroCarouselLoop);
+    if(S.view==="datetime") requestAnimationFrame(()=>{
+      keepSelectedBookingDateVisible();
+      ensureBookingAvailabilityFresh(true);
+    });
+  }
+
+
+  let bookingKeyboardTarget=null;
+  let bookingKeyboardBlurTimer=0;
+  let bookingKeyboardReleaseTimer=0;
+  let bookingKeyboardFullViewportHeight=0;
+
+  function formatKzPhone(raw){
+    let digits=String(raw||"").replace(/\D/g,"");
+
+    // +7 is a fixed prefix. Normalize pasted +7 / 8... numbers.
+    if(digits.startsWith("7") || digits.startsWith("8")){
+      digits=digits.slice(1);
+    }
+
+    // Exactly 10 digits are allowed after +7.
+    digits=digits.slice(0,10);
+
+    if(!digits)return "+7";
+
+    let out="+7";
+    if(digits.length>0)out+=" "+digits.slice(0,3);
+    if(digits.length>3)out+=" "+digits.slice(3,6);
+    if(digits.length>6)out+=" "+digits.slice(6,8);
+    if(digits.length>8)out+=" "+digits.slice(8,10);
+    return out;
+  }
+
+  function bookingPhoneIsComplete(value){
+    return /^\+7 \d{3} \d{3} \d{2} \d{2}$/.test(String(value||""));
+  }
+
+  function currentVisualViewportHeight(){
+    return Math.round(window.visualViewport?.height || window.innerHeight);
+  }
+
+  function rememberFullBookingViewport(){
+    const h=currentVisualViewportHeight();
+    // Only increase the remembered normal viewport. The software keyboard
+    // makes visualViewport smaller, never larger.
+    if(h>bookingKeyboardFullViewportHeight){
+      bookingKeyboardFullViewportHeight=h;
+    }
+  }
+
+  function setBookingKeyboardMode(active){
+    if(active){
+      clearTimeout(bookingKeyboardReleaseTimer);
+
+      // Focus fires before iOS has finished shrinking visualViewport, so this
+      // is the reliable "keyboard closed" height we need to return to later.
+      rememberFullBookingViewport();
+
+      document.documentElement.classList.add("booking-keyboard-open");
+      document.body?.classList.add("booking-keyboard-open");
+      return;
+    }
+
+    document.documentElement.classList.remove("booking-keyboard-open");
+    document.body?.classList.remove("booking-keyboard-open");
+  }
+
+  function releaseBookingKeyboardModeWhenClosed(){
+    clearTimeout(bookingKeyboardReleaseTimer);
+
+    if(!document.documentElement.classList.contains("booking-keyboard-open")){
+      return;
+    }
+
+    const targetHeight=bookingKeyboardFullViewportHeight || window.innerHeight;
+    const started=performance.now();
+
+    const check=()=>{
+      const active=document.activeElement;
+      const stillEditing=
+        S.view==="booking-contact" &&
+        active &&
+        (active.id==="bookingClientName" || active.id==="bookingClientPhone");
+
+      if(stillEditing)return;
+
+      const vv=window.visualViewport;
+      const current=currentVisualViewportHeight();
+      const offsetTop=Math.round(vv?.offsetTop||0);
+
+      // Do not restore fixed UI merely because the keyboard animation paused.
+      // Restore only when the visual viewport has ACTUALLY returned to its
+      // original full-height state.
+      const backToFullHeight=current >= targetHeight-8;
+      const backToTop=Math.abs(offsetTop)<=2;
+
+      if(backToFullHeight && backToTop){
+        bookingKeyboardTarget=null;
+        rememberFullBookingViewport();
+        setBookingKeyboardMode(false);
+        return;
+      }
+
+      // iOS keyboard close is normally ~250-450ms. Keep the bottom controls
+      // absent for a generous 1.5s safety window rather than showing them
+      // during any viewport movement.
+      if(performance.now()-started>=1500){
+        bookingKeyboardTarget=null;
+        setBookingKeyboardMode(false);
+        return;
+      }
+
+      bookingKeyboardReleaseTimer=setTimeout(check,40);
+    };
+
+    bookingKeyboardReleaseTimer=setTimeout(check,40);
+  }
+
+  function ensureBookingFieldVisible(field=bookingKeyboardTarget){
+    if(S.view!=="booking-contact" || !field || document.activeElement!==field)return;
+
+    const vv=window.visualViewport;
+    const viewportTop=(vv?.offsetTop||0);
+    const viewportBottom=viewportTop+(vv?.height||window.innerHeight);
+    const rect=field.getBoundingClientRect();
+    const safeTop=viewportTop+105;
+    const safeBottom=viewportBottom-28;
+
+    if(rect.bottom>safeBottom){
+      window.scrollBy({
+        top:rect.bottom-safeBottom+30,
+        behavior:"smooth"
+      });
+    }else if(rect.top<safeTop){
+      window.scrollBy({
+        top:rect.top-safeTop-12,
+        behavior:"smooth"
+      });
+    }
+  }
+
+  function bookingFieldFocus(field){
+    clearTimeout(bookingKeyboardBlurTimer);
+    clearTimeout(bookingKeyboardReleaseTimer);
+    bookingKeyboardTarget=field;
+    rememberFullBookingViewport();
+    setBookingKeyboardMode(true);
+
+    requestAnimationFrame(()=>ensureBookingFieldVisible(field));
+    setTimeout(()=>ensureBookingFieldVisible(field),100);
+    setTimeout(()=>ensureBookingFieldVisible(field),240);
+  }
+
+  function bookingFieldBlur(){
+    clearTimeout(bookingKeyboardBlurTimer);
+    bookingKeyboardBlurTimer=setTimeout(()=>{
+      const active=document.activeElement;
+      const editing=
+        S.view==="booking-contact" &&
+        active &&
+        (active.id==="bookingClientName" || active.id==="bookingClientPhone");
+
+      if(!editing){
+        // Keep fixed bottom UI hidden until visualViewport has COMPLETELY
+        // returned to its final height. This prevents the visible action jump.
+        releaseBookingKeyboardModeWhenClosed();
+      }
+    },70);
+  }
+
+  function focusBookingPhone(input){
+    bookingFieldFocus(input);
+
+    if(!String(input.value||"").trim()){
+      input.value="+7";
+      S.bookingPhone="+7";
+    }else{
+      input.value=formatKzPhone(input.value);
+      S.bookingPhone=input.value;
+    }
+
+    requestAnimationFrame(()=>{
+      try{
+        const n=input.value.length;
+        input.setSelectionRange(n,n);
+      }catch(e){}
+    });
+  }
+
+  function inputBookingPhone(input){
+    const formatted=formatKzPhone(input.value);
+    input.value=formatted;
+    S.bookingPhone=formatted;
+
+    try{
+      const n=input.value.length;
+      input.setSelectionRange(n,n);
+    }catch(e){}
+  }
+
+  function dismissBookingKeyboard(){
+    if(S.view!=="booking-contact")return;
+    const active=document.activeElement;
+
+    if(active && (active.id==="bookingClientName" || active.id==="bookingClientPhone")){
+      active.blur();
+      // blur handler keeps the fixed controls hidden until the keyboard
+      // closing animation is completely finished.
+      return;
+    }
+
+    releaseBookingKeyboardModeWhenClosed();
+  }
+
+  // Tap anywhere outside the active input = close keyboard.
+  document.addEventListener("pointerdown",(event)=>{
+    if(S.view!=="booking-contact")return;
+
+    const active=document.activeElement;
+    const editing=
+      active &&
+      (active.id==="bookingClientName" || active.id==="bookingClientPhone");
+
+    if(!editing)return;
+    if(event.target.closest("#bookingClientName,#bookingClientPhone"))return;
+
+    dismissBookingKeyboard();
+  },true);
+
+  // Capture the keyboard-closed viewport once the Mini App has settled.
+  requestAnimationFrame(()=>requestAnimationFrame(rememberFullBookingViewport));
+  setTimeout(rememberFullBookingViewport,350);
+
+  if(window.visualViewport){
+    window.visualViewport.addEventListener("resize",()=>{
+      if(document.documentElement.classList.contains("booking-keyboard-open")){
+        requestAnimationFrame(()=>ensureBookingFieldVisible());
+      }else{
+        // Telegram fullscreen/browser chrome changes can legitimately increase
+        // the normal viewport height; keep that new baseline.
+        rememberFullBookingViewport();
+      }
+    },{passive:true});
+  }
+
+
+  function updateBookingDateUi(selectedDate){
+    const strip=document.querySelector("#bookingDateStrip");
+    if(strip){
+      strip.querySelectorAll("[data-booking-date]").forEach(btn=>{
+        const active=btn.dataset.bookingDate===selectedDate;
+        btn.classList.toggle("active",active);
+        btn.setAttribute("aria-pressed",active?"true":"false");
+      });
+    }
+
+    // New date means the previously selected time is no longer valid.
+    const timeGrid=document.querySelector("#bookingTimeGrid");
+    if(timeGrid){
+      timeGrid.querySelectorAll("[data-booking-time]").forEach(btn=>{
+        btn.classList.remove("active");
+        btn.setAttribute("aria-pressed","false");
+      });
+    }
+
+    const pretty=bookingPrettyDate(selectedDate);
+    const selectedLabel=document.querySelector("#bookingSelectedDate");
+    if(selectedLabel)selectedLabel.innerHTML=`Выбрано: <b>${esc(pretty)}</b>`;
+
+    const summary=document.querySelector("#bookingSummaryDate");
+    if(summary)summary.textContent=pretty;
+
+    const ok=document.querySelector("#bookingDateOkBtn");
+    if(ok){
+      ok.disabled=true;
+      ok.style.opacity=".45";
+    }
+  }
+
+  function updateBookingTimeUi(selectedTime){
+    const timeGrid=document.querySelector("#bookingTimeGrid");
+    if(timeGrid){
+      timeGrid.querySelectorAll("[data-booking-time]").forEach(btn=>{
+        const active=btn.dataset.bookingTime===selectedTime;
+        btn.classList.toggle("active",active);
+        btn.setAttribute("aria-pressed",active?"true":"false");
+      });
+    }
+
+    const summary=document.querySelector("#bookingSummaryDate");
+    if(summary){
+      summary.textContent=
+        `${bookingPrettyDate(S.date)}${selectedTime?` · ${selectedTime}`:""}`;
+    }
+
+    const ok=document.querySelector("#bookingDateOkBtn");
+    if(ok){
+      ok.disabled=!selectedTime;
+      ok.style.opacity=selectedTime?"":"0.45";
+    }
+  }
+
+  function updateBookingAvailabilityUi(){
+    const grid=document.querySelector("#bookingTimeGrid");
+    if(!grid)return;
+    const unavailableForDate=bookingAvailabilityByDate.get(S.date)||new Set();
+    bookingAvailabilityDate=bookingAvailabilityByDate.has(S.date)?S.date:"";
+    bookingUnavailableTimes=new Set(unavailableForDate);
+    grid.querySelectorAll("[data-booking-time]").forEach(btn=>{
+      const t=btn.dataset.bookingTime;
+      const unavailable=unavailableForDate.has(t);
+      btn.disabled=unavailable;
+      btn.setAttribute("aria-disabled",unavailable?"true":"false");
+      btn.classList.toggle("unavailable",unavailable);
+      let small=btn.querySelector("small");
+      if(unavailable&&!small){small=document.createElement("small");small.textContent="занято";btn.appendChild(small)}
+      if(!unavailable&&small)small.remove();
+      if(unavailable&&S.time===t){S.time=null;btn.classList.remove("active");btn.setAttribute("aria-pressed","false")}
+    });
+    updateBookingTimeUi(S.time);
+  }
+
+  function keepSelectedBookingDateVisible(){
+    if(S.view!=="datetime" || !S.date)return;
+    const strip=document.querySelector("#bookingDateStrip");
+    const selected=strip?.querySelector(`[data-booking-date="${CSS.escape(S.date)}"]`);
+    if(!strip || !selected)return;
+
+    const left=selected.offsetLeft;
+    const right=left+selected.offsetWidth;
+    const viewLeft=strip.scrollLeft;
+    const viewRight=viewLeft+strip.clientWidth;
+
+    // Only move if the selected day is actually outside the visible strip.
+    // Clicking a visible date never changes the user's horizontal position.
+    if(left<viewLeft || right>viewRight){
+      strip.scrollTo({
+        left:Math.max(0,left-(strip.clientWidth-selected.offsetWidth)/2),
+        behavior:"auto"
+      });
+    }
+  }
+
+  window.Beauty = {
+    go,
+    toast,
+    openRoleSheet(){S.roleSheet=true;render();haptic()},
+    closeRoleSheet(){S.roleSheet=false;render()},
+    async openAdminAccess(){
+      S.view="admin-access";
+      render();
+      await loadAdmins(true);
+    },
+    loadAdmins(){return loadAdmins(false)},
+    openAdminServices,
+    loadAdminServices(){return loadAdminServices(false)},
+    openAdminServiceEditor,
+    closeAdminServiceEditor,
+    saveAdminService,
+    toggleAdminService,
+    deleteAdminService,
+    addAdminById,
+    createAdminInvite,
+    copyAdminInvite,
+    shareAdminInvite,
+    removeAdmin,
+    openAdminBooking,
+    closeAdminBooking,
+    openAdminSearch,
+    closeAdminSearch,
+    adminGlobalSearch,
+    openClientFromSearch,
+    openBookingFromSearch,
+    filterAdminClients,
+    openAdminClient,
+    closeAdminClient,
+    openBookingFromClient,
+    createBookingForClient,
+    callClientByKey,
+    messageClientByKey,
+    saveAdminClientNote,
+    openAdminCreateBooking,
+    closeAdminCreateBooking,
+    adminManualDateChanged,
+    adminManualServiceChanged,
+    submitAdminCreateBooking,
+    openAdminReschedule,
+    closeAdminReschedule,
+    adminMoveDateChanged,
+    submitAdminReschedule,
+    saveAdminBookingNote,
+    openAdminSlot,
+    closeAdminSlot,
+    slotCreateBooking,
+    blockAdminSlot,
+    unblockAdminSlot,
+    openAdminPending,
+    updateAdminBookingStatus,
+    messageBookingClient,
+    callBookingClient,
+    loadAdminBookings(){return loadAdminBookings(false)},
+    switchRole(role){
+      if(role!=="client" && S.actualRole==="creator"){
+        location.href="/?entry=creator";
+        return;
+      }
+      if(role!=="client")return;
+      S.roleMode="client";
+      S.roleSheet=false;
+      S.view="home";
+      render();
+      loadBookings(true);
+      setAppScrollTop(0,"auto");
+      haptic("medium");
+    },
+    setAdminFilter(v){S.adminFilter=v;render();haptic()},
+    pickAdminDate(v){S.adminDate=v;render();haptic()},
+    openCategory(c){
+      S.category=c;
+      S.view="services";
+      render();
+      setAppScrollTop(0,"auto");
+      haptic();
+    },
+    setCategory(c){S.category=c;render()},
+    filterServices(q){
+      q=String(q||"").trim().toLowerCase();
+      document.querySelectorAll("#serviceList [data-service-search]").forEach(el=>{
+        el.hidden=Boolean(q) && !String(el.dataset.serviceSearch||"").includes(q);
+      });
+    },
+    backToServices(){backToServices()},
+    openService(id){
+      const found=services.find(x=>Number(x.id)===Number(id));
+
+      if(S.view==="services"){
+        rememberServicesPosition(id);
+      }else if(S.view==="home"){
+        // Opening from Home should keep the existing behavior: Back -> top of Services.
+        servicesReturnState=null;
+      }
+
+      if(!found){
+        S.view="services";
+        render();
+        if(servicesLoaded)toast("Эта услуга сейчас недоступна");
+        else loadServices(false);
+        return;
+      }
+      // Always use the current object returned by /api/services, never an old copy.
+      S.service=found;
+      S.master=null;
+      S.time=null;
+      resetBookingAvailabilityForService(found.id);
+      S.view="service";
+      render();
+      setAppScrollTop(0,"auto");
+      setTimeout(()=>loadBookingAvailabilityRange(true),0);
+      haptic();
+    },
+    startBooking(id){
+      S.service=services.find(x=>x.id===id);
+      S.master=masters[0];
+      S.date=null;
+      S.time=null;
+      resetBookingAvailabilityForService(id);
+      bookingAvailabilityDate="";
+      bookingUnavailableTimes=new Set();
+      S.bookingPhone="";
+      go("datetime");
+      ensureBookingAvailabilityFresh(true);
+    },
+    openMaster(id){S.master=masters.find(x=>x.id===id);if(!S.service){S.service=services[0]}go("masters")},
+    selectMaster(id){S.master=masters.find(x=>x.id===id);render();haptic()},
+    pickDate(d,button=null){
+      S.date=d;
+      S.time=null;
+      updateBookingDateUi(d);
+      applyBookingAvailabilityDate(d);
+      // The date switches from the already loaded 14-day map immediately.
+      // If the map is older than 15 seconds it refreshes quietly in background.
+      if(!bookingAvailabilityCacheFresh())loadBookingAvailabilityRange(true);
+      // Preserve the exact horizontal scroll position the client chose.
+      haptic();
+    },
+    pickTime(t,button=null){
+      if((bookingAvailabilityByDate.get(S.date)||new Set()).has(t)){toast("Это время уже занято");return}
+      S.time=t;
+      updateBookingTimeUi(t);
+      haptic();
+    },
+    openBookingContact(){
+      if(!S.service||!S.date||!S.time)return;
+      S.view="booking-contact";
+      render();
+      setAppScrollTop(0,"auto");
+      haptic();
+    },
+    setBookingContact(kind,value){
+      if(kind==="name")S.bookingName=String(value||"");
+    },
+    bookingFieldFocus(field){bookingFieldFocus(field)},
+    bookingFieldBlur(){bookingFieldBlur()},
+    focusBookingPhone(input){focusBookingPhone(input)},
+    inputBookingPhone(input){inputBookingPhone(input)},
+    dismissBookingKeyboard(){dismissBookingKeyboard()},
+    async confirmBooking(button=null){
+      if(bookingSubmitPending)return;
+      if(!S.service||!S.date||!S.time)return;
+
+      const name=String(S.bookingName||"").trim().replace(/\s+/g," ");
+      const phone=String(S.bookingPhone||"").trim();
+
+      if(name.length<2){
+        toast("Укажите ваше имя");
+        const input=document.querySelector("#bookingClientName");
+        input?.focus();
+        if(input)bookingFieldFocus(input);
+        return;
+      }
+
+      if(!bookingPhoneIsComplete(phone)){
+        toast("Введите номер полностью: +7 XXX XXX XX XX");
+        const input=document.querySelector("#bookingClientPhone");
+        input?.focus();
+        if(input)focusBookingPhone(input);
+        return;
+      }
+
+      S.bookingName=name;
+      S.bookingPhone=phone;
+      try{
+        localStorage.setItem("medAestheticBookingName",name);
+        localStorage.removeItem("medAestheticBookingPhone");
+      }catch(e){}
+
+      bookingSubmitPending=true;
+      const submitButton=button || document.querySelector("#bookingSubmitBtn");
+      setActionButtonBusy(submitButton,"Отправляем…");
+      haptic("medium");
+
+      dismissBookingKeyboard();
+
+      try{
+        const data = await bookingApi("",{
+          method:"POST",
+          body:JSON.stringify({
+            service_id:S.service.id,
+            service_name:S.service.name,
+            client_name:name,
+            phone:phone,
+            booking_date:S.date,
+            booking_time:S.time
+          })
+        });
+        if(data.booking) serverBookings.unshift(data.booking);
+        invalidateLocalBookingAvailability();
+        if(["creator","admin"].includes(S.actualRole)){
+          loadAdminBookings(true);
+        }
+        bookingSubmitPending=false;
+        S.view="confirm";
+        render();
+        haptic("medium");
+      }catch(e){
+        bookingSubmitPending=false;
+        restoreActionButton(submitButton);
+        toast(e.message || "Не удалось создать запись");
+      }
+    },
+    bookingInfo
+  };
+
+  render();
+
+  // Персональный entry от Telegram позволяет сразу рисовать правильный экран
+  // и параллельно подтверждать роль на сервере.
+  const startupDataLoad =
+    startupRole==="creator" || startupRole==="admin"
+      ? Promise.allSettled([loadAdminBookings(true),loadServices(true),loadAdminBlocks(true),loadAdminClientNotes(true)])
+      : loadServices(true);
+
+  Promise.allSettled([
+    loadIdentity(),
+    startupDataLoad
+  ]).then(()=>{
+    if(isStaffMode() && !adminBookingsLoaded){
+      loadAdminBookings(true);
+    }else if(S.roleMode==="client" && !lastServicesSignature){
+      loadServices(true);
+    }
+  });
+
+  // Refresh only the data belonging to the screen the user is looking at.
+  // Important: opening the native photo picker also triggers visibilitychange,
+  // therefore an open service editor is deliberately left completely untouched.
+  let __adminLayoutDesktopLast=null;
+  function refreshAdminLayoutIfNeeded(){
+    if(!isStaffMode())return;
+    const next=adminIsDesktopLayout();
+    if(__adminLayoutDesktopLast===null){
+      __adminLayoutDesktopLast=next;
+      return;
+    }
+    if(next!==__adminLayoutDesktopLast){
+      __adminLayoutDesktopLast=next;
+      render();
+    }
+  }
+  window.addEventListener("resize",()=>requestAnimationFrame(refreshAdminLayoutIfNeeded),{passive:true});
+
+  document.addEventListener("visibilitychange",()=>{
+    if(document.visibilityState!=="visible")return;
+
+    loadIdentity();
+
+    if(isStaffMode()){
+      if(["admin-home","admin-bookings","admin-calendar","admin-clients","admin-finance"].includes(S.view)){
+        loadAdminBookings(true);
+        if(S.view==="admin-calendar")loadAdminBlocks(true);
+        if(S.view==="admin-clients")loadAdminClientNotes(true);
+      }else if(S.view==="admin-services" && !S.adminServiceId){
+        loadAdminServices(true);
+      }
+      return;
+    }
+
+    if(["home","services","service"].includes(S.view))loadServices(true);
+    if(["booking","history"].includes(S.view))loadBookings(true);
+    if(S.view==="datetime")ensureBookingAvailabilityFresh(true);
+  });
+
+  let lastAdminPollAt=0;
+  setInterval(()=>{
+    if(document.visibilityState!=="visible")return;
+    if(!isStaffMode())return;
+    if(formFieldIsActive() || adminFormIsOpen())return;
+
+    const now=Date.now();
+    const delay=
+      S.view==="admin-bookings" ? 5000 :
+      S.view==="admin-home" ? 15000 :
+      S.view==="admin-calendar" ? 30000 :
+      S.view==="admin-clients" ? 30000 :
+      S.view==="admin-finance" ? 60000 :
+      0;
+
+    if(!delay || now-lastAdminPollAt<delay)return;
+    lastAdminPollAt=now;
+    loadAdminBookings(true);
+  },5000);
+
+  setInterval(()=>{
+    if(document.visibilityState!=="visible"||S.view!=="admin-home")return;
+    const el=document.querySelector("#adminNextRelative");
+    const next=adminNearest();
+    if(el&&next)el.textContent=adminRelativeBookingText(next);
+  },30000);
+
+  setInterval(()=>{
+    if(document.visibilityState!=="visible")return;
+    if(isStaffMode())return;
+    if(!["booking","history"].includes(S.view))return;
+    if(formFieldIsActive())return;
+    loadBookings(true);
+  },30000);
+})();
+  
