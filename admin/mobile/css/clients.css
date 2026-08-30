@@ -1,0 +1,168 @@
+/* MOBILE ADMIN — clients. No desktop dependency. */
+/* ADMIN CLIENTS — CALM MOBILE */
+.admin-clients-page .search-box{
+  min-height:43px;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin:0 0 11px!important;
+  padding:0 12px;
+  border:1px solid var(--admin-border);
+  border-radius:13px;
+  background:#111218;
+  color:#706b75;
+}
+.admin-clients-page .search-box input{
+  width:100%;
+  border:0;
+  outline:0;
+  background:transparent;
+  color:var(--admin-text);
+  font-size:10.5px;
+}
+.admin-clients-page .search-box input::placeholder{color:#696570}
+.admin-clients-page .admin-kpis{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-bottom:11px;
+}
+.admin-clients-page .admin-kpi{
+  min-height:73px;
+  padding:12px;
+  border:1px solid var(--admin-border);
+  border-radius:15px;
+  background:#111218;
+}
+.admin-clients-page .admin-kpi small{
+  display:block;
+  color:var(--admin-muted);
+  font-size:9px;
+}
+.admin-clients-page .admin-kpi strong{
+  display:block;
+  margin-top:9px;
+  color:#ede9ef;
+  font-size:21px;
+  font-weight:650;
+}
+.admin-clients-page .admin-section{
+  margin-top:0;
+}
+
+/* Real client list + history sheet */
+.admin-client-list{display:grid;gap:7px}.admin-client-row{width:100%;min-height:68px;display:grid;grid-template-columns:39px minmax(0,1fr) 10px;align-items:center;gap:9px;padding:9px 10px;border:1px solid var(--admin-border);border-radius:14px;background:#111218;color:var(--admin-text);text-align:left}.admin-client-avatar{width:38px;height:38px;display:grid;place-items:center;border:1px solid rgba(156,132,216,.12);border-radius:11px;background:#18171e;color:#ad9dcc;font-size:10px;font-weight:750}.admin-client-copy{min-width:0}.admin-client-copy b,.admin-client-copy small,.admin-client-copy em{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.admin-client-copy b{font-size:10.5px}.admin-client-copy small{margin-top:3px;color:#8a858f;font-size:8.5px}.admin-client-copy em{margin-top:4px;color:#69656d;font-size:7.8px;font-style:normal}.admin-client-row>i{color:#5e5a63;font-style:normal}
+.admin-client-backdrop{position:fixed;z-index:136;inset:0;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.70);backdrop-filter:blur(7px)}.admin-client-sheet{width:min(100%,620px);max-height:92vh;overflow:auto;padding:14px 14px calc(19px + env(safe-area-inset-bottom));border:1px solid var(--admin-border-strong);border-radius:23px 23px 0 0;background:#111218;box-shadow:0 -20px 55px rgba(0,0,0,.42)}
+.admin-client-contact{display:grid;grid-template-columns:1fr 1fr;gap:7px}.admin-client-contact button{min-height:37px;border:1px solid var(--admin-border);border-radius:10px;background:#0d0e13;color:#aaa5ae;font-size:8.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.admin-client-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:9px}.admin-client-stats>div{padding:10px 6px;border:1px solid var(--admin-border);border-radius:11px;background:#0d0e13;text-align:center}.admin-client-stats strong{display:block;font-size:17px;font-weight:650}.admin-client-stats span{display:block;margin-top:4px;color:#77727d;font-size:7.8px}
+.admin-client-note{display:block;margin-top:9px;padding:10px;border:1px solid var(--admin-border);border-radius:13px;background:#0d0e13}.admin-client-note>span{display:block;margin-bottom:6px;color:#8b8690;font-size:8px;font-weight:650}.admin-client-note textarea{width:100%;padding:9px;border:1px solid rgba(255,255,255,.06);border-radius:10px;outline:0;resize:vertical;background:#111218;color:var(--admin-text);font:inherit;font-size:9.5px;line-height:1.45}.admin-client-note button{width:100%;min-height:33px;margin-top:7px;border:1px solid rgba(156,132,216,.15);border-radius:9px;background:rgba(156,132,216,.045);color:#b6a9cc;font-size:8.5px;font-weight:700}
+.admin-client-history-title{display:flex;align-items:center;justify-content:space-between;margin:15px 1px 7px}.admin-client-history-title h4{margin:0;font-size:11px}.admin-client-history-title span{color:#77727d;font-size:8px}.admin-client-history{overflow:hidden;border:1px solid var(--admin-border);border-radius:13px;background:#0d0e13}.admin-client-history>button{width:100%;min-height:55px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;padding:9px 10px;border:0;border-bottom:1px solid rgba(255,255,255,.05);background:none;color:var(--admin-text);text-align:left}.admin-client-history>button:last-child{border-bottom:0}.admin-client-history b,.admin-client-history small{display:block}.admin-client-history b{font-size:9.5px}.admin-client-history small{margin-top:3px;color:#7f7a84;font-size:8px}.admin-client-history em{max-width:104px;color:#99939c;font-size:7.5px;font-style:normal;text-align:right}.admin-client-history em.status-confirmed{color:#83ae90}.admin-client-history em.status-pending{color:#cfb16f}.admin-client-history em.status-no_show,.admin-client-history em.status-cancelled{color:#c7838e}
+
+
+/* MOBILE OVERRIDES */
+/* MED AESTHETIC — MOBILE CLIENTS */
+body.admin-layout-mobile .admin-clients-page .search-box{
+    border-color:#e1dcd8!important;background:#fff!important;color:#918a92!important;
+    box-shadow:0 4px 14px rgba(47,38,50,.035)!important;
+  }
+
+body.admin-layout-mobile .admin-clients-page .search-box input{color:#252127!important}
+
+body.admin-layout-mobile .admin-clients-page .search-box input::placeholder{color:#a49da5!important}
+
+body.admin-layout-mobile .admin-clients-page .admin-kpi,
+  body.admin-layout-mobile .admin-client-row{
+    border-color:#e2ddd9!important;background:#fff!important;color:#252127!important;
+    box-shadow:0 5px 17px rgba(47,38,50,.04)!important;
+  }
+
+body.admin-layout-mobile .admin-clients-page .admin-kpi small{color:#7c7580!important}
+
+body.admin-layout-mobile .admin-clients-page .admin-kpi strong{color:#252127!important}
+
+body.admin-layout-mobile .admin-client-avatar{border-color:#ddd0ef!important;background:#f1ebfa!important;color:#684ba3!important}
+
+body.admin-layout-mobile .admin-client-copy small{color:#736d76!important}
+
+body.admin-layout-mobile .admin-client-copy em{color:#9a939b!important}
+
+body.admin-layout-mobile .admin-client-row>i{color:#a39ca4!important}
+
+body.admin-layout-mobile .admin-more-page .admin-menu small,
+  body.admin-layout-mobile .admin-more-page .admin-client-switch p,
+  body.admin-layout-mobile .admin-access-page .access-hero p,
+  body.admin-layout-mobile .admin-access-page .admin-person p{color:#77717a!important}
+
+body.admin-layout-mobile .admin-more-page .admin-client-switch{
+    border-color:#ead6aa!important;background:#fff7e8!important;
+  }
+
+body.admin-layout-mobile .role-sheet-backdrop,
+  body.admin-layout-mobile .admin-booking-backdrop,
+  body.admin-layout-mobile .admin-form-backdrop,
+  body.admin-layout-mobile .admin-client-backdrop,
+  body.admin-layout-mobile .admin-service-backdrop,
+  body.admin-layout-mobile .admin-search-backdrop{
+    background:rgba(39,32,43,.34)!important;backdrop-filter:blur(7px)!important;
+  }
+
+body.admin-layout-mobile .role-sheet,
+  body.admin-layout-mobile .admin-booking-sheet,
+  body.admin-layout-mobile .admin-form-sheet,
+  body.admin-layout-mobile .admin-client-sheet,
+  body.admin-layout-mobile .admin-service-sheet,
+  body.admin-layout-mobile .admin-search-sheet{
+    border-color:#ddd7d2!important;background:#fff!important;color:#252127!important;
+    box-shadow:0 -22px 55px rgba(52,42,56,.16)!important;
+  }
+
+body.admin-layout-mobile .admin-booking-client,
+  body.admin-layout-mobile .admin-booking-details>div,
+  body.admin-layout-mobile .admin-booking-note,
+  body.admin-layout-mobile .admin-client-contact button,
+  body.admin-layout-mobile .admin-client-stats>div,
+  body.admin-layout-mobile .admin-client-note,
+  body.admin-layout-mobile .admin-client-history,
+  body.admin-layout-mobile .service-static-photo-note,
+  body.admin-layout-mobile .service-active-row,
+  body.admin-layout-mobile .admin-form-note{
+    border-color:#e5e0dc!important;background:#faf9f7!important;
+  }
+
+body.admin-layout-mobile .admin-booking-client b,
+  body.admin-layout-mobile .admin-booking-details b,
+  body.admin-layout-mobile .admin-client-stats strong,
+  body.admin-layout-mobile .service-static-photo-note b,
+  body.admin-layout-mobile .service-active-row b{color:#29252b!important}
+
+body.admin-layout-mobile .admin-booking-client span,
+  body.admin-layout-mobile .admin-booking-details span,
+  body.admin-layout-mobile .admin-client-stats span,
+  body.admin-layout-mobile .service-static-photo-note span,
+  body.admin-layout-mobile .service-active-row small{color:#7d7680!important}
+
+body.admin-layout-mobile .admin-form-grid input,
+  body.admin-layout-mobile .admin-form-grid select,
+  body.admin-layout-mobile .admin-form-field input,
+  body.admin-layout-mobile .admin-form-field select,
+  body.admin-layout-mobile .admin-form-field textarea,
+  body.admin-layout-mobile .admin-booking-note textarea,
+  body.admin-layout-mobile .admin-client-note textarea,
+  body.admin-layout-mobile .service-edit-grid input,
+  body.admin-layout-mobile .service-edit-wide textarea,
+  body.admin-layout-mobile .admin-search-input{
+    border-color:#dfdad6!important;background:#fff!important;color:#252127!important;
+  }
+
+body.admin-layout-mobile .admin-form-grid span,
+  body.admin-layout-mobile .admin-form-field>span,
+  body.admin-layout-mobile .admin-booking-note>span,
+  body.admin-layout-mobile .admin-client-note>span,
+  body.admin-layout-mobile .service-edit-grid span,
+  body.admin-layout-mobile .service-edit-wide>span{color:#756f77!important}
+
+body.admin-layout-mobile .admin-form-primary,
+  body.admin-layout-mobile .service-sheet-actions .save,
+  body.admin-layout-mobile .admin-booking-note button,
+  body.admin-layout-mobile .admin-client-note button{
+    border-color:#cfc0e6!important;background:#eee8f8!important;color:#684ba3!important;
+  }
