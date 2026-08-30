@@ -1,0 +1,182 @@
+/* DESKTOP ADMIN — calendar. No mobile dependency. */
+/* ADMIN CALENDAR — CALM MOBILE */
+.admin-calendar-page .admin-calendar{
+  padding:12px;
+  border:1px solid var(--admin-border);
+  border-radius:18px;
+  background:#111218;
+}
+.admin-calendar-page .admin-week{
+  display:grid;
+  grid-template-columns:repeat(7,minmax(0,1fr));
+  gap:5px;
+  margin-bottom:12px;
+}
+.admin-calendar-page .admin-day{
+  min-width:0;
+  padding:8px 2px;
+  border:1px solid transparent;
+  border-radius:11px;
+  background:#0d0e13;
+  color:#7d7882;
+  text-align:center;
+}
+.admin-calendar-page .admin-day span{
+  display:block;
+  font-size:7.5px;
+}
+.admin-calendar-page .admin-day b{
+  display:block;
+  margin-top:3px;
+  color:#aaa5ae;
+  font-size:12px;
+  font-weight:650;
+}
+.admin-calendar-page .admin-day.active{
+  border-color:rgba(156,132,216,.22);
+  background:rgba(156,132,216,.065);
+}
+.admin-calendar-page .admin-day.active span,
+.admin-calendar-page .admin-day.active b{
+  color:#c2b6d9;
+}
+.admin-calendar-page .admin-timeline{
+  display:grid;
+  gap:7px;
+}
+.admin-calendar-page .admin-slot{
+  display:grid;
+  grid-template-columns:49px minmax(0,1fr);
+  align-items:stretch;
+  gap:8px;
+}
+.admin-calendar-page .admin-slot-time{
+  padding-top:11px;
+  color:#8b8590;
+  font-size:9px;
+  font-weight:650;
+}
+.admin-calendar-page .admin-slot-card,
+.admin-calendar-page .admin-slot-free{
+  min-height:56px;
+  padding:10px 11px;
+  border:1px solid var(--admin-border);
+  border-radius:13px;
+  background:#0d0e13;
+}
+.admin-calendar-page .admin-slot-card b{
+  display:block;
+  color:#e9e5eb;
+  font-size:10.5px;
+}
+.admin-calendar-page .admin-slot-card span{
+  display:block;
+  margin-top:4px;
+  color:#817c86;
+  font-size:8.7px;
+}
+.admin-calendar-page .admin-slot-free{
+  display:flex;
+  align-items:center;
+  color:#74707a;
+  font-size:9px;
+}
+.admin-calendar-page .admin-action{
+  min-height:71px;
+}
+
+/* Complete time-slot calendar */
+.admin-week-scroll{grid-template-columns:none!important;display:flex!important;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.admin-week-scroll::-webkit-scrollbar{display:none}.admin-week-scroll .admin-day{flex:0 0 43px}
+.admin-calendar-date-label{margin:3px 0 11px;color:#aaa4ad;font-size:10px;font-weight:650}
+.admin-calendar-page .admin-slot-card,.admin-calendar-page .admin-slot-free,.admin-calendar-page .admin-slot-blocked{width:100%;text-align:left}
+.admin-calendar-page .admin-slot-free{display:block!important;border-style:dashed!important;background:#0c0d11!important}.admin-calendar-page .admin-slot-free b,.admin-calendar-page .admin-slot-free span,.admin-calendar-page .admin-slot-blocked b,.admin-calendar-page .admin-slot-blocked span{display:block}.admin-calendar-page .admin-slot-free b{color:#8c8791;font-size:9.5px;font-weight:600}.admin-calendar-page .admin-slot-free span{margin-top:3px;color:#605c65;font-size:7.8px}
+.admin-calendar-page .admin-slot-blocked{min-height:56px;padding:10px 11px;border:1px solid rgba(214,180,107,.14);border-radius:13px;background:rgba(214,180,107,.035);color:#b59b66}.admin-calendar-page .admin-slot-blocked b{font-size:9.5px}.admin-calendar-page .admin-slot-blocked span{margin-top:4px;color:#7b6c50;font-size:7.8px}
+.admin-calendar-hint{margin:9px 2px 0;color:#6f6a74;font-size:8px;line-height:1.4}
+
+
+/* DESKTOP OVERRIDES */
+/* MED AESTHETIC — DESKTOP CALENDAR */
+/* ========== CALENDAR ========== */
+  body.admin-layout-desktop .admin-calendar-page .admin-calendar{
+    padding:18px!important;
+    border:1px solid #dfe2e7!important;
+    border-radius:16px!important;
+    background:#fff!important;
+    box-shadow:0 7px 22px rgba(45,48,60,.045)!important;
+  }
+
+  body.admin-layout-desktop .admin-calendar-page .admin-week{
+    display:grid!important;
+    grid-template-columns:repeat(14,minmax(58px,1fr))!important;
+    gap:5px!important;
+    overflow:visible!important;
+    scrollbar-width:none;
+  }
+
+  body.admin-layout-desktop .admin-calendar-page .admin-day{
+    min-width:0!important;
+    min-height:64px!important;
+    border:1px solid #e4e6eb!important;
+    border-radius:10px!important;
+    background:#f8f9fa!important;
+    color:#858994!important;
+  }
+
+  body.admin-layout-desktop .admin-calendar-page .admin-day.active{
+    border-color:#cdbfe3!important;
+    background:#efeaf8!important;
+  }
+
+  body.admin-layout-desktop .admin-calendar-date-label{
+    margin:18px 0 10px!important;
+    color:#343640!important;
+    font-size:13px!important;
+    font-weight:750!important;
+  }
+
+  body.admin-layout-desktop .admin-calendar-page .admin-timeline{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:7px 14px!important;
+  }
+
+  body.admin-layout-desktop .admin-calendar-page .admin-slot{
+    min-width:0;
+    display:grid!important;
+    grid-template-columns:48px minmax(0,1fr)!important;
+    align-items:stretch!important;
+    gap:7px!important;
+  }
+
+  body.admin-layout-desktop .admin-calendar-page .admin-slot-time{
+    padding-top:13px!important;
+    color:#727681!important;
+    font-size:10px!important;
+    text-align:right!important;
+  }
+
+  body.admin-layout-desktop .admin-calendar-page .admin-slot-card,
+  body.admin-layout-desktop .admin-calendar-page .admin-slot-free,
+  body.admin-layout-desktop .admin-calendar-page .admin-slot-blocked{
+    min-height:56px!important;
+    border-radius:10px!important;
+    text-align:left!important;
+  }
+
+  body.admin-layout-desktop .admin-calendar-page .admin-slot-card{
+    border:1px solid #d8cfea!important;
+    border-left:4px solid #7557b7!important;
+    background:#f7f4fb!important;
+  }
+
+  body.admin-layout-desktop .admin-calendar-page .admin-slot-free{
+    border:1px dashed #b8d9c4!important;
+    border-left:4px solid #409361!important;
+    background:#f0f8f3!important;
+  }
+
+  body.admin-layout-desktop .admin-calendar-page .admin-slot-blocked{
+    border:1px solid #ead1a1!important;
+    border-left:4px solid #c58a31!important;
+    background:#fff7e8!important;
+  }
