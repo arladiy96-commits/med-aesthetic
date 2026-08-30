@@ -1,5 +1,3 @@
-/* MOBILE ADMIN — calendar.css */
-/* Base admin styles */
 /* ADMIN CALENDAR — CALM MOBILE */
 .admin-calendar-page .admin-calendar{
   padding:12px;
@@ -93,61 +91,3 @@
 .admin-calendar-page .admin-slot-free{display:block!important;border-style:dashed!important;background:#0c0d11!important}.admin-calendar-page .admin-slot-free b,.admin-calendar-page .admin-slot-free span,.admin-calendar-page .admin-slot-blocked b,.admin-calendar-page .admin-slot-blocked span{display:block}.admin-calendar-page .admin-slot-free b{color:#8c8791;font-size:9.5px;font-weight:600}.admin-calendar-page .admin-slot-free span{margin-top:3px;color:#605c65;font-size:7.8px}
 .admin-calendar-page .admin-slot-blocked{min-height:56px;padding:10px 11px;border:1px solid rgba(214,180,107,.14);border-radius:13px;background:rgba(214,180,107,.035);color:#b59b66}.admin-calendar-page .admin-slot-blocked b{font-size:9.5px}.admin-calendar-page .admin-slot-blocked span{margin-top:4px;color:#7b6c50;font-size:7.8px}
 .admin-calendar-hint{margin:9px 2px 0;color:#6f6a74;font-size:8px;line-height:1.4}
-
-/* mobile-only overrides */
-/* MED AESTHETIC — MOBILE CALENDAR */
-body.admin-layout-mobile .admin-calendar-page .admin-calendar{
-    border-color:#e1dcd7!important;background:#fff!important;
-    box-shadow:0 7px 24px rgba(47,38,50,.05)!important;
-  }
-
-body.admin-layout-mobile .admin-calendar-page .admin-day{
-    border-color:#eeeae6!important;background:#f8f7f5!important;color:#88818a!important;
-  }
-
-body.admin-layout-mobile .admin-calendar-page .admin-day b{color:#4c464f!important}
-
-body.admin-layout-mobile .admin-calendar-page .admin-day.active{
-    border-color:#c6b4df!important;background:#eee8f8!important;
-    box-shadow:inset 0 0 0 1px rgba(117,87,183,.06)!important;
-  }
-
-body.admin-layout-mobile .admin-calendar-page .admin-day.active span,
-  body.admin-layout-mobile .admin-calendar-page .admin-day.active b{color:#684ba3!important}
-
-body.admin-layout-mobile .admin-calendar-date-label{color:#4d4750!important}
-
-body.admin-layout-mobile .admin-calendar-page .admin-slot-time{color:#716a73!important}
-
-body.admin-layout-mobile .admin-calendar-page .admin-slot-card{
-    border:1px solid #d9cfeb!important;border-left:4px solid #7557b7!important;
-    background:#f7f3fc!important;box-shadow:0 3px 10px rgba(72,51,92,.04)!important;
-  }
-
-body.admin-layout-mobile .admin-calendar-page .admin-slot-card b{color:#2c2730!important}
-
-body.admin-layout-mobile .admin-calendar-page .admin-slot-card span{color:#776f7b!important}
-
-body.admin-layout-mobile .admin-calendar-page .admin-slot-free{
-    border:1px dashed #bcdcc8!important;border-left:4px solid #4a9b69!important;
-    background:#f0f8f3!important;
-  }
-
-body.admin-layout-mobile .admin-calendar-page .admin-slot-free b{color:#287247!important}
-
-body.admin-layout-mobile .admin-calendar-page .admin-slot-free span{color:#66806f!important}
-
-body.admin-layout-mobile .admin-calendar-page .admin-slot-blocked{
-    border:1px solid #ead1a1!important;border-left:4px solid #c38a2f!important;
-    background:#fff7e8!important;color:#98681e!important;
-  }
-
-body.admin-layout-mobile .admin-calendar-page .admin-slot-blocked span{color:#94794e!important}
-
-body.admin-layout-mobile .admin-calendar-hint{color:#928b93!important}
-
-body.admin-layout-mobile .admin-slot-choice{
-    border-color:#d6c8e9!important;background:#f4effb!important;color:#29252b!important;
-  }
-
-body.admin-layout-mobile .admin-slot-choice span{color:#736b76!important}

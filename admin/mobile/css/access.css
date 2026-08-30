@@ -1,5 +1,3 @@
-/* MOBILE ADMIN — access.css */
-/* Base admin styles */
 /* ADMIN ACCESS — CALM MOBILE */
 .admin-access-page .access-hero{
   margin:3px 0 14px;
@@ -118,17 +116,3 @@
   color:#c8808c;
   font-size:8.5px;
 }
-
-/* mobile-only overrides */
-/* MED AESTHETIC — MOBILE ACCESS */
-body.admin-layout-mobile .admin-access-page .admin-id-form input{
-    border-color:#dfdad6!important;background:#faf9f7!important;color:#252127!important;
-  }
-
-body.admin-layout-mobile .admin-access-page .access-primary{
-    border-color:#cfc0e6!important;background:#eee8f8!important;color:#684ba3!important;
-  }
-
-body.admin-layout-mobile .admin-access-page .admin-person-avatar{border-color:#ddd0ef!important;background:#f1ebfa!important;color:#684ba3!important}
-
-body.admin-layout-mobile .admin-access-page .admin-remove{border-color:#ebc1c8!important;background:#fff1f3!important;color:#b84453!important}

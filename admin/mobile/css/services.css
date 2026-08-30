@@ -1,5 +1,3 @@
-/* MOBILE ADMIN — services.css */
-/* Base admin styles */
 /* ADMIN SERVICES + EDITOR — CALM MOBILE */
 .admin-services-page .admin-services-summary{
   display:grid;
@@ -302,56 +300,3 @@
 @media(max-width:390px){
   .service-edit-grid{grid-template-columns:1fr}
 }
-
-/* mobile-only overrides */
-/* MED AESTHETIC — MOBILE SERVICES */
-body.admin-layout-mobile .admin-services-page .admin-services-summary>div,
-  body.admin-layout-mobile .admin-services-page .admin-service-card{
-    border-color:#e2ddd9!important;background:#fff!important;
-    box-shadow:0 6px 20px rgba(47,38,50,.045)!important;
-  }
-
-body.admin-layout-mobile .admin-services-page .admin-services-summary strong,
-  body.admin-layout-mobile .admin-services-page .admin-service-body h3{color:#252127!important}
-
-body.admin-layout-mobile .admin-services-page .admin-services-summary span,
-  body.admin-layout-mobile .admin-services-page .admin-service-body p{color:#79727b!important}
-
-body.admin-layout-mobile .admin-services-page .admin-service-body>small{color:#684ba3!important}
-
-body.admin-layout-mobile .admin-services-page .admin-service-meta span{
-    border-color:#e5e0dc!important;background:#f7f5f3!important;color:#665f68!important;
-  }
-
-body.admin-layout-mobile .admin-services-page .admin-service-buttons button{
-    border-color:#e0dbd7!important;background:#f8f6f4!important;color:#5d5760!important;
-  }
-
-body.admin-layout-mobile .admin-services-page .admin-service-buttons button:first-child{
-    border-color:#d3c6e7!important;background:#f1ebfa!important;color:#684ba3!important;
-  }
-
-body.admin-layout-mobile .admin-services-page .admin-service-buttons button.show{
-    border-color:#c2ddcc!important;background:#eff8f2!important;color:#287247!important;
-  }
-
-body.admin-layout-mobile .admin-booking-sheet-head,
-  body.admin-layout-mobile .admin-service-sheet-head{
-    background:linear-gradient(180deg,#fff 78%,rgba(255,255,255,0))!important;
-  }
-
-body.admin-layout-mobile .role-sheet h3,
-  body.admin-layout-mobile .admin-booking-sheet-head h3,
-  body.admin-layout-mobile .admin-form-head h3,
-  body.admin-layout-mobile .admin-service-sheet-head h3{color:#252127!important}
-
-body.admin-layout-mobile .role-sheet p,
-  body.admin-layout-mobile .admin-booking-sheet-head small,
-  body.admin-layout-mobile .admin-form-head small,
-  body.admin-layout-mobile .admin-service-sheet-head small{color:#7b747d!important}
-
-body.admin-layout-mobile .admin-booking-sheet-head>button,
-  body.admin-layout-mobile .admin-form-head>button,
-  body.admin-layout-mobile .admin-service-sheet-head>button{
-    border-color:#e0dbd7!important;background:#f7f5f3!important;color:#655e67!important;
-  }
