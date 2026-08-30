@@ -49,6 +49,7 @@
   <link rel="stylesheet" href="./css/admin/more.css">
   <link rel="stylesheet" href="./css/admin/services.css">
   <link rel="stylesheet" href="./css/admin/finance.css">
+  <link rel="stylesheet" href="./css/admin/mobile-light.css">
   <link rel="stylesheet" href="./css/navigation.css">
 
 <style>
@@ -2726,6 +2727,7 @@ button:disabled.is-busy{
   }
 
   function render(){
+    document.body?.classList.toggle("admin-mobile-light", isStaffMode());
     let html="";
     if(S.view==="role-loading")html=roleLoadingView();
     else if(S.view==="admin-home")html=adminHome();
