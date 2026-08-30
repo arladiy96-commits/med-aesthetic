@@ -481,6 +481,7 @@ button:disabled.is-busy{
   let bookingAvailabilityDate = "";
   let bookingAvailabilityByDate = new Map();
   let bookingAvailabilityRangeStart = "";
+  let bookingAvailabilityServiceId = 0;
   let bookingAvailabilityLoadedAt = 0;
   let bookingAvailabilityRequest = null;
   let servicesReturnState = null;
@@ -527,10 +528,12 @@ button:disabled.is-busy{
     return data;
   }
 
-  async function availabilityRangeApi(startDate,days=14){
+  async function availabilityRangeApi(startDate,days=14,serviceId=null){
     const headers={"X-Telegram-Init-Data":tg?.initData||""};
+    const sid=Number(serviceId||S.service?.id||0);
+    if(!sid)throw new Error("Сначала выберите услугу");
     const res=await fetch(
-      `/api/availability-range?start_date=${encodeURIComponent(startDate)}&days=${encodeURIComponent(days)}`,
+      `/api/availability-range?start_date=${encodeURIComponent(startDate)}&days=${encodeURIComponent(days)}&service_id=${encodeURIComponent(sid)}`,
       {headers,cache:"no-store"}
     );
     const data=await res.json().catch(()=>({}));
@@ -606,9 +609,12 @@ button:disabled.is-busy{
   function bookingAvailabilityCacheFresh(){
     const ds=dates();
     const startDate=ds[0]?.iso||"";
+    const serviceId=Number(S.service?.id||0);
     return Boolean(
       startDate &&
+      serviceId &&
       bookingAvailabilityRangeStart===startDate &&
+      bookingAvailabilityServiceId===serviceId &&
       bookingAvailabilityLoadedAt &&
       Date.now()-bookingAvailabilityLoadedAt<BOOKING_AVAILABILITY_CLIENT_TTL_MS
     );
@@ -618,6 +624,8 @@ button:disabled.is-busy{
     const ds=dates();
     if(!ds.length)return;
     const startDate=ds[0].iso;
+    const serviceId=Number(S.service?.id||0);
+    if(!serviceId)return;
 
     if(!force&&bookingAvailabilityCacheFresh()){
       if(S.view==="datetime"&&S.date)applyBookingAvailabilityDate(S.date);
@@ -628,7 +636,8 @@ button:disabled.is-busy{
 
     bookingAvailabilityRequest=(async()=>{
       try{
-        const data=await availabilityRangeApi(startDate,ds.length);
+        const data=await availabilityRangeApi(startDate,ds.length,serviceId);
+        if(Number(S.service?.id||0)!==serviceId)return data;
         const raw=data.availability&&typeof data.availability==="object"
           ? data.availability
           : {};
@@ -643,6 +652,7 @@ button:disabled.is-busy{
 
         bookingAvailabilityByDate=nextMap;
         bookingAvailabilityRangeStart=startDate;
+        bookingAvailabilityServiceId=serviceId;
         bookingAvailabilityLoadedAt=Date.now();
 
         if(S.view==="datetime"&&S.date){
@@ -671,6 +681,17 @@ button:disabled.is-busy{
 
   function invalidateLocalBookingAvailability(){
     bookingAvailabilityLoadedAt=0;
+  }
+
+  function resetBookingAvailabilityForService(serviceId){
+    const sid=Number(serviceId||0);
+    if(bookingAvailabilityServiceId===sid)return;
+    bookingAvailabilityByDate=new Map();
+    bookingAvailabilityRangeStart="";
+    bookingAvailabilityServiceId=0;
+    bookingAvailabilityLoadedAt=0;
+    bookingAvailabilityDate="";
+    bookingUnavailableTimes=new Set();
   }
 
   async function accessApi(path="", options={}){
@@ -1937,18 +1958,59 @@ button:disabled.is-busy{
     const s=services.find(x=>Number(x.id)===Number(b?.serviceId));
     return Number.isFinite(Number(s?.price))?Number(s.price):0;
   }
-  function adminUnavailableTimes(dateValue,excludeBookingId=null){
+  function clockToMinutes(value){
+    const [h,m]=String(value||"00:00").slice(0,5).split(":").map(Number);
+    return (Number(h)||0)*60+(Number(m)||0);
+  }
+  function bookingDurationMinutes(b){
+    if(Number.isFinite(Number(b?.durationMinutes))&&Number(b.durationMinutes)>0)return Number(b.durationMinutes);
+    const service=adminServices.find(x=>Number(x.id)===Number(b?.serviceId))
+      || services.find(x=>Number(x.id)===Number(b?.serviceId));
+    return Number.isFinite(Number(service?.duration))&&Number(service.duration)>0?Number(service.duration):60;
+  }
+  function serviceDurationMinutes(serviceId){
+    const service=adminServices.find(x=>Number(x.id)===Number(serviceId))
+      || services.find(x=>Number(x.id)===Number(serviceId));
+    return Number.isFinite(Number(service?.duration))&&Number(service.duration)>0?Number(service.duration):60;
+  }
+  function intervalsOverlap(startA,durationA,startB,durationB){
+    return startA<startB+durationB && startA+durationA>startB;
+  }
+  function adminTimeIsUnavailable(dateValue,timeValue,candidateDuration=60,excludeBookingId=null){
+    const start=clockToMinutes(timeValue);
+    const duration=Math.max(1,Number(candidateDuration)||60);
+    if(start<600||start+duration>1260)return true;
+
+    for(const b of adminBookings.filter(isActiveAdminBooking)){
+      if(String(b.date||"").slice(0,10)!==dateValue)continue;
+      if(String(b.id)===String(excludeBookingId||""))continue;
+      if(intervalsOverlap(start,duration,clockToMinutes(b.time),bookingDurationMinutes(b)))return true;
+    }
+
+    for(const block of adminBlocks){
+      if(String(block.date||"").slice(0,10)!==dateValue)continue;
+      if(intervalsOverlap(start,duration,clockToMinutes(block.time),60))return true;
+    }
+    return false;
+  }
+  function adminUnavailableTimes(dateValue,excludeBookingId=null,candidateDuration=60){
     const busy=new Set();
-    adminBookings.filter(isActiveAdminBooking).forEach(b=>{
-      if(String(b.date||"").slice(0,10)===dateValue&&String(b.id)!==String(excludeBookingId||""))busy.add(String(b.time||"").slice(0,5));
+    const times=["10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00","19:00","20:00"];
+    times.forEach(t=>{
+      if(adminTimeIsUnavailable(dateValue,t,candidateDuration,excludeBookingId))busy.add(t);
     });
-    adminBlocks.forEach(b=>{if(String(b.date||"").slice(0,10)===dateValue)busy.add(String(b.time||"").slice(0,5))});
     return busy;
   }
-  function adminTimeOptionsHtml(dateValue,selected="",excludeBookingId=null){
-    const busy=adminUnavailableTimes(dateValue,excludeBookingId);
+  function adminTimeOptionsHtml(dateValue,selected="",excludeBookingId=null,serviceId=null){
+    const booking=excludeBookingId
+      ? adminBookings.find(b=>String(b.id)===String(excludeBookingId))
+      : null;
+    const duration=booking
+      ? bookingDurationMinutes(booking)
+      : serviceDurationMinutes(serviceId);
+    const busy=adminUnavailableTimes(dateValue,excludeBookingId,duration);
     const times=["10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00","19:00","20:00"];
-    return `<option value="">Выберите время</option>`+times.map(t=>`<option value="${t}" ${selected===t?"selected":""} ${busy.has(t)&&selected!==t?"disabled":""}>${t}${busy.has(t)&&selected!==t?" · занято":""}</option>`).join("");
+    return `<option value="">Выберите время</option>`+times.map(t=>`<option value="${t}" ${selected===t?"selected":""} ${busy.has(t)&&selected!==t?"disabled":""}>${t}${busy.has(t)&&selected!==t?" · недоступно":""}</option>`).join("");
   }
 
   function adminHomeTimeValue(b){
@@ -2075,9 +2137,18 @@ button:disabled.is-busy{
     const active=adminBookings.filter(b=>isActiveAdminBooking(b)&&String(b.date||"").slice(0,10)===S.adminDate);
     const blocks=adminBlocks.filter(b=>String(b.date||"").slice(0,10)===S.adminDate);
     const slotHtml=times.map(t=>{
-      const booking=active.find(b=>String(b.time||"").slice(0,5)===t);
+      const slotStart=clockToMinutes(t);
+      const booking=active.find(b=>{
+        const start=clockToMinutes(b.time);
+        return slotStart>=start && slotStart<start+bookingDurationMinutes(b);
+      });
+      const exactBooking=booking&&String(booking.time||"").slice(0,5)===t;
       const block=blocks.find(b=>String(b.time||"").slice(0,5)===t);
-      if(booking)return `<div class="admin-slot"><div class="admin-slot-time">${t}</div><button class="admin-slot-card" onclick="Beauty.openAdminBooking('${booking.id}')"><b>${esc(booking.clientName||"Клиент")}</b><span>${esc(booking.serviceName||"Запись")}</span></button></div>`;
+      if(booking){
+        const end=clockToMinutes(booking.time)+bookingDurationMinutes(booking);
+        const endText=`${String(Math.floor(end/60)).padStart(2,"0")}:${String(end%60).padStart(2,"0")}`;
+        return `<div class="admin-slot"><div class="admin-slot-time">${t}</div><button class="admin-slot-card" onclick="Beauty.openAdminBooking('${booking.id}')"><b>${exactBooking?esc(booking.clientName||"Клиент"):"Продолжается запись"}</b><span>${esc(booking.serviceName||"Запись")} · до ${endText}</span></button></div>`;
+      }
       if(block)return `<div class="admin-slot"><div class="admin-slot-time">${t}</div><button class="admin-slot-blocked" onclick="Beauty.unblockAdminSlot('${block.id}')"><b>${esc(block.label||"Закрыто")}</b><span>Нажмите, чтобы открыть время</span></button></div>`;
       return `<div class="admin-slot"><div class="admin-slot-time">${t}</div><button class="admin-slot-free" onclick="Beauty.openAdminSlot('${S.adminDate}','${t}')"><b>Свободно</b><span>Добавить запись или закрыть время</span></button></div>`;
     }).join("");
@@ -2297,8 +2368,8 @@ button:disabled.is-busy{
     const serviceOptions=services.filter(s=>s.isActive!==false).map(s=>`<option value="${s.id}" ${String(preset.serviceId||"")===String(s.id)?"selected":""}>${esc(s.name)}${Number.isFinite(Number(s.price))?` · ${fmt(Number(s.price))}`:""}</option>`).join("");
     return `<div class="admin-form-backdrop" onclick="if(event.target===this)Beauty.closeAdminCreateBooking()"><section class="admin-form-sheet"><div class="admin-form-head"><div><small>Ручная запись</small><h3>Новая запись</h3></div><button onclick="Beauty.closeAdminCreateBooking()">×</button></div>
       <div class="admin-form-grid"><label><span>Имя клиента</span><input id="adminCreateName" maxlength="120" value="${esc(client?.name||preset.name||"")}" placeholder="Имя"></label><label><span>Телефон</span><input id="adminCreatePhone" maxlength="32" inputmode="tel" value="${esc(client?.phone||preset.phone||"")}" placeholder="+7 ..."></label></div>
-      <label class="admin-form-field"><span>Услуга</span><select id="adminCreateService"><option value="">Выберите услугу</option>${serviceOptions}</select></label>
-      <div class="admin-form-grid"><label><span>Дата</span><input id="adminCreateDate" type="date" min="${todayISO()}" value="${esc(dateValue)}" onchange="Beauty.adminManualDateChanged(this.value)"></label><label><span>Время</span><select id="adminCreateTime">${adminTimeOptionsHtml(dateValue,timeValue)}</select></label></div>
+      <label class="admin-form-field"><span>Услуга</span><select id="adminCreateService" onchange="Beauty.adminManualServiceChanged(this.value)"><option value="">Выберите услугу</option>${serviceOptions}</select></label>
+      <div class="admin-form-grid"><label><span>Дата</span><input id="adminCreateDate" type="date" min="${todayISO()}" value="${esc(dateValue)}" onchange="Beauty.adminManualDateChanged(this.value)"></label><label><span>Время</span><select id="adminCreateTime">${adminTimeOptionsHtml(dateValue,timeValue,null,preset.serviceId||null)}</select></label></div>
       <label class="admin-form-field"><span>Заметка к записи</span><textarea id="adminCreateNote" maxlength="2000" rows="3" placeholder="Необязательно"></textarea></label>
       <input id="adminCreateTelegramId" type="hidden" value="${esc(client?.telegramUserId||preset.telegramUserId||"")}">
       <button id="adminCreateSubmit" class="admin-form-primary" onclick="Beauty.submitAdminCreateBooking(this)">Создать запись</button>
@@ -2309,7 +2380,7 @@ button:disabled.is-busy{
     if(!S.adminRescheduleId)return "";
     const b=adminBookings.find(x=>String(x.id)===String(S.adminRescheduleId));
     if(!b)return "";
-    return `<div class="admin-form-backdrop" onclick="if(event.target===this)Beauty.closeAdminReschedule()"><section class="admin-form-sheet compact"><div class="admin-form-head"><div><small>${esc(b.clientName||"Клиент")}</small><h3>Перенести запись</h3></div><button onclick="Beauty.closeAdminReschedule()">×</button></div><div class="admin-form-grid"><label><span>Новая дата</span><input id="adminMoveDate" type="date" min="${todayISO()}" value="${esc(b.date)}" onchange="Beauty.adminMoveDateChanged(this.value,'${b.id}')"></label><label><span>Новое время</span><select id="adminMoveTime">${adminTimeOptionsHtml(b.date,b.time,b.id)}</select></label></div><div class="admin-form-note">Клиент получит сообщение в Telegram о новой дате и времени, если Telegram привязан.</div><button id="adminMoveSubmit" class="admin-form-primary" onclick="Beauty.submitAdminReschedule('${b.id}',this)">Перенести</button></section></div>`;
+    return `<div class="admin-form-backdrop" onclick="if(event.target===this)Beauty.closeAdminReschedule()"><section class="admin-form-sheet compact"><div class="admin-form-head"><div><small>${esc(b.clientName||"Клиент")}</small><h3>Перенести запись</h3></div><button onclick="Beauty.closeAdminReschedule()">×</button></div><div class="admin-form-grid"><label><span>Новая дата</span><input id="adminMoveDate" type="date" min="${todayISO()}" value="${esc(b.date)}" onchange="Beauty.adminMoveDateChanged(this.value,'${b.id}')"></label><label><span>Новое время</span><select id="adminMoveTime">${adminTimeOptionsHtml(b.date,b.time,b.id,b.serviceId)}</select></label></div><div class="admin-form-note">Клиент получит сообщение в Telegram о новой дате и времени, если Telegram привязан.</div><button id="adminMoveSubmit" class="admin-form-primary" onclick="Beauty.submitAdminReschedule('${b.id}',this)">Перенести</button></section></div>`;
   }
 
   function adminSlotSheet(){
@@ -2351,7 +2422,16 @@ button:disabled.is-busy{
 
   function openAdminCreateBooking(dateValue="",timeValue="",clientKey=null){S.adminBookingId=null;S.adminSlotDate=null;S.adminSlotTime=null;S.adminCreateOpen=true;S.adminCreatePreset={date:dateValue||todayISO(),time:timeValue||"",clientKey:clientKey||null};render();haptic()}
   function closeAdminCreateBooking(){S.adminCreateOpen=false;S.adminCreatePreset=null;render()}
-  function adminManualDateChanged(value){const select=document.querySelector("#adminCreateTime");if(select)select.innerHTML=adminTimeOptionsHtml(value,"",null)}
+  function adminManualServiceChanged(serviceId){
+    const dateValue=String(document.querySelector("#adminCreateDate")?.value||"");
+    const select=document.querySelector("#adminCreateTime");
+    if(select)select.innerHTML=adminTimeOptionsHtml(dateValue,"",null,Number(serviceId||0));
+  }
+  function adminManualDateChanged(value){
+    const serviceId=Number(document.querySelector("#adminCreateService")?.value||0);
+    const select=document.querySelector("#adminCreateTime");
+    if(select)select.innerHTML=adminTimeOptionsHtml(value,"",null,serviceId);
+  }
   async function submitAdminCreateBooking(button=null){
     const name=String(document.querySelector("#adminCreateName")?.value||"").trim();
     const phone=String(document.querySelector("#adminCreatePhone")?.value||"").trim();
@@ -2367,7 +2447,11 @@ button:disabled.is-busy{
 
   function openAdminReschedule(id){S.adminBookingId=null;S.adminRescheduleId=String(id);render();haptic()}
   function closeAdminReschedule(){S.adminRescheduleId=null;render()}
-  function adminMoveDateChanged(value,id){const select=document.querySelector("#adminMoveTime");if(select)select.innerHTML=adminTimeOptionsHtml(value,"",id)}
+  function adminMoveDateChanged(value,id){
+    const booking=adminBookings.find(b=>String(b.id)===String(id));
+    const select=document.querySelector("#adminMoveTime");
+    if(select)select.innerHTML=adminTimeOptionsHtml(value,"",id,booking?.serviceId||null);
+  }
   async function submitAdminReschedule(id,button=null){const dateValue=String(document.querySelector("#adminMoveDate")?.value||"");const timeValue=String(document.querySelector("#adminMoveTime")?.value||"");if(!dateValue||!timeValue){toast("Выберите новую дату и время");return}setActionButtonBusy(button,"Переносим…");try{const data=await adminBookingApi("/"+encodeURIComponent(id),{method:"PATCH",body:JSON.stringify({booking_date:dateValue,booking_time:timeValue})});if(data.booking)adminBookings=adminBookings.map(b=>String(b.id)===String(id)?data.booking:b);saveAdminBookingsCache();invalidateLocalBookingAvailability();S.adminRescheduleId=null;render();toast("Запись перенесена");haptic("medium");loadAdminBookings(true)}catch(e){restoreActionButton(button);toast(e.message||"Не удалось перенести запись")}}
 
   async function saveAdminBookingNote(id,button=null){const note=String(document.querySelector("#adminBookingNote")?.value||"").trim();setActionButtonBusy(button,"Сохраняем…");try{const data=await adminBookingApi("/"+encodeURIComponent(id),{method:"PATCH",body:JSON.stringify({note})});if(data.booking)adminBookings=adminBookings.map(b=>String(b.id)===String(id)?data.booking:b);saveAdminBookingsCache();restoreActionButton(button);toast("Заметка сохранена");haptic()}catch(e){restoreActionButton(button);toast(e.message||"Не удалось сохранить заметку")}}
@@ -3050,6 +3134,7 @@ button:disabled.is-busy{
     openAdminCreateBooking,
     closeAdminCreateBooking,
     adminManualDateChanged,
+    adminManualServiceChanged,
     submitAdminCreateBooking,
     openAdminReschedule,
     closeAdminReschedule,
@@ -3083,7 +3168,6 @@ button:disabled.is-busy{
       render();
       if(role==="client"){
         loadBookings(true);
-        loadBookingAvailabilityRange(true);
       }else{
         loadAdminBookings(true);
       }
@@ -3128,9 +3212,11 @@ button:disabled.is-busy{
       S.service=found;
       S.master=null;
       S.time=null;
+      resetBookingAvailabilityForService(found.id);
       S.view="service";
       render();
       setAppScrollTop(0,"auto");
+      setTimeout(()=>loadBookingAvailabilityRange(true),0);
       haptic();
     },
     startBooking(id){
@@ -3138,6 +3224,7 @@ button:disabled.is-busy{
       S.master=masters[0];
       S.date=null;
       S.time=null;
+      resetBookingAvailabilityForService(id);
       bookingAvailabilityDate="";
       bookingUnavailableTimes=new Set();
       S.bookingPhone="";
@@ -3252,7 +3339,7 @@ button:disabled.is-busy{
   const startupDataLoad =
     startupRole==="creator" || startupRole==="admin"
       ? Promise.allSettled([loadAdminBookings(true),loadServices(true),loadAdminBlocks(true),loadAdminClientNotes(true)])
-      : Promise.allSettled([loadServices(true),loadBookingAvailabilityRange(true)]);
+      : loadServices(true);
 
   Promise.allSettled([
     loadIdentity(),

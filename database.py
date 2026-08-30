@@ -432,11 +432,29 @@ def init_db() -> None:
             "ALTER TABLE beauty_bookings ADD COLUMN IF NOT EXISTS price_snapshot INTEGER"
         )
         conn.execute(
+            "ALTER TABLE beauty_bookings ADD COLUMN IF NOT EXISTS duration_snapshot INTEGER"
+        )
+        conn.execute(
             """
             UPDATE beauty_bookings b
             SET price_snapshot=s.price
             FROM beauty_services s
             WHERE b.price_snapshot IS NULL AND s.id=b.service_id
+            """
+        )
+        conn.execute(
+            """
+            UPDATE beauty_bookings b
+            SET duration_snapshot=COALESCE(s.duration, 60)
+            FROM beauty_services s
+            WHERE b.duration_snapshot IS NULL AND s.id=b.service_id
+            """
+        )
+        conn.execute(
+            """
+            UPDATE beauty_bookings
+            SET duration_snapshot=60
+            WHERE duration_snapshot IS NULL
             """
         )
 
