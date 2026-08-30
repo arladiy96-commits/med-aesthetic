@@ -1,2 +1,0 @@
-/* Client booking: occupied/blocked time slots only. No other client styles changed. */
-.page-booking .time-btn.unavailable,.page-booking .time-btn:disabled{opacity:.40!important;cursor:not-allowed!important;filter:none!important;box-shadow:none!important}.page-booking .time-btn.unavailable small{display:block;margin-top:2px;color:inherit;font-size:7px;font-weight:500;opacity:.85}
