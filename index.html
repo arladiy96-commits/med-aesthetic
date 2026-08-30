@@ -1,42 +1,31 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>MED AESTHETIC</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    html,body{margin:0;min-height:100%;background:#f5f5f7;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-    .boot{min-height:100vh;display:grid;place-items:center;color:#30323a}
-    .boot div{text-align:center}.boot b{font-family:Georgia,serif;font-size:24px}.boot span{color:#7557b7}
-    .boot small{display:block;margin-top:9px;color:#8a8d96}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>MED AESTHETIC</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-  <div class="boot"><div><b>MED <span>AESTHETIC</span></b><small>Открываем приложение…</small></div></div>
-  <script>
-  (async()=>{
-    const tg=window.Telegram?.WebApp;
-    try{tg?.ready?.();tg?.expand?.()}catch(e){}
-    const hinted=new URLSearchParams(location.search).get("entry");
-    let actualRole=hinted==="creator"||hinted==="admin"||hinted==="client"?hinted:null;
-    try{
-      const res=await fetch("/api/me",{cache:"no-store",headers:{"X-Telegram-Init-Data":tg?.initData||""}});
-      const data=await res.json();
-      if(res.ok)actualRole=data?.user?.actualRole||"client";
-    }catch(e){}
-    if(actualRole!=="creator"&&actualRole!=="admin") {
-      location.replace("/client/index.html?entry=client&build=20260830-chat-exact-1");
-      return;
-    }
-    const platform=String(tg?.platform||"").toLowerCase();
-    const mobile=platform==="ios"||platform==="android";
-    const desktop=platform==="tdesktop"||platform==="macos"||(!mobile&&window.innerWidth>=900);
-    const entry=actualRole==="creator"?"creator":"admin";
-    location.replace(desktop
-      ? `/admin/desktop/index.html?entry=${entry}`
-      : `/admin/mobile/index.html?entry=${entry}`);
-  })();
-  </script>
+<script>
+(async()=>{
+  const tg=window.Telegram?.WebApp;
+  try{tg?.ready?.();tg?.expand?.()}catch(e){}
+  const params=new URLSearchParams(location.search);
+  const hinted=params.get("entry");
+  let actualRole=(hinted==="creator"||hinted==="admin"||hinted==="client")?hinted:null;
+  try{
+    const res=await fetch("/api/me",{cache:"no-store",headers:{"X-Telegram-Init-Data":tg?.initData||""}});
+    const data=await res.json().catch(()=>({}));
+    if(res.ok) actualRole=String(data?.user?.actualRole||data?.actualRole||"client").toLowerCase();
+  }catch(e){}
+  if(actualRole==="creator"||actualRole==="admin"){
+    location.replace(`/admin/mobile/index.html?entry=${actualRole}`);
+  }else{
+    location.replace("/client/index.html?entry=client");
+  }
+})();
+</script>
 </body>
 </html>

@@ -15,9 +15,6 @@ from bot import (
 from database import database_status, init_db
 
 BASE_DIR = Path(__file__).resolve().parent
-CLIENT_DIR = BASE_DIR / "client"
-ADMIN_MOBILE_DIR = BASE_DIR / "admin" / "mobile"
-ADMIN_DESKTOP_DIR = BASE_DIR / "admin" / "desktop"
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
 
 app = FastAPI(
@@ -32,15 +29,17 @@ app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=5)
 app.include_router(api_router, prefix="/api")
 app.include_router(telegram_router)
 
-# Three physically isolated frontends.
+# Serve the modular CSS files used by index.html.
+ASSETS_DIR = BASE_DIR / "assets"
+CLIENT_DIR = BASE_DIR / "client"
+ADMIN_MOBILE_DIR = BASE_DIR / "admin" / "mobile"
+ASSETS_DIR.mkdir(parents=True, exist_ok=True)
+CLIENT_DIR.mkdir(parents=True, exist_ok=True)
+ADMIN_MOBILE_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
 app.mount("/client", StaticFiles(directory=CLIENT_DIR, html=True), name="client")
 app.mount("/admin/mobile", StaticFiles(directory=ADMIN_MOBILE_DIR, html=True), name="admin-mobile")
-app.mount("/admin/desktop", StaticFiles(directory=ADMIN_DESKTOP_DIR, html=True), name="admin-desktop")
 
-# Existing global assets stay shared because they are content, not interface code.
-ASSETS_DIR = BASE_DIR / "assets"
-if ASSETS_DIR.exists():
-    app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
 
 @app.on_event("startup")
 def startup() -> None:
@@ -56,11 +55,9 @@ async def cache_policy(request, call_next):
     response = await call_next(request)
     path = request.url.path
 
-    if path == "/" or path.startswith("/client/"):
-        # Telegram WebView can aggressively reuse static client files.
-        # The client UI is actively edited, so never serve stale HTML/CSS/JS.
-        response.headers["Cache-Control"] = "no-store, max-age=0"
-        response.headers["Pragma"] = "no-cache"
+    if path == "/":
+        # index.html must always pick up the newest deployment.
+        response.headers["Cache-Control"] = "no-cache, must-revalidate"
     elif path in {"/api/services", "/api/admin/services"} or path.startswith("/api/admin/") or path.startswith("/api/availability"):
         # Live admin/availability data must never be stale. Service catalog speed
         # still comes from the server RAM cache, not from browser caching.
@@ -68,9 +65,9 @@ async def cache_policy(request, call_next):
     elif path.startswith("/assets/"):
         # Static image assets almost never change and have their own filenames.
         response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
-    elif path.startswith("/css/"):
-        # Let the browser reuse CSS but still revalidate after a short period.
-        response.headers["Cache-Control"] = "public, max-age=300, must-revalidate"
+    elif path.startswith("/client/") or path.startswith("/admin/mobile/"):
+        # Keep the physical client/mobile-admin bundles fresh after deploys.
+        response.headers["Cache-Control"] = "no-cache, must-revalidate"
 
     return response
 
