@@ -36,6 +36,7 @@
   <link rel="stylesheet" href="./css/home.css">
   <link rel="stylesheet" href="./css/services.css">
   <link rel="stylesheet" href="./css/booking.css">
+  <link rel="stylesheet" href="./css/booking-availability.css">
   <link rel="stylesheet" href="./css/history.css">
   <link rel="stylesheet" href="./css/profile.css">
   <!-- Admin is split by screen. Edit only the screen you are working on. -->
@@ -47,6 +48,7 @@
   <link rel="stylesheet" href="./css/admin/access.css">
   <link rel="stylesheet" href="./css/admin/more.css">
   <link rel="stylesheet" href="./css/admin/services.css">
+  <link rel="stylesheet" href="./css/admin/finance.css">
   <link rel="stylesheet" href="./css/navigation.css">
 
 <style>
@@ -363,7 +365,16 @@ button:disabled.is-busy{
     adminInviteLink: "",
     adminBookingId: null,
     adminServiceId: null,
-    adminServicesLoading: false
+    adminServicesLoading: false,
+    adminSearchOpen: false,
+    adminSearchQuery: "",
+    adminCreateOpen: false,
+    adminCreatePreset: null,
+    adminRescheduleId: null,
+    adminSlotDate: null,
+    adminSlotTime: null,
+    adminClientKey: null,
+    adminBlocksLoading: false
   };
 
   const HERO_EXACT_CARD = "/assets/hero.webp";
@@ -463,6 +474,10 @@ button:disabled.is-busy{
   })();
   let adminBookingsLoaded = adminBookings.length > 0;
   let adminServices = [];
+  let adminBlocks = [];
+  let adminClientNotes = {};
+  let bookingUnavailableTimes = new Set();
+  let bookingAvailabilityDate = "";
   let servicesReturnState = null;
   let lastServicesSignature = "";
   let lastBookingsSignature = "";
@@ -505,6 +520,82 @@ button:disabled.is-busy{
     const data = await res.json().catch(()=>({}));
     if(!res.ok) throw new Error(data.detail || data.error || "Ошибка сервера");
     return data;
+  }
+
+  async function availabilityApi(bookingDate){
+    const headers={"X-Telegram-Init-Data":tg?.initData||""};
+    const res=await fetch(`/api/availability?booking_date=${encodeURIComponent(bookingDate)}`,{headers,cache:"no-store"});
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok)throw new Error(data.detail||data.error||"Не удалось проверить время");
+    return data;
+  }
+
+  async function adminBlocksApi(path="",options={}){
+    const headers={
+      "Content-Type":"application/json",
+      "X-Telegram-Init-Data":tg?.initData||"",
+      ...(options.headers||{})
+    };
+    const res=await fetch("/api/admin/blocks"+path,{...options,headers,cache:"no-store"});
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok)throw new Error(data.detail||data.error||"Ошибка расписания");
+    return data;
+  }
+
+  async function adminClientNotesApi(path="",options={}){
+    const headers={
+      "Content-Type":"application/json",
+      "X-Telegram-Init-Data":tg?.initData||"",
+      ...(options.headers||{})
+    };
+    const res=await fetch("/api/admin/client-notes"+path,{...options,headers,cache:"no-store"});
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok)throw new Error(data.detail||data.error||"Ошибка заметок");
+    return data;
+  }
+
+  async function loadAdminBlocks(silent=true){
+    if(!["creator","admin"].includes(S.actualRole))return;
+    S.adminBlocksLoading=true;
+    try{
+      const data=await adminBlocksApi();
+      adminBlocks=Array.isArray(data.blocks)?data.blocks:[];
+    }catch(e){
+      console.error("Admin blocks load failed:",e);
+      if(!silent)toast(e.message||"Не удалось загрузить закрытые окна");
+    }finally{
+      S.adminBlocksLoading=false;
+      if(S.view==="admin-calendar"&&!formFieldIsActive())backgroundRender();
+    }
+  }
+
+  async function loadAdminClientNotes(silent=true){
+    if(!["creator","admin"].includes(S.actualRole))return;
+    try{
+      const data=await adminClientNotesApi();
+      adminClientNotes=data.notes&&typeof data.notes==="object"?data.notes:{};
+      if(S.view==="admin-clients"&&!formFieldIsActive())backgroundRender();
+    }catch(e){
+      console.error("Admin client notes load failed:",e);
+      if(!silent)toast(e.message||"Не удалось загрузить заметки клиентов");
+    }
+  }
+
+  async function loadBookingAvailability(dateValue,silent=true){
+    if(!dateValue)return;
+    try{
+      const data=await availabilityApi(dateValue);
+      if(S.date!==dateValue)return;
+      bookingAvailabilityDate=dateValue;
+      bookingUnavailableTimes=new Set(Array.isArray(data.unavailable)?data.unavailable:[]);
+      if(S.time&&bookingUnavailableTimes.has(S.time)){
+        S.time=null;
+      }
+      updateBookingAvailabilityUi();
+    }catch(e){
+      console.error("Availability load failed:",e);
+      if(!silent)toast(e.message||"Не удалось проверить свободное время");
+    }
   }
 
   async function accessApi(path="", options={}){
@@ -894,7 +985,7 @@ button:disabled.is-busy{
         adminBookings=next;
         lastAdminBookingsSignature=signature;
         saveAdminBookingsCache();
-        if(["admin-home","admin-bookings","admin-calendar"].includes(S.view))backgroundRender();
+        if(["admin-home","admin-bookings","admin-calendar","admin-clients","admin-finance"].includes(S.view))backgroundRender();
       }
       adminBookingsLoaded=true;
     }catch(e){
@@ -915,6 +1006,11 @@ button:disabled.is-busy{
   function adminFormIsOpen(){
     return Boolean(
       S.adminServiceId ||
+      S.adminCreateOpen ||
+      S.adminRescheduleId ||
+      S.adminSlotDate ||
+      S.adminClientKey ||
+      S.adminSearchOpen ||
       S.view==="admin-access" && formFieldIsActive()
     );
   }
@@ -1056,12 +1152,22 @@ button:disabled.is-busy{
     S.view=view;
     S.bookingConfirmed=false;
     S.adminBookingId=null;
+    S.adminSearchOpen=false;
+    S.adminCreateOpen=false;
+    S.adminCreatePreset=null;
+    S.adminRescheduleId=null;
+    S.adminSlotDate=null;
+    S.adminSlotTime=null;
+    S.adminClientKey=null;
     setAppScrollTop(0,"auto");
     render();
 
     // Live booking data is requested only on screens that display it.
-    if(["admin-home","admin-bookings","admin-calendar"].includes(view)){
+    if(["admin-home","admin-bookings","admin-calendar","admin-clients","admin-finance"].includes(view)){
       loadAdminBookings(true);
+      if(view==="admin-calendar")loadAdminBlocks(true);
+      if(view==="admin-clients")loadAdminClientNotes(true);
+      if(view==="admin-finance"&&!servicesLoaded)loadServices(true);
     }else if(view==="booking" || view==="history"){
       loadBookings(true);
     }
@@ -1325,7 +1431,7 @@ button:disabled.is-busy{
         <div class="date-strip" id="bookingDateStrip">${ds.map(d=>`<button class="date-btn ${S.date===d.iso?"active":""}" data-booking-date="${d.iso}" aria-pressed="${S.date===d.iso?"true":"false"}" onclick="Beauty.pickDate('${d.iso}',this)"><span>${d.w}</span><b>${d.day}</b><small>${d.m}</small></button>`).join("")}</div>
         <div class="booking-selected-date" id="bookingSelectedDate">Выбрано: <b>${esc(bookingPrettyDate(S.date))}</b></div>
         <div class="time-title">Доступное время</div>
-        <div class="time-grid" id="bookingTimeGrid">${times.map(t=>`<button class="time-btn ${S.time===t?"active":""}" data-booking-time="${t}" aria-pressed="${S.time===t?"true":"false"}" onclick="Beauty.pickTime('${t}',this)">${t}</button>`).join("")}</div>
+        <div class="time-grid" id="bookingTimeGrid">${times.map(t=>{const unavailable=bookingAvailabilityDate===S.date&&bookingUnavailableTimes.has(t);return `<button class="time-btn ${S.time===t?"active":""} ${unavailable?"unavailable":""}" data-booking-time="${t}" aria-pressed="${S.time===t?"true":"false"}" ${unavailable?"disabled aria-disabled='true'":""} onclick="Beauty.pickTime('${t}',this)">${t}${unavailable?`<small>занято</small>`:""}</button>`}).join("")}</div>
       </div>
 
       <div class="summary">
@@ -1622,7 +1728,12 @@ button:disabled.is-busy{
 
   function isStaffMode(){ return S.roleMode === "creator" || S.roleMode === "admin"; }
 
+  function adminPendingCount(){
+    return adminBookings.filter(b=>String(b.status||"")==="pending").length;
+  }
+
   function adminNav(active){
+    const pending=adminPendingCount();
     const items=[
       ["admin-home","⌂","Главная"],
       ["admin-bookings","▣","Записи"],
@@ -1630,7 +1741,7 @@ button:disabled.is-busy{
       ["admin-clients","♙","Клиенты"],
       ["admin-more","☷","Ещё"]
     ];
-    return `<nav class="bottom-nav admin-bottom"><div class="nav-inner">${items.map(([v,i,l])=>`<button class="nav-btn ${active===v?"active":""}" onclick="Beauty.go('${v}')"><div class="nav-icon">${i}</div><span>${l}</span></button>`).join("")}</div></nav>`;
+    return `<nav class="bottom-nav admin-bottom"><div class="nav-inner">${items.map(([v,i,l])=>`<button class="nav-btn ${active===v?"active":""}" onclick="Beauty.go('${v}')"><div class="nav-icon">${i}${v==="admin-bookings"&&pending?`<em class="admin-nav-badge">${pending>99?"99+":pending}</em>`:""}</div><span>${l}</span></button>`).join("")}</div></nav>`;
   }
 
   function adminHeader(){
@@ -1640,8 +1751,9 @@ button:disabled.is-busy{
     return `<div class="admin-safe"></div><header class="admin-header">
       <div class="admin-brand"><div class="admin-brand-title">MED <span>AESTHETIC</span></div><div class="admin-role">${esc(ruRole(S.roleMode))} · ${esc(name)}</div></div>
       <div class="admin-head-actions">
-        ${S.actualRole==="creator"?`<button class="admin-round" onclick="Beauty.openRoleSheet()" aria-label="Переключить роль">♛</button>`:`<button class="admin-round" onclick="Beauty.toast('Новых уведомлений нет')">♧</button>`}
-        ${avatar?`<img class="admin-avatar" src="${avatar}" alt="">`:`<div class="admin-avatar" style="display:grid;place-items:center;color:var(--admin-accent2);font-weight:800">${esc((name||"A").slice(0,1).toUpperCase())}</div>`}
+        <button class="admin-round" onclick="Beauty.openAdminSearch()" aria-label="Поиск">⌕</button>
+        ${S.actualRole==="creator"?`<button class="admin-round" onclick="Beauty.openRoleSheet()" aria-label="Переключить роль">♛</button>`:""}
+        ${avatar?`<img class="admin-avatar" src="${avatar}" alt="">`:`<div class="admin-avatar" style="display:grid;place-items:center;color:var(--admin-purple);font-weight:800">${esc((name||"A").slice(0,1).toUpperCase())}</div>`}
       </div>
     </header>`;
   }
@@ -1657,14 +1769,22 @@ button:disabled.is-busy{
     return `<div class="test-mode-bar"><span>${S.actualRole==="creator"?"♛":"◇"} Тест: клиент</span><button onclick="Beauty.switchRole('${S.actualRole}')">Вернуться в ${S.actualRole==="creator"?"создателя":"админку"}</button></div>`;
   }
 
-  function todayISO(){ return new Date().toISOString().slice(0,10); }
-  function addDaysISO(days){
-    const d=new Date();d.setDate(d.getDate()+days);return d.toISOString().slice(0,10);
+  function localISODate(d=new Date()){
+    const y=d.getFullYear();
+    const m=String(d.getMonth()+1).padStart(2,"0");
+    const day=String(d.getDate()).padStart(2,"0");
+    return `${y}-${m}-${day}`;
   }
+  function todayISO(){ return localISODate(new Date()); }
+  function addDaysISO(days){const d=new Date();d.setDate(d.getDate()+days);return localISODate(d)}
   function bookingStatusRu(status){
     return ({pending:"Ожидает подтверждения",confirmed:"Подтверждена",completed:"Завершена",cancelled:"Отменена",no_show:"Не пришёл"})[status] || "Запись";
   }
   function isActiveAdminBooking(b){ return ["pending","confirmed"].includes(String(b.status||"confirmed")); }
+  function adminBookingDateTime(b){
+    const d=new Date(`${String(b?.date||"").slice(0,10)}T${String(b?.time||"00:00").slice(0,5)}:00`);
+    return Number.isFinite(d.getTime())?d:null;
+  }
   function sortedAdminBookings(){
     return [...adminBookings].sort((a,b)=>String((a.date||"")+(a.time||"")).localeCompare(String((b.date||"")+(b.time||""))));
   }
@@ -1674,32 +1794,86 @@ button:disabled.is-busy{
     const active=all.filter(isActiveAdminBooking);
     if(S.adminFilter==="Сегодня")return active.filter(b=>String(b.date||"").slice(0,10)===todayISO());
     if(S.adminFilter==="Завтра")return active.filter(b=>String(b.date||"").slice(0,10)===addDaysISO(1));
+    if(S.adminFilter==="Неподтверждённые")return all.filter(b=>String(b.status||"")==="pending");
     if(S.adminFilter==="Неделя"){
-      const from=todayISO(), to=addDaysISO(7);
+      const from=todayISO(),to=addDaysISO(7);
       return active.filter(b=>{const d=String(b.date||"").slice(0,10);return d>=from&&d<=to});
     }
     return all;
   }
-  function adminTodayBookings(){ return adminBookings.filter(b=>isActiveAdminBooking(b)&&String(b.date||"").slice(0,10)===todayISO()); }
+  function adminTodayBookings(){return adminBookings.filter(b=>isActiveAdminBooking(b)&&String(b.date||"").slice(0,10)===todayISO())}
   function adminNearest(){
-    const now=new Date();
+    const now=Date.now();
     const active=sortedAdminBookings().filter(isActiveAdminBooking);
-    return active.find(b=>{
-      const d=new Date(`${b.date}T${b.time||"00:00"}:00`);
-      return Number.isFinite(d.getTime()) && d>=now;
-    }) || active[0] || null;
+    const overdueToday=active.filter(b=>{const d=adminBookingDateTime(b);return d&&String(b.date||"").slice(0,10)===todayISO()&&d.getTime()<now});
+    if(overdueToday.length)return overdueToday[overdueToday.length-1];
+    return active.find(b=>{const d=adminBookingDateTime(b);return d&&d.getTime()>=now}) || null;
   }
-  function niceToday(){
-    return new Intl.DateTimeFormat("ru-RU",{weekday:"long",day:"numeric",month:"long"}).format(new Date());
+  function adminRelativeBookingText(b){
+    const d=adminBookingDateTime(b);
+    if(!d)return "";
+    const diff=Math.round((d.getTime()-Date.now())/60000);
+    if(diff<0 && String(b.date||"").slice(0,10)===todayISO())return `Опаздывает ${Math.abs(diff)} мин`;
+    if(diff===0)return "Сейчас";
+    if(diff>0&&diff<60)return `Через ${diff} мин`;
+    if(diff>=60&&diff<180)return `Через ${Math.floor(diff/60)} ч ${diff%60} мин`;
+    if(String(b.date||"").slice(0,10)===todayISO())return `Сегодня в ${String(b.time||"").slice(0,5)}`;
+    if(String(b.date||"").slice(0,10)===addDaysISO(1))return `Завтра в ${String(b.time||"").slice(0,5)}`;
+    return `${adminHomeDateLabel(b.date)} · ${String(b.time||"").slice(0,5)}`;
   }
-  function adminMetric(value,label,p=50,small=""){
-    return `<div class="admin-metric"><div class="admin-ring" style="--p:${Math.max(2,Math.min(100,p))}"><b>${esc(value)}</b></div><span>${esc(label)}</span>${small?`<small>${esc(small)}</small>`:""}</div>`;
-  }
+  function niceToday(){return new Intl.DateTimeFormat("ru-RU",{weekday:"long",day:"numeric",month:"long"}).format(new Date())}
   function adminBookingRow(b){
-    const s=services.find(x=>x.id===b.serviceId)||{};
-    const client=b.clientName || (b.clientUsername?`@${b.clientUsername}`:"Клиент");
+    const client=b.clientName||(b.clientUsername?`@${b.clientUsername}`:"Клиент");
     const status=String(b.status||"confirmed");
-    return `<button class="admin-book-row" onclick="Beauty.openAdminBooking('${b.id}')"><div class="t">${esc(b.time||"—")}</div><div><h3>${esc(b.serviceName||s.name||"Запись")}</h3><p>${esc(client)} · ${esc(b.date||"")}</p></div><span class="admin-row-status status-${esc(status)}">${esc(bookingStatusRu(status))}</span></button>`;
+    return `<button class="admin-book-row" onclick="Beauty.openAdminBooking('${b.id}')"><div class="t">${esc(b.time||"—")}</div><div><h3>${esc(b.serviceName||"Запись")}</h3><p>${esc(client)} · ${esc(adminHomeDateLabel(b.date))}</p></div><span class="admin-row-status status-${esc(status)}">${esc(bookingStatusRu(status))}</span></button>`;
+  }
+  function adminClientKeyFromBooking(b){
+    const phone=String(b?.clientPhone||"").replace(/\D/g,"");
+    if(phone)return `phone:${phone}`;
+    if(b?.telegramUserId)return `tg:${b.telegramUserId}`;
+    return `name:${String(b?.clientName||b?.clientTelegramName||"клиент").trim().toLowerCase()}`;
+  }
+  function adminClientToken(key){return encodeURIComponent(String(key||""))}
+  function adminClientKeyFromToken(token){try{return decodeURIComponent(String(token||""))}catch(e){return String(token||"")}}
+  function adminClientsData(){
+    const map=new Map();
+    adminBookings.forEach(b=>{
+      const key=adminClientKeyFromBooking(b);
+      if(!map.has(key))map.set(key,{key,bookings:[],name:b.clientName||b.clientTelegramName||(b.clientUsername?`@${b.clientUsername}`:"Клиент"),phone:b.clientPhone||"",username:b.clientUsername||"",telegramUserId:b.telegramUserId||null});
+      const c=map.get(key);c.bookings.push(b);
+      if(!c.phone&&b.clientPhone)c.phone=b.clientPhone;
+      if(!c.username&&b.clientUsername)c.username=b.clientUsername;
+      if(!c.telegramUserId&&b.telegramUserId)c.telegramUserId=b.telegramUserId;
+    });
+    return [...map.values()].map(c=>{
+      c.bookings.sort((a,b)=>String((b.date||"")+(b.time||"")).localeCompare(String((a.date||"")+(a.time||""))));
+      c.completed=c.bookings.filter(b=>String(b.status)==="completed").length;
+      c.noShows=c.bookings.filter(b=>String(b.status)==="no_show").length;
+      c.cancelled=c.bookings.filter(b=>String(b.status)==="cancelled").length;
+      c.upcoming=c.bookings.filter(isActiveAdminBooking).sort((a,b)=>String((a.date||"")+(a.time||"")).localeCompare(String((b.date||"")+(b.time||""))))[0]||null;
+      c.lastVisit=c.bookings.find(b=>String(b.status)==="completed")||null;
+      c.note=adminClientNotes[c.key]||"";
+      return c;
+    }).sort((a,b)=>String(b.bookings[0]?.date||"").localeCompare(String(a.bookings[0]?.date||"")));
+  }
+  function adminClientByKey(key){return adminClientsData().find(c=>c.key===key)||null}
+  function adminServicePriceForBooking(b){
+    if(Number.isFinite(Number(b?.priceSnapshot)))return Number(b.priceSnapshot);
+    const s=services.find(x=>Number(x.id)===Number(b?.serviceId));
+    return Number.isFinite(Number(s?.price))?Number(s.price):0;
+  }
+  function adminUnavailableTimes(dateValue,excludeBookingId=null){
+    const busy=new Set();
+    adminBookings.filter(isActiveAdminBooking).forEach(b=>{
+      if(String(b.date||"").slice(0,10)===dateValue&&String(b.id)!==String(excludeBookingId||""))busy.add(String(b.time||"").slice(0,5));
+    });
+    adminBlocks.forEach(b=>{if(String(b.date||"").slice(0,10)===dateValue)busy.add(String(b.time||"").slice(0,5))});
+    return busy;
+  }
+  function adminTimeOptionsHtml(dateValue,selected="",excludeBookingId=null){
+    const busy=adminUnavailableTimes(dateValue,excludeBookingId);
+    const times=["10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00","19:00","20:00"];
+    return `<option value="">Выберите время</option>`+times.map(t=>`<option value="${t}" ${selected===t?"selected":""} ${busy.has(t)&&selected!==t?"disabled":""}>${t}${busy.has(t)&&selected!==t?" · занято":""}</option>`).join("");
   }
 
   function adminHomeTimeValue(b){
@@ -1765,139 +1939,87 @@ button:disabled.is-busy{
   /* ===== ADMIN MODULE — visual styles are isolated in css/admin/*.css by screen ===== */
   function adminHome(){
     const loaded=adminBookingsLoaded;
-    const now=new Date();
-
-    const today=adminTodayBookings()
-      .sort((a,b)=>String(a.time||"").localeCompare(String(b.time||"")));
-
-    const active=sortedAdminBookings().filter(isActiveAdminBooking);
-
-    const upcoming=active.filter(b=>{
-      const d=new Date(`${String(b.date||"").slice(0,10)}T${String(b.time||"00:00").slice(0,5)}:00`);
-      return Number.isFinite(d.getTime()) && d>=now;
+    const next=adminNearest();
+    const today=adminTodayBookings().sort((a,b)=>String(a.time||"").localeCompare(String(b.time||"")));
+    const upcomingAll=sortedAdminBookings().filter(isActiveAdminBooking).filter(b=>{
+      const d=adminBookingDateTime(b);return d&&d.getTime()>=Date.now();
     });
-
-    const pending=sortedAdminBookings()
-      .filter(b=>String(b.status||"")==="pending");
-
-    const todayCount=loaded?today.length:"—";
-    const upcomingCount=loaded?upcoming.length:"—";
-    const pendingCount=loaded?pending.length:"—";
-
+    const upcoming=upcomingAll.filter(b=>String(b.id)!==String(next?.id||""));
+    const pending=sortedAdminBookings().filter(b=>String(b.status||"")==="pending");
+    const phone=String(next?.clientPhone||"").trim();
     return `<main class="admin-page admin-dashboard-page v3-admin-home">${adminHeader()}
-      <div class="v3-admin-title">
-        <div>
-          <h1>Главная</h1>
-          <p>${esc(niceToday())}</p>
-        </div>
-        <button onclick="Beauty.go('admin-calendar')">Календарь</button>
-      </div>
+      <div class="v3-admin-title"><div><h1>Главная</h1><p>${esc(niceToday())}</p></div><button onclick="Beauty.openAdminCreateBooking()">＋ Новая запись</button></div>
+
+      <section class="admin-next-card ${next&&adminRelativeBookingText(next).startsWith("Опаздывает")?"late":""}">
+        <div class="admin-next-top"><span>Следующая запись</span>${next?`<b id="adminNextRelative">${esc(adminRelativeBookingText(next))}</b>`:""}</div>
+        ${!loaded?`<div class="v3-admin-empty">Загружаем расписание…</div>`:next?`
+          <button class="admin-next-main" onclick="Beauty.openAdminBooking('${next.id}')">
+            <strong>${esc(String(next.time||"").slice(0,5))}</strong>
+            <div><h2>${esc(next.clientName||next.clientTelegramName||(next.clientUsername?`@${next.clientUsername}`:"Клиент"))}</h2><p>${esc(next.serviceName||"Запись")}</p></div>
+            <i>›</i>
+          </button>
+          <div class="admin-next-actions">
+            ${phone?`<button onclick="Beauty.callBookingClient('${next.id}')">Позвонить</button>`:""}
+            ${next.clientUsername?`<button onclick="Beauty.messageBookingClient('${next.id}')">Telegram</button>`:""}
+            <button onclick="Beauty.openAdminBooking('${next.id}')">Открыть</button>
+          </div>`:`<div class="admin-next-empty"><b>Ближайших записей нет</b><span>Можно добавить запись вручную.</span></div>`}
+      </section>
 
       <div class="v3-admin-stats">
-        <button class="v3-stat-card" onclick="Beauty.setAdminFilter('Сегодня');Beauty.go('admin-bookings')">
-          <span class="v3-stat-icon">□</span>
-          <small>Записи сегодня</small>
-          <strong>${esc(String(todayCount))}</strong>
-        </button>
-        <button class="v3-stat-card" onclick="Beauty.go('admin-bookings')">
-          <span class="v3-stat-icon">◷</span>
-          <small>Ближайшие</small>
-          <strong>${esc(String(upcomingCount))}</strong>
-        </button>
-        <button class="v3-stat-card attention" onclick="Beauty.go('admin-bookings')">
-          <span class="v3-stat-icon">!</span>
-          <small>Неподтверждённые</small>
-          <strong>${esc(String(pendingCount))}</strong>
-        </button>
+        <button class="v3-stat-card" onclick="Beauty.setAdminFilter('Сегодня');Beauty.go('admin-bookings')"><span class="v3-stat-icon">□</span><small>Записи сегодня</small><strong>${loaded?today.length:"—"}</strong></button>
+        <button class="v3-stat-card" onclick="Beauty.go('admin-bookings')"><span class="v3-stat-icon">◷</span><small>Ближайшие</small><strong>${loaded?upcomingAll.length:"—"}</strong></button>
+        <button class="v3-stat-card attention" onclick="Beauty.openAdminPending()"><span class="v3-stat-icon">!</span><small>Неподтверждённые</small><strong>${loaded?pending.length:"—"}</strong></button>
       </div>
 
-      <section class="v3-admin-section">
-        <div class="v3-section-head">
-          <div>
-            <h2>Сегодня</h2>
-            <span>${loaded?(today.length?`${today.length} ${today.length===1?"запись":"записей"}`:"Записей нет"):"Загрузка…"}</span>
-          </div>
-          <button onclick="Beauty.setAdminFilter('Сегодня');Beauty.go('admin-bookings')">Все записи ›</button>
-        </div>
-
-        <div class="v3-today-list">
-          ${!loaded
-            ? `<div class="v3-admin-empty">Загружаем расписание…</div>`
-            : today.length
-              ? today.slice(0,5).map(b=>adminHomeRow(b)).join("")
-              : `<div class="v3-admin-empty">На сегодня записей пока нет.</div>`
-          }
-        </div>
-      </section>
-
-      <section class="v3-admin-section">
-        <div class="v3-section-head">
-          <div>
-            <h2>Ближайшие</h2>
-            <span>Следующие записи</span>
-          </div>
-          <button onclick="Beauty.go('admin-bookings')">Смотреть все ›</button>
-        </div>
-
-        <div class="v3-upcoming-list">
-          ${!loaded
-            ? `<div class="v3-admin-empty">Загружаем записи…</div>`
-            : upcoming.length
-              ? upcoming.slice(0,4).map(b=>adminHomeRow(b,{showDate:true,compact:true})).join("")
-              : `<div class="v3-admin-empty">Ближайших записей пока нет.</div>`
-          }
-        </div>
-      </section>
-
       <section class="v3-admin-section v3-pending-section">
-        <div class="v3-section-head">
-          <div>
-            <h2>Неподтверждённые</h2>
-            <span>${loaded?(pending.length?`${pending.length} требуют внимания`:"Всё подтверждено"):"Загрузка…"}</span>
-          </div>
-          ${pending.length?`<span class="v3-count-badge">${pending.length}</span>`:""}
-        </div>
-
-        <div class="v3-pending-list admin-booking-actions">
-          ${!loaded
-            ? `<div class="v3-admin-empty">Проверяем новые заявки…</div>`
-            : pending.length
-              ? pending.slice(0,4).map(adminHomePendingRow).join("")
-              : `<div class="v3-admin-empty success">Новых заявок на подтверждение нет.</div>`
-          }
-        </div>
-
-        ${pending.length>4?`<button class="v3-more-pending" onclick="Beauty.go('admin-bookings')">Показать остальные ›</button>`:""}
+        <div class="v3-section-head"><div><h2>Неподтверждённые</h2><span>${pending.length?`${pending.length} требуют решения`:"Всё обработано"}</span></div>${pending.length?`<span class="v3-count-badge">${pending.length}</span>`:""}</div>
+        <div class="v3-pending-list admin-booking-actions">${!loaded?`<div class="v3-admin-empty">Проверяем заявки…</div>`:pending.length?pending.slice(0,3).map(adminHomePendingRow).join(""):`<div class="v3-admin-empty success">Новых заявок нет.</div>`}</div>
+        ${pending.length>3?`<button class="v3-more-pending" onclick="Beauty.openAdminPending()">Показать остальные ›</button>`:""}
       </section>
+
+      <section class="v3-admin-section"><div class="v3-section-head"><div><h2>Сегодня</h2><span>${today.length?`${today.length} записей`:"Записей нет"}</span></div><button onclick="Beauty.setAdminFilter('Сегодня');Beauty.go('admin-bookings')">Все записи ›</button></div><div class="v3-today-list">${today.length?today.slice(0,5).map(b=>adminHomeRow(b)).join(""):`<div class="v3-admin-empty">На сегодня записей пока нет.</div>`}</div></section>
+
+      <section class="v3-admin-section"><div class="v3-section-head"><div><h2>Ближайшие</h2><span>После следующей записи</span></div><button onclick="Beauty.go('admin-bookings')">Смотреть все ›</button></div><div class="v3-upcoming-list">${upcoming.length?upcoming.slice(0,4).map(b=>adminHomeRow(b,{showDate:true,compact:true})).join(""):`<div class="v3-admin-empty">Ближайших записей пока нет.</div>`}</div></section>
     </main>${adminNav("admin-home")}${roleSheet()}`;
   }
 
   function adminBookingsView(){
     const list=filteredAdminBookings();
-    return `<main class="admin-page admin-bookings-page">${adminHeader()}<div class="admin-date-row"><div><h1>Записи</h1><p>Быстрый контроль расписания</p></div><button class="admin-link" onclick="Beauty.toast('Поиск подключим вместе с клиентской базой')">⌕ Поиск</button></div>
-      <div class="admin-filter">${["Сегодня","Завтра","Неделя","Все"].map(x=>`<button class="${S.adminFilter===x?"active":""}" onclick="Beauty.setAdminFilter('${x}')">${x}</button>`).join("")}</div>
+    return `<main class="admin-page admin-bookings-page">${adminHeader()}<div class="admin-date-row"><div><h1>Записи</h1><p>Расписание и работа с клиентами</p></div><button class="admin-link" onclick="Beauty.openAdminSearch()">⌕ Поиск</button></div>
+      <button class="admin-create-main" onclick="Beauty.openAdminCreateBooking()">＋ Новая запись вручную</button>
+      <div class="admin-filter">${["Сегодня","Завтра","Неделя","Неподтверждённые","Все"].map(x=>`<button class="${S.adminFilter===x?"active":""}" onclick="Beauty.setAdminFilter('${x}')">${x}</button>`).join("")}</div>
       <div class="admin-list">${list.length?list.map(adminBookingRow).join(""):`<div class="admin-empty">Записей пока нет.</div>`}</div>
-      <section class="admin-section"><button class="btn-primary" style="width:100%;background:linear-gradient(135deg,#7651e8,#9c72ff);border-color:#9570ff;color:white" onclick="Beauty.toast('Ручную запись подключим следующим шагом')">＋ Новая запись</button></section>
     </main>${adminNav("admin-bookings")}${roleSheet()}`;
   }
 
   function adminCalendarView(){
-    const ds=[];const w=["Вс","Пн","Вт","Ср","Чт","Пт","Сб"];
-    for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()+i);ds.push({iso:d.toISOString().slice(0,10),day:d.getDate(),w:w[d.getDay()]})}
+    const ds=[],w=["Вс","Пн","Вт","Ср","Чт","Пт","Сб"];
+    for(let i=0;i<14;i++){const d=new Date();d.setDate(d.getDate()+i);ds.push({iso:localISODate(d),day:d.getDate(),w:w[d.getDay()]})}
     if(!S.adminDate)S.adminDate=ds[0].iso;
-    const selected=adminBookings.filter(b=>isActiveAdminBooking(b)&&String(b.date||"").slice(0,10)===S.adminDate).sort((a,b)=>String(a.time).localeCompare(String(b.time)));
-    return `<main class="admin-page admin-calendar-page">${adminHeader()}<div class="admin-date-row"><div><h1>Календарь</h1><p>Записи и свободные окна</p></div><button class="admin-link" onclick="Beauty.toast('Настройку рабочих часов добавим далее')">Настроить</button></div>
-      <div class="admin-calendar"><div class="admin-week">${ds.map(d=>`<button class="admin-day ${S.adminDate===d.iso?"active":""}" onclick="Beauty.pickAdminDate('${d.iso}')"><span>${d.w}</span><b>${d.day}</b></button>`).join("")}</div>
-      <div class="admin-timeline">${selected.length?selected.map(b=>`<div class="admin-slot"><div class="admin-slot-time">${esc(b.time||"—")}</div><div class="admin-slot-card" role="button" onclick="Beauty.openAdminBooking('${b.id}')"><b>${esc(b.serviceName||"Запись")}</b><span>${esc(b.clientName||"Клиент")}</span></div></div>`).join(""):`<div class="admin-slot"><div class="admin-slot-time">День</div><div class="admin-slot-free">Свободно · записей нет</div></div>`}</div></div>
-      <section class="admin-section"><div class="admin-actions"><button class="admin-action" onclick="Beauty.toast('Создание ручной записи — следующим шагом')"><i>＋</i><b>Добавить запись</b></button><button class="admin-action" onclick="Beauty.toast('Блокировку окна подключим к расписанию')"><i>×</i><b>Закрыть окно</b></button><button class="admin-action" onclick="Beauty.toast('Перерыв подключим к расписанию')"><i>☕</i><b>Перерыв</b></button><button class="admin-action" onclick="Beauty.toast('Выходной подключим к расписанию')"><i>○</i><b>Выходной</b></button></div></section>
+    const times=["10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00","19:00","20:00"];
+    const active=adminBookings.filter(b=>isActiveAdminBooking(b)&&String(b.date||"").slice(0,10)===S.adminDate);
+    const blocks=adminBlocks.filter(b=>String(b.date||"").slice(0,10)===S.adminDate);
+    const slotHtml=times.map(t=>{
+      const booking=active.find(b=>String(b.time||"").slice(0,5)===t);
+      const block=blocks.find(b=>String(b.time||"").slice(0,5)===t);
+      if(booking)return `<div class="admin-slot"><div class="admin-slot-time">${t}</div><button class="admin-slot-card" onclick="Beauty.openAdminBooking('${booking.id}')"><b>${esc(booking.clientName||"Клиент")}</b><span>${esc(booking.serviceName||"Запись")}</span></button></div>`;
+      if(block)return `<div class="admin-slot"><div class="admin-slot-time">${t}</div><button class="admin-slot-blocked" onclick="Beauty.unblockAdminSlot('${block.id}')"><b>${esc(block.label||"Закрыто")}</b><span>Нажмите, чтобы открыть время</span></button></div>`;
+      return `<div class="admin-slot"><div class="admin-slot-time">${t}</div><button class="admin-slot-free" onclick="Beauty.openAdminSlot('${S.adminDate}','${t}')"><b>Свободно</b><span>Добавить запись или закрыть время</span></button></div>`;
+    }).join("");
+    return `<main class="admin-page admin-calendar-page">${adminHeader()}<div class="admin-date-row"><div><h1>Календарь</h1><p>Записи, свободные и закрытые окна</p></div><button class="admin-link" onclick="Beauty.openAdminCreateBooking('${S.adminDate||todayISO()}')">＋ Запись</button></div>
+      <div class="admin-calendar"><div class="admin-week admin-week-scroll">${ds.map(d=>`<button class="admin-day ${S.adminDate===d.iso?"active":""}" onclick="Beauty.pickAdminDate('${d.iso}')"><span>${d.w}</span><b>${d.day}</b></button>`).join("")}</div><div class="admin-calendar-date-label">${esc(bookingPrettyDate(S.adminDate))}</div><div class="admin-timeline">${S.adminBlocksLoading?`<div class="admin-empty">Обновляем календарь…</div>`:slotHtml}</div></div>
+      <div class="admin-calendar-hint">Нажмите на свободное время, чтобы добавить запись или закрыть окно для клиентов.</div>
     </main>${adminNav("admin-calendar")}${roleSheet()}`;
   }
 
   function adminClientsView(){
-    return `<main class="admin-page admin-clients-page">${adminHeader()}<div class="admin-date-row"><div><h1>Клиенты</h1><p>Карточки, история и повторные записи</p></div><button class="admin-link" onclick="Beauty.toast('Добавление клиента подключим вместе с базой клиентов')">＋ Добавить</button></div>
-      <div class="search-box" style="margin-top:0">⌕ <input placeholder="Имя, Telegram, телефон" oninput="Beauty.toast('Поиск будет работать после подключения клиентской базы')"></div>
-      <div class="admin-kpis"><div class="admin-kpi"><small>Клиентов в базе</small><strong>—</strong></div><div class="admin-kpi"><small>Новых за месяц</small><strong>—</strong></div></div>
-      <section class="admin-section"><div class="admin-empty">Карточки реальных клиентов подключим к Neon следующим этапом. Никакие тестовые люди здесь не подставлены, чтобы не смешивать демо-данные с настоящими.</div></section>
+    const clients=adminClientsData();
+    const month=todayISO().slice(0,7);
+    const newThisMonth=clients.filter(c=>c.bookings.some(b=>String(b.createdAt||"").slice(0,7)===month)).length;
+    return `<main class="admin-page admin-clients-page">${adminHeader()}<div class="admin-date-row"><div><h1>Клиенты</h1><p>Контакты, заметки и история визитов</p></div><button class="admin-link" onclick="Beauty.openAdminCreateBooking()">＋ Запись</button></div>
+      <div class="search-box">⌕ <input id="adminClientSearch" placeholder="Имя, Telegram, телефон" oninput="Beauty.filterAdminClients(this.value)"></div>
+      <div class="admin-kpis"><div class="admin-kpi"><small>Клиентов</small><strong>${clients.length}</strong></div><div class="admin-kpi"><small>Новых за месяц</small><strong>${newThisMonth}</strong></div></div>
+      <div class="admin-client-list" id="adminClientList">${clients.length?clients.map(c=>`<button class="admin-client-row" data-admin-client-search="${esc(`${c.name} ${c.phone} ${c.username}`.toLowerCase())}" onclick="Beauty.openAdminClient('${adminClientToken(c.key)}')"><span class="admin-client-avatar">${esc(String(c.name||"К").slice(0,1).toUpperCase())}</span><span class="admin-client-copy"><b>${esc(c.name)}</b><small>${esc(c.phone||c.username||"Без контакта")}</small><em>${c.upcoming?`Ближайшая: ${esc(adminHomeDateLabel(c.upcoming.date))} · ${esc(c.upcoming.time)}`:`Визитов завершено: ${c.completed}`}</em></span><i>›</i></button>`).join(""):`<div class="admin-empty">Клиенты появятся здесь после первой записи.</div>`}</div>
     </main>${adminNav("admin-clients")}${roleSheet()}`;
   }
 
@@ -2038,17 +2160,32 @@ button:disabled.is-busy{
   }
 
   function adminMoreView(){
-    const creatorItem=S.actualRole==="creator"?`<button onclick="Beauty.openAdminAccess()"><span class="ico">♛</span><div><b>Администраторы</b><small>Добавление по Telegram ID и права доступа</small></div><span class="go">›</span></button>`:"";
-    return `<main class="admin-page admin-more-page">${adminHeader()}<div class="admin-date-row"><div><h1>Ещё</h1><p>Управление и автоматизация</p></div></div>
-      <div class="admin-menu">
-        <button onclick="Beauty.openAdminServices()"><span class="ico">⌘</span><div><b>Услуги</b><small>Описание, цены и доступность</small></div><span class="go">›</span></button>
-        <button onclick="Beauty.go('admin-calendar')"><span class="ico">□</span><div><b>Расписание</b><small>Рабочие дни, перерывы, выходные</small></div><span class="go">›</span></button>
-        <button onclick="Beauty.toast('Автоматические уведомления — следующий модуль')"><span class="ico">♧</span><div><b>Уведомления</b><small>Напоминания и сообщения клиентам</small></div><span class="go">›</span></button>
-        <button onclick="Beauty.toast('Автоматизацию будем настраивать по сценариям')"><span class="ico">↻</span><div><b>Автоматизация</b><small>Правила без ручной работы</small></div><span class="go">›</span></button>
-        ${creatorItem}
-        <button onclick="Beauty.toast('Настройки появятся следующим этапом')"><span class="ico">⚙</span><div><b>Настройки</b><small>Интерфейс и параметры заведения</small></div><span class="go">›</span></button>
-      </div>
-      ${S.actualRole==="creator"?`<div class="admin-client-switch"><div><b>Режим клиента</b><p>Открыть клиентскую часть только для теста</p></div><button class="switch-pill" onclick="Beauty.switchRole('client')"></button></div>`:""}
+    const creatorItem=S.actualRole==="creator"?`<button onclick="Beauty.openAdminAccess()"><span class="ico">♛</span><div><b>Администраторы</b><small>Telegram ID и права доступа</small></div><span class="go">›</span></button>`:"";
+    return `<main class="admin-page admin-more-page">${adminHeader()}<div class="admin-date-row"><div><h1>Ещё</h1><p>Управление студией</p></div></div><div class="admin-menu">
+      <button onclick="Beauty.openAdminServices()"><span class="ico">⌘</span><div><b>Услуги</b><small>Описание, цены и доступность</small></div><span class="go">›</span></button>
+      <button onclick="Beauty.go('admin-finance')"><span class="ico">₸</span><div><b>Выручка и аналитика</b><small>Отдельно от рабочей главной</small></div><span class="go">›</span></button>
+      <button onclick="Beauty.go('admin-calendar')"><span class="ico">□</span><div><b>Расписание</b><small>Записи и закрытые окна</small></div><span class="go">›</span></button>
+      ${creatorItem}
+    </div>${S.actualRole==="creator"?`<div class="admin-client-switch"><div><b>Режим клиента</b><p>Открыть клиентскую часть для проверки</p></div><button class="switch-pill" onclick="Beauty.switchRole('client')"></button></div>`:""}</main>${adminNav("admin-more")}${roleSheet()}`;
+  }
+
+  function adminFinanceView(){
+    const month=todayISO().slice(0,7);
+    const completed=adminBookings.filter(b=>String(b.status)==="completed");
+    const monthRows=completed.filter(b=>String(b.date||"").slice(0,7)===month);
+    const todayRows=completed.filter(b=>String(b.date||"").slice(0,10)===todayISO());
+    const sum=rows=>rows.reduce((acc,b)=>acc+adminServicePriceForBooking(b),0);
+    const serviceMap=new Map();
+    monthRows.forEach(b=>{const key=b.serviceName||"Услуга";const x=serviceMap.get(key)||{name:key,count:0,total:0};x.count++;x.total+=adminServicePriceForBooking(b);serviceMap.set(key,x)});
+    const top=[...serviceMap.values()].sort((a,b)=>b.count-a.count||b.total-a.total).slice(0,5);
+    const monthAll=adminBookings.filter(b=>String(b.date||"").slice(0,7)===month);
+    const noShows=monthAll.filter(b=>String(b.status)==="no_show").length;
+    const cancelled=monthAll.filter(b=>String(b.status)==="cancelled").length;
+    return `<main class="admin-page admin-finance-page">${adminHeader()}<div class="admin-date-row"><div><h1>Выручка</h1><p>Отдельная аналитика по завершённым записям</p></div><button class="admin-link" onclick="Beauty.go('admin-more')">Назад</button></div>
+      <div class="finance-kpis"><div><small>За сегодня</small><strong>${fmt(sum(todayRows))}</strong><span>${todayRows.length} завершено</span></div><div><small>За месяц</small><strong>${fmt(sum(monthRows))}</strong><span>${monthRows.length} завершено</span></div></div>
+      <section class="finance-panel"><div class="finance-head"><h2>Популярные услуги</h2><span>текущий месяц</span></div>${top.length?`<div class="finance-list">${top.map((x,i)=>`<div><b>${i+1}</b><span><strong>${esc(x.name)}</strong><small>${x.count} записей</small></span><em>${fmt(x.total)}</em></div>`).join("")}</div>`:`<div class="admin-empty">Завершённых записей в этом месяце пока нет.</div>`}</section>
+      <section class="finance-panel"><div class="finance-head"><h2>Сводка месяца</h2></div><div class="finance-mini"><div><strong>${monthRows.length}</strong><span>завершено</span></div><div><strong>${cancelled}</strong><span>отменено</span></div><div><strong>${noShows}</strong><span>неявок</span></div></div></section>
+      <div class="finance-note">Сумма считается по цене услуги, сохранённой в записи. Это рабочая аналитика завершённых услуг, а не банковская касса.</div>
     </main>${adminNav("admin-more")}${roleSheet()}`;
   }
 
@@ -2056,38 +2193,119 @@ button:disabled.is-busy{
     if(!S.adminBookingId)return "";
     const b=adminBookings.find(x=>String(x.id)===String(S.adminBookingId));
     if(!b)return "";
-    const client=b.clientName || b.clientTelegramName || (b.clientUsername?`@${b.clientUsername}`:"Клиент");
-    const username=b.clientUsername ? `@${b.clientUsername}` : "Telegram ID "+String(b.telegramUserId||"—");
+    const client=b.clientName||b.clientTelegramName||(b.clientUsername?`@${b.clientUsername}`:"Клиент");
+    const username=b.clientUsername?`@${b.clientUsername}`:(b.telegramUserId?`Telegram ID ${b.telegramUserId}`:"Telegram не привязан");
     const phone=String(b.clientPhone||"").trim();
     const status=String(b.status||"confirmed");
-    return `<div class="admin-booking-backdrop" onclick="if(event.target===this)Beauty.closeAdminBooking()">
-      <section class="admin-booking-sheet">
-        <div class="admin-booking-sheet-head"><div><small>Запись #${esc(b.id)}</small><h3>${esc(b.serviceName||"Услуга")}</h3></div><button onclick="Beauty.closeAdminBooking()" aria-label="Закрыть">×</button></div>
-        <div class="admin-booking-client">
-          <b>${esc(client)}</b>
-          ${phone?`<span>Телефон: ${esc(phone)}</span>`:""}
-          <span>Telegram: ${esc(username)}</span>
-        </div>
-        <div class="admin-booking-details">
-          <div><span>Дата</span><b>${esc(b.date||"—")}</b></div>
-          <div><span>Время</span><b>${esc(b.time||"—")}</b></div>
-          <div><span>Мастер</span><b>${esc(b.masterName||"Людмила")}</b></div>
-          <div><span>Статус</span><b>${esc(bookingStatusRu(status))}</b></div>
-        </div>
-        <div class="admin-booking-actions">
-          ${phone?`<button class="booking-action contact" onclick="Beauty.callBookingClient('${b.id}')">Позвонить · ${esc(phone)}</button>`:""}
-          ${b.clientUsername?`<button class="booking-action contact" onclick="Beauty.messageBookingClient('${b.id}')">Написать клиенту в Telegram</button>`:""}
-          ${status==="pending"?`<button class="booking-action confirm" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','confirmed',this)">Подтвердить запись</button>`:""}
-          ${status==="pending"?`<button class="booking-action danger" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','cancelled',this)">Отклонить заявку</button>`:""}
-          ${status==="confirmed"?`<button class="booking-action done" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','completed',this)">Отметить как завершённую</button>`:""}
-          ${status==="confirmed"?`<button class="booking-action neutral" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','no_show',this)">Клиент не пришёл</button>`:""}
-          ${status==="confirmed"?`<button class="booking-action danger" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','cancelled',this)">Отменить запись</button>`:""}
-        </div>
-      </section>
-    </div>`;
+    const clientKey=adminClientKeyFromBooking(b);
+    return `<div class="admin-booking-backdrop" onclick="if(event.target===this)Beauty.closeAdminBooking()"><section class="admin-booking-sheet">
+      <div class="admin-booking-sheet-head"><div><small>Запись #${esc(b.id)}${b.bookingSource==="admin"?" · создана администратором":""}</small><h3>${esc(b.serviceName||"Услуга")}</h3></div><button onclick="Beauty.closeAdminBooking()" aria-label="Закрыть">×</button></div>
+      <button class="admin-booking-client admin-booking-client-button" onclick="Beauty.openAdminClient('${adminClientToken(clientKey)}')"><b>${esc(client)}</b>${phone?`<span>Телефон: ${esc(phone)}</span>`:""}<span>Telegram: ${esc(username)}</span><em>История клиента ›</em></button>
+      <div class="admin-booking-details"><div><span>Дата</span><b>${esc(bookingPrettyDate(b.date))}</b></div><div><span>Время</span><b>${esc(b.time||"—")}</b></div><div><span>Мастер</span><b>${esc(b.masterName||"Людмила")}</b></div><div><span>Статус</span><b>${esc(bookingStatusRu(status))}</b></div></div>
+      <label class="admin-booking-note"><span>Заметка к этой записи</span><textarea id="adminBookingNote" maxlength="2000" rows="3" placeholder="Например: просила позвонить перед визитом">${esc(b.note||"")}</textarea><button onclick="Beauty.saveAdminBookingNote('${b.id}',this)">Сохранить заметку</button></label>
+      <div class="admin-booking-actions">
+        ${phone?`<button class="booking-action contact" onclick="Beauty.callBookingClient('${b.id}')">Позвонить · ${esc(phone)}</button>`:""}
+        ${b.clientUsername?`<button class="booking-action contact" onclick="Beauty.messageBookingClient('${b.id}')">Написать в Telegram</button>`:""}
+        ${isActiveAdminBooking(b)?`<button class="booking-action neutral" onclick="Beauty.openAdminReschedule('${b.id}')">Перенести запись</button>`:""}
+        ${status==="pending"?`<button class="booking-action confirm" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','confirmed',this)">Подтвердить запись</button><button class="booking-action danger" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','cancelled',this)">Отклонить заявку</button>`:""}
+        ${status==="confirmed"?`<button class="booking-action done" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','completed',this)">Отметить как завершённую</button><button class="booking-action neutral" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','no_show',this)">Клиент не пришёл</button><button class="booking-action danger" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','cancelled',this)">Отменить запись</button>`:""}
+      </div>
+    </section></div>`;
   }
 
+  function adminCreateBookingSheet(){
+    if(!S.adminCreateOpen)return "";
+    const preset=S.adminCreatePreset||{};
+    const dateValue=preset.date||todayISO();
+    const timeValue=preset.time||"";
+    const client=preset.clientKey?adminClientByKey(preset.clientKey):null;
+    const serviceOptions=services.filter(s=>s.isActive!==false).map(s=>`<option value="${s.id}" ${String(preset.serviceId||"")===String(s.id)?"selected":""}>${esc(s.name)}${Number.isFinite(Number(s.price))?` · ${fmt(Number(s.price))}`:""}</option>`).join("");
+    return `<div class="admin-form-backdrop" onclick="if(event.target===this)Beauty.closeAdminCreateBooking()"><section class="admin-form-sheet"><div class="admin-form-head"><div><small>Ручная запись</small><h3>Новая запись</h3></div><button onclick="Beauty.closeAdminCreateBooking()">×</button></div>
+      <div class="admin-form-grid"><label><span>Имя клиента</span><input id="adminCreateName" maxlength="120" value="${esc(client?.name||preset.name||"")}" placeholder="Имя"></label><label><span>Телефон</span><input id="adminCreatePhone" maxlength="32" inputmode="tel" value="${esc(client?.phone||preset.phone||"")}" placeholder="+7 ..."></label></div>
+      <label class="admin-form-field"><span>Услуга</span><select id="adminCreateService"><option value="">Выберите услугу</option>${serviceOptions}</select></label>
+      <div class="admin-form-grid"><label><span>Дата</span><input id="adminCreateDate" type="date" min="${todayISO()}" value="${esc(dateValue)}" onchange="Beauty.adminManualDateChanged(this.value)"></label><label><span>Время</span><select id="adminCreateTime">${adminTimeOptionsHtml(dateValue,timeValue)}</select></label></div>
+      <label class="admin-form-field"><span>Заметка к записи</span><textarea id="adminCreateNote" maxlength="2000" rows="3" placeholder="Необязательно"></textarea></label>
+      <input id="adminCreateTelegramId" type="hidden" value="${esc(client?.telegramUserId||preset.telegramUserId||"")}">
+      <button id="adminCreateSubmit" class="admin-form-primary" onclick="Beauty.submitAdminCreateBooking(this)">Создать запись</button>
+    </section></div>`;
+  }
+
+  function adminRescheduleSheet(){
+    if(!S.adminRescheduleId)return "";
+    const b=adminBookings.find(x=>String(x.id)===String(S.adminRescheduleId));
+    if(!b)return "";
+    return `<div class="admin-form-backdrop" onclick="if(event.target===this)Beauty.closeAdminReschedule()"><section class="admin-form-sheet compact"><div class="admin-form-head"><div><small>${esc(b.clientName||"Клиент")}</small><h3>Перенести запись</h3></div><button onclick="Beauty.closeAdminReschedule()">×</button></div><div class="admin-form-grid"><label><span>Новая дата</span><input id="adminMoveDate" type="date" min="${todayISO()}" value="${esc(b.date)}" onchange="Beauty.adminMoveDateChanged(this.value,'${b.id}')"></label><label><span>Новое время</span><select id="adminMoveTime">${adminTimeOptionsHtml(b.date,b.time,b.id)}</select></label></div><div class="admin-form-note">Клиент получит сообщение в Telegram о новой дате и времени, если Telegram привязан.</div><button id="adminMoveSubmit" class="admin-form-primary" onclick="Beauty.submitAdminReschedule('${b.id}',this)">Перенести</button></section></div>`;
+  }
+
+  function adminSlotSheet(){
+    if(!S.adminSlotDate||!S.adminSlotTime)return "";
+    return `<div class="admin-form-backdrop" onclick="if(event.target===this)Beauty.closeAdminSlot()"><section class="admin-form-sheet compact"><div class="admin-form-head"><div><small>${esc(bookingPrettyDate(S.adminSlotDate))} · ${esc(S.adminSlotTime)}</small><h3>Свободное время</h3></div><button onclick="Beauty.closeAdminSlot()">×</button></div><button class="admin-slot-choice" onclick="Beauty.slotCreateBooking()"><b>＋ Добавить запись</b><span>Записать клиента вручную на это время</span></button><label class="admin-form-field"><span>Причина закрытия</span><input id="adminBlockLabel" maxlength="120" placeholder="Обед, личное время, обучение..."></label><button id="adminBlockSubmit" class="admin-form-secondary" onclick="Beauty.blockAdminSlot(this)">Закрыть это время</button></section></div>`;
+  }
+
+  function adminClientSheet(){
+    if(!S.adminClientKey)return "";
+    const c=adminClientByKey(S.adminClientKey);if(!c)return "";
+    const history=c.bookings;
+    return `<div class="admin-client-backdrop" onclick="if(event.target===this)Beauty.closeAdminClient()"><section class="admin-client-sheet"><div class="admin-form-head"><div><small>Карточка клиента</small><h3>${esc(c.name)}</h3></div><button onclick="Beauty.closeAdminClient()">×</button></div><div class="admin-client-contact">${c.phone?`<button onclick="Beauty.callClientByKey('${adminClientToken(c.key)}')">☎ ${esc(c.phone)}</button>`:""}${c.username?`<button onclick="Beauty.messageClientByKey('${adminClientToken(c.key)}')">Telegram · @${esc(c.username)}</button>`:""}</div><div class="admin-client-stats"><div><strong>${c.completed}</strong><span>визитов</span></div><div><strong>${c.noShows}</strong><span>неявок</span></div><div><strong>${c.cancelled}</strong><span>отмен</span></div></div><label class="admin-client-note"><span>Постоянная заметка о клиенте</span><textarea id="adminClientNote" maxlength="3000" rows="3" placeholder="Аллергия, особенности, просьбы клиента...">${esc(c.note||"")}</textarea><button onclick="Beauty.saveAdminClientNote('${adminClientToken(c.key)}',this)">Сохранить</button></label><button class="admin-form-primary" onclick="Beauty.createBookingForClient('${adminClientToken(c.key)}')">＋ Новая запись этому клиенту</button><div class="admin-client-history-title"><h4>История</h4><span>${history.length} записей</span></div><div class="admin-client-history">${history.map(b=>`<button onclick="Beauty.openBookingFromClient('${b.id}')"><span><b>${esc(b.serviceName||"Запись")}</b><small>${esc(adminHomeDateLabel(b.date))} · ${esc(b.time)}</small></span><em class="status-${esc(b.status||"")}">${esc(bookingStatusRu(b.status))}</em></button>`).join("")}</div></section></div>`;
+  }
+
+  function adminSearchSheet(){
+    if(!S.adminSearchOpen)return "";
+    const q=String(S.adminSearchQuery||"").trim().toLowerCase();
+    const clients=adminClientsData().filter(c=>!q||`${c.name} ${c.phone} ${c.username}`.toLowerCase().includes(q)).slice(0,8);
+    const bookings=sortedAdminBookings().filter(b=>!q||`${b.clientName||""} ${b.clientPhone||""} ${b.clientUsername||""} ${b.serviceName||""} ${b.date||""}`.toLowerCase().includes(q)).slice(0,10);
+    return `<div class="admin-search-backdrop" onclick="if(event.target===this)Beauty.closeAdminSearch()"><section class="admin-search-sheet"><div class="admin-search-head"><div class="admin-search-input">⌕ <input id="adminGlobalSearch" value="${esc(S.adminSearchQuery||"")}" placeholder="Имя, телефон, Telegram, услуга" oninput="Beauty.adminGlobalSearch(this.value)"></div><button onclick="Beauty.closeAdminSearch()">×</button></div>${q?`<div class="admin-search-group"><h4>Клиенты <span>${clients.length}</span></h4>${clients.length?clients.map(c=>`<button onclick="Beauty.openClientFromSearch('${adminClientToken(c.key)}')"><b>${esc(c.name)}</b><small>${esc(c.phone||c.username||"Без контакта")}</small><i>›</i></button>`).join(""):`<p>Клиентов не найдено</p>`}</div><div class="admin-search-group"><h4>Записи <span>${bookings.length}</span></h4>${bookings.length?bookings.map(b=>`<button onclick="Beauty.openBookingFromSearch('${b.id}')"><b>${esc(b.serviceName||"Запись")}</b><small>${esc(b.clientName||"Клиент")} · ${esc(adminHomeDateLabel(b.date))} ${esc(b.time||"")}</small><i>›</i></button>`).join(""):`<p>Записей не найдено</p>`}</div>`:`<div class="admin-search-empty"><b>Глобальный поиск</b><span>Находит клиента или запись по имени, телефону, Telegram и услуге.</span></div>`}</section></div>`;
+  }
+
+  function openAdminPending(){S.adminFilter="Неподтверждённые";S.view="admin-bookings";render();haptic()}
+
+  function openAdminSearch(){S.adminSearchOpen=true;S.adminSearchQuery="";render();setTimeout(()=>document.querySelector("#adminGlobalSearch")?.focus(),60);haptic()}
+  function closeAdminSearch(){S.adminSearchOpen=false;S.adminSearchQuery="";render()}
+  function adminGlobalSearch(value){S.adminSearchQuery=String(value||"");const input=document.querySelector("#adminGlobalSearch");const pos=input?.selectionStart;render();requestAnimationFrame(()=>{const next=document.querySelector("#adminGlobalSearch");if(next){next.focus();try{next.setSelectionRange(pos,pos)}catch(e){}}})}
+  function openClientFromSearch(token){S.adminSearchOpen=false;S.adminClientKey=adminClientKeyFromToken(token);render()}
+  function openBookingFromSearch(id){S.adminSearchOpen=false;S.adminBookingId=String(id);render()}
+
+  function filterAdminClients(q){q=String(q||"").trim().toLowerCase();document.querySelectorAll("#adminClientList [data-admin-client-search]").forEach(el=>{el.hidden=Boolean(q)&&!String(el.dataset.adminClientSearch||"").includes(q)})}
+  function openAdminClient(token){S.adminBookingId=null;S.adminClientKey=adminClientKeyFromToken(token);render();haptic()}
+  function closeAdminClient(){S.adminClientKey=null;render()}
+  function openBookingFromClient(id){S.adminClientKey=null;S.adminBookingId=String(id);render()}
+  function createBookingForClient(token){const key=adminClientKeyFromToken(token);S.adminClientKey=null;openAdminCreateBooking("","",key)}
+  function callClientByKey(token){const key=adminClientKeyFromToken(token);const c=adminClientByKey(key);if(!c?.phone){toast("Номер телефона не указан");return}window.location.href="tel:"+String(c.phone).replace(/[^+\d]/g,"");haptic()}
+  function messageClientByKey(token){const key=adminClientKeyFromToken(token);const c=adminClientByKey(key);if(!openClientTelegram(c?.username,c?.telegramUserId)){toast("Telegram клиента не привязан");return}haptic()}
+  async function saveAdminClientNote(token,button=null){const key=adminClientKeyFromToken(token);const note=String(document.querySelector("#adminClientNote")?.value||"").trim();setActionButtonBusy(button,"Сохраняем…");try{const data=await adminClientNotesApi("/"+encodeURIComponent(key),{method:"PUT",body:JSON.stringify({note})});adminClientNotes[key]=data.note||"";restoreActionButton(button);toast("Заметка клиента сохранена");haptic()}catch(e){restoreActionButton(button);toast(e.message||"Не удалось сохранить заметку")}}
+
+  function openAdminCreateBooking(dateValue="",timeValue="",clientKey=null){S.adminBookingId=null;S.adminSlotDate=null;S.adminSlotTime=null;S.adminCreateOpen=true;S.adminCreatePreset={date:dateValue||todayISO(),time:timeValue||"",clientKey:clientKey||null};render();haptic()}
+  function closeAdminCreateBooking(){S.adminCreateOpen=false;S.adminCreatePreset=null;render()}
+  function adminManualDateChanged(value){const select=document.querySelector("#adminCreateTime");if(select)select.innerHTML=adminTimeOptionsHtml(value,"",null)}
+  async function submitAdminCreateBooking(button=null){
+    const name=String(document.querySelector("#adminCreateName")?.value||"").trim();
+    const phone=String(document.querySelector("#adminCreatePhone")?.value||"").trim();
+    const serviceId=Number(document.querySelector("#adminCreateService")?.value||0);
+    const bookingDate=String(document.querySelector("#adminCreateDate")?.value||"");
+    const bookingTime=String(document.querySelector("#adminCreateTime")?.value||"");
+    const note=String(document.querySelector("#adminCreateNote")?.value||"").trim();
+    const telegramIdRaw=String(document.querySelector("#adminCreateTelegramId")?.value||"").trim();
+    if(name.length<2){toast("Введите имя клиента");return}if(!serviceId){toast("Выберите услугу");return}if(!bookingDate||!bookingTime){toast("Выберите дату и время");return}
+    setActionButtonBusy(button,"Создаём…");
+    try{const data=await adminBookingApi("",{method:"POST",body:JSON.stringify({client_name:name,phone:phone||null,telegram_user_id:telegramIdRaw?Number(telegramIdRaw):null,service_id:serviceId,booking_date:bookingDate,booking_time:bookingTime,note:note||null})});if(data.booking){adminBookings.push(data.booking);adminBookingsLoaded=true;saveAdminBookingsCache()}S.adminCreateOpen=false;S.adminCreatePreset=null;render();toast("Запись создана");haptic("medium");loadAdminBookings(true)}catch(e){restoreActionButton(button);toast(e.message||"Не удалось создать запись")}
+  }
+
+  function openAdminReschedule(id){S.adminBookingId=null;S.adminRescheduleId=String(id);render();haptic()}
+  function closeAdminReschedule(){S.adminRescheduleId=null;render()}
+  function adminMoveDateChanged(value,id){const select=document.querySelector("#adminMoveTime");if(select)select.innerHTML=adminTimeOptionsHtml(value,"",id)}
+  async function submitAdminReschedule(id,button=null){const dateValue=String(document.querySelector("#adminMoveDate")?.value||"");const timeValue=String(document.querySelector("#adminMoveTime")?.value||"");if(!dateValue||!timeValue){toast("Выберите новую дату и время");return}setActionButtonBusy(button,"Переносим…");try{const data=await adminBookingApi("/"+encodeURIComponent(id),{method:"PATCH",body:JSON.stringify({booking_date:dateValue,booking_time:timeValue})});if(data.booking)adminBookings=adminBookings.map(b=>String(b.id)===String(id)?data.booking:b);saveAdminBookingsCache();S.adminRescheduleId=null;render();toast("Запись перенесена");haptic("medium");loadAdminBookings(true)}catch(e){restoreActionButton(button);toast(e.message||"Не удалось перенести запись")}}
+
+  async function saveAdminBookingNote(id,button=null){const note=String(document.querySelector("#adminBookingNote")?.value||"").trim();setActionButtonBusy(button,"Сохраняем…");try{const data=await adminBookingApi("/"+encodeURIComponent(id),{method:"PATCH",body:JSON.stringify({note})});if(data.booking)adminBookings=adminBookings.map(b=>String(b.id)===String(id)?data.booking:b);saveAdminBookingsCache();restoreActionButton(button);toast("Заметка сохранена");haptic()}catch(e){restoreActionButton(button);toast(e.message||"Не удалось сохранить заметку")}}
+
+  function openAdminSlot(dateValue,timeValue){S.adminSlotDate=dateValue;S.adminSlotTime=timeValue;render();haptic()}
+  function closeAdminSlot(){S.adminSlotDate=null;S.adminSlotTime=null;render()}
+  function slotCreateBooking(){const d=S.adminSlotDate,t=S.adminSlotTime;S.adminSlotDate=null;S.adminSlotTime=null;openAdminCreateBooking(d,t)}
+  async function blockAdminSlot(button=null){const label=String(document.querySelector("#adminBlockLabel")?.value||"").trim();const d=S.adminSlotDate,t=S.adminSlotTime;if(!d||!t)return;setActionButtonBusy(button,"Закрываем…");try{const data=await adminBlocksApi("",{method:"POST",body:JSON.stringify({booking_date:d,booking_time:t,label:label||"Закрыто"})});if(data.block)adminBlocks.push(data.block);S.adminSlotDate=null;S.adminSlotTime=null;render();toast("Время закрыто для клиентов");haptic("medium")}catch(e){restoreActionButton(button);toast(e.message||"Не удалось закрыть время")}}
+  async function unblockAdminSlot(id){if(!confirm("Открыть это время для записи клиентов?"))return;try{await adminBlocksApi("/"+encodeURIComponent(id),{method:"DELETE"});adminBlocks=adminBlocks.filter(b=>String(b.id)!==String(id));render();toast("Время снова доступно");haptic()}catch(e){toast(e.message||"Не удалось открыть время")}}
+
   function openAdminBooking(id){
+    S.adminSearchOpen=false;
+    S.adminClientKey=null;
     S.adminBookingId=String(id);
     render();
     haptic();
@@ -2186,15 +2404,36 @@ button:disabled.is-busy{
     }
   }
 
+  function openClientTelegram(username,telegramUserId){
+    const cleanUsername=String(username||"").replace(/^@/,"").trim();
+    if(cleanUsername){
+      const url="https://t.me/"+encodeURIComponent(cleanUsername);
+      try{
+        if(tg?.openTelegramLink)tg.openTelegramLink(url);
+        else window.open(url,"_blank");
+      }catch(e){window.open(url,"_blank")}
+      return true;
+    }
+
+    const uid=Number(telegramUserId||0);
+    if(uid>0){
+      const direct="tg://user?id="+encodeURIComponent(String(uid));
+      try{
+        if(tg?.openLink)tg.openLink(direct);
+        else window.location.href=direct;
+      }catch(e){window.location.href=direct}
+      return true;
+    }
+
+    return false;
+  }
+
   function messageBookingClient(id){
     const b=adminBookings.find(x=>String(x.id)===String(id));
-    const username=String(b?.clientUsername||"").replace(/^@/,"").trim();
-    if(!username){
-      toast("У клиента нет публичного Telegram username");
+    if(!openClientTelegram(b?.clientUsername,b?.telegramUserId)){
+      toast("Telegram клиента не привязан");
       return;
     }
-    const url="https://t.me/"+encodeURIComponent(username);
-    try{tg?.openTelegramLink?.(url)}catch(e){window.open(url,"_blank")}
     haptic();
   }
 
@@ -2336,6 +2575,7 @@ button:disabled.is-busy{
     else if(S.view==="admin-more")html=adminMoreView();
     else if(S.view==="admin-services")html=adminServicesView();
     else if(S.view==="admin-access")html=adminAccessView();
+    else if(S.view==="admin-finance")html=adminFinanceView();
     else if(S.view==="home")html=home();
     else if(S.view==="services")html=servicesView();
     else if(S.view==="service")html=serviceDetail();
@@ -2348,9 +2588,9 @@ button:disabled.is-busy{
     else if(S.view==="profile")html=profileView();
     else if(S.view==="bonus")html=bonusView();
     else html=isStaffMode()?adminHome():home();
-    document.querySelector("#app").innerHTML=html + testModeBar() + (S.roleMode==="client" ? roleSheet() : "") + (isStaffMode() ? adminBookingSheet() : "") + (isStaffMode() ? adminServiceSheet() : "");
+    document.querySelector("#app").innerHTML=html + testModeBar() + (S.roleMode==="client" ? roleSheet() : "") + (isStaffMode() ? adminBookingSheet() : "") + (isStaffMode() ? adminServiceSheet() : "") + (isStaffMode() ? adminCreateBookingSheet() : "") + (isStaffMode() ? adminRescheduleSheet() : "") + (isStaffMode() ? adminSlotSheet() : "") + (isStaffMode() ? adminClientSheet() : "") + (isStaffMode() ? adminSearchSheet() : "");
     if(S.view==="home") requestAnimationFrame(initHeroCarouselLoop);
-    if(S.view==="datetime") requestAnimationFrame(keepSelectedBookingDateVisible);
+    if(S.view==="datetime") requestAnimationFrame(()=>{keepSelectedBookingDateVisible();loadBookingAvailability(S.date,true)});
   }
 
 
@@ -2649,6 +2889,23 @@ button:disabled.is-busy{
     }
   }
 
+  function updateBookingAvailabilityUi(){
+    const grid=document.querySelector("#bookingTimeGrid");
+    if(!grid)return;
+    grid.querySelectorAll("[data-booking-time]").forEach(btn=>{
+      const t=btn.dataset.bookingTime;
+      const unavailable=bookingAvailabilityDate===S.date&&bookingUnavailableTimes.has(t);
+      btn.disabled=unavailable;
+      btn.setAttribute("aria-disabled",unavailable?"true":"false");
+      btn.classList.toggle("unavailable",unavailable);
+      let small=btn.querySelector("small");
+      if(unavailable&&!small){small=document.createElement("small");small.textContent="занято";btn.appendChild(small)}
+      if(!unavailable&&small)small.remove();
+      if(unavailable&&S.time===t){S.time=null;btn.classList.remove("active");btn.setAttribute("aria-pressed","false")}
+    });
+    updateBookingTimeUi(S.time);
+  }
+
   function keepSelectedBookingDateVisible(){
     if(S.view!=="datetime" || !S.date)return;
     const strip=document.querySelector("#bookingDateStrip");
@@ -2695,6 +2952,34 @@ button:disabled.is-busy{
     removeAdmin,
     openAdminBooking,
     closeAdminBooking,
+    openAdminSearch,
+    closeAdminSearch,
+    adminGlobalSearch,
+    openClientFromSearch,
+    openBookingFromSearch,
+    filterAdminClients,
+    openAdminClient,
+    closeAdminClient,
+    openBookingFromClient,
+    createBookingForClient,
+    callClientByKey,
+    messageClientByKey,
+    saveAdminClientNote,
+    openAdminCreateBooking,
+    closeAdminCreateBooking,
+    adminManualDateChanged,
+    submitAdminCreateBooking,
+    openAdminReschedule,
+    closeAdminReschedule,
+    adminMoveDateChanged,
+    submitAdminReschedule,
+    saveAdminBookingNote,
+    openAdminSlot,
+    closeAdminSlot,
+    slotCreateBooking,
+    blockAdminSlot,
+    unblockAdminSlot,
+    openAdminPending,
     updateAdminBookingStatus,
     messageBookingClient,
     callBookingClient,
@@ -2705,6 +2990,13 @@ button:disabled.is-busy{
       S.roleMode=role;
       S.roleSheet=false;
       S.adminBookingId=null;
+      S.adminSearchOpen=false;
+      S.adminCreateOpen=false;
+      S.adminCreatePreset=null;
+      S.adminRescheduleId=null;
+      S.adminSlotDate=null;
+      S.adminSlotTime=null;
+      S.adminClientKey=null;
       S.view=role==="client"?"home":"admin-home";
       render();
       if(role==="client")loadBookings(true);else loadAdminBookings(true);
@@ -2759,6 +3051,8 @@ button:disabled.is-busy{
       S.master=masters[0];
       S.date=null;
       S.time=null;
+      bookingAvailabilityDate="";
+      bookingUnavailableTimes=new Set();
       S.bookingPhone="";
       go("datetime");
     },
@@ -2767,12 +3061,16 @@ button:disabled.is-busy{
     pickDate(d,button=null){
       S.date=d;
       S.time=null;
+      bookingAvailabilityDate="";
+      bookingUnavailableTimes=new Set();
       updateBookingDateUi(d);
+      loadBookingAvailability(d,false);
       // Preserve the exact horizontal scroll position the client chose.
       // The clicked date remains highlighted exactly where it was tapped.
       haptic();
     },
     pickTime(t,button=null){
+      if(bookingAvailabilityDate===S.date&&bookingUnavailableTimes.has(t)){toast("Это время уже занято");return}
       S.time=t;
       updateBookingTimeUi(t);
       haptic();
@@ -2864,7 +3162,7 @@ button:disabled.is-busy{
   // и параллельно подтверждать роль на сервере.
   const startupDataLoad =
     startupRole==="creator" || startupRole==="admin"
-      ? loadAdminBookings(true)
+      ? Promise.allSettled([loadAdminBookings(true),loadServices(true),loadAdminBlocks(true),loadAdminClientNotes(true)])
       : loadServices(true);
 
   Promise.allSettled([
@@ -2887,8 +3185,10 @@ button:disabled.is-busy{
     loadIdentity();
 
     if(isStaffMode()){
-      if(["admin-home","admin-bookings","admin-calendar"].includes(S.view)){
+      if(["admin-home","admin-bookings","admin-calendar","admin-clients","admin-finance"].includes(S.view)){
         loadAdminBookings(true);
+        if(S.view==="admin-calendar")loadAdminBlocks(true);
+        if(S.view==="admin-clients")loadAdminClientNotes(true);
       }else if(S.view==="admin-services" && !S.adminServiceId){
         loadAdminServices(true);
       }
@@ -2903,19 +3203,28 @@ button:disabled.is-busy{
   setInterval(()=>{
     if(document.visibilityState!=="visible")return;
     if(!isStaffMode())return;
-    if(formFieldIsActive() || S.adminServiceId)return;
+    if(formFieldIsActive() || adminFormIsOpen())return;
 
     const now=Date.now();
     const delay=
       S.view==="admin-bookings" ? 5000 :
       S.view==="admin-home" ? 15000 :
       S.view==="admin-calendar" ? 30000 :
+      S.view==="admin-clients" ? 30000 :
+      S.view==="admin-finance" ? 60000 :
       0;
 
     if(!delay || now-lastAdminPollAt<delay)return;
     lastAdminPollAt=now;
     loadAdminBookings(true);
   },5000);
+
+  setInterval(()=>{
+    if(document.visibilityState!=="visible"||S.view!=="admin-home")return;
+    const el=document.querySelector("#adminNextRelative");
+    const next=adminNearest();
+    if(el&&next)el.textContent=adminRelativeBookingText(next);
+  },30000);
 
   setInterval(()=>{
     if(document.visibilityState!=="visible")return;

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import date, time
+from datetime import date, time, timedelta
 from functools import lru_cache
 from threading import RLock
 from pathlib import Path
@@ -38,6 +38,33 @@ class BookingCreate(BaseModel):
 
 class BookingStatusUpdate(BaseModel):
     status: Literal["pending", "confirmed", "completed", "cancelled", "no_show"]
+
+
+class AdminBookingUpdate(BaseModel):
+    status: Optional[Literal["pending", "confirmed", "completed", "cancelled", "no_show"]] = None
+    booking_date: Optional[date] = None
+    booking_time: Optional[time] = None
+    note: Optional[str] = Field(default=None, max_length=2000)
+
+
+class AdminBookingCreate(BaseModel):
+    client_name: str = Field(min_length=2, max_length=120)
+    phone: Optional[str] = Field(default=None, max_length=32)
+    telegram_user_id: Optional[int] = Field(default=None, gt=0)
+    service_id: int = Field(gt=0)
+    booking_date: date
+    booking_time: time
+    note: Optional[str] = Field(default=None, max_length=2000)
+
+
+class BlockedSlotCreate(BaseModel):
+    booking_date: date
+    booking_time: time
+    label: Optional[str] = Field(default=None, max_length=120)
+
+
+class ClientNoteUpdate(BaseModel):
+    note: str = Field(default="", max_length=3000)
 
 
 class AdminGrant(BaseModel):
@@ -146,11 +173,14 @@ def _booking_payload(row: dict, include_client: bool = False) -> dict:
         phone = row.get("phone")
         result.update(
             {
-                "telegramUserId": int(row["telegram_user_id"]),
+                "telegramUserId": int(row["telegram_user_id"]) if row.get("telegram_user_id") is not None else None,
                 "clientTelegramName": first_name,
                 "clientUsername": username,
                 "clientName": client_name or first_name or (f"@{username}" if username else "Клиент"),
                 "clientPhone": phone,
+                "note": row.get("note") or "",
+                "bookingSource": row.get("booking_source") or "client",
+                "priceSnapshot": row.get("price_snapshot"),
             }
         )
     return result
@@ -670,6 +700,73 @@ def delete_admin_service(
     return {"ok": True}
 
 
+def _slot_is_blocked(conn, booking_date: date, booking_time: time) -> bool:
+    return bool(
+        conn.execute(
+            """
+            SELECT 1
+            FROM beauty_blocked_slots
+            WHERE master_id=1 AND booking_date=%s AND booking_time=%s
+            LIMIT 1
+            """,
+            (booking_date, booking_time),
+        ).fetchone()
+    )
+
+
+def _reschedule_client_text(row: dict) -> str:
+    return (
+        "MED AESTHETIC\n\n"
+        "Ваша запись перенесена администратором.\n"
+        f"{row['service_name']}\n"
+        f"{_date_ru(row['booking_date'])} в {row['booking_time'].strftime('%H:%M')}\n"
+        f"Мастер: {row.get('master_name') or 'Людмила'}"
+    )
+
+
+def _manual_booking_client_text(row: dict) -> str:
+    return (
+        "MED AESTHETIC\n\n"
+        "Администратор создал для вас запись.\n"
+        f"{row['service_name']}\n"
+        f"{_date_ru(row['booking_date'])} в {row['booking_time'].strftime('%H:%M')}\n"
+        f"Мастер: {row.get('master_name') or 'Людмила'}"
+    )
+
+
+@router.get("/availability")
+def booking_availability(
+    booking_date: date,
+    x_telegram_init_data: str | None = Header(default=None, alias="X-Telegram-Init-Data"),
+):
+    # Require a valid Telegram Mini App session, but this endpoint is public to clients.
+    _identity(x_telegram_init_data)
+    with db() as conn:
+        booking_rows = conn.execute(
+            """
+            SELECT booking_time
+            FROM beauty_bookings
+            WHERE master_id=1 AND booking_date=%s
+              AND status IN ('pending','confirmed')
+            """,
+            (booking_date,),
+        ).fetchall()
+        block_rows = conn.execute(
+            """
+            SELECT booking_time
+            FROM beauty_blocked_slots
+            WHERE master_id=1 AND booking_date=%s
+            """,
+            (booking_date,),
+        ).fetchall()
+
+    unavailable = sorted({
+        *(r["booking_time"].strftime("%H:%M") for r in booking_rows),
+        *(r["booking_time"].strftime("%H:%M") for r in block_rows),
+    })
+    return {"ok": True, "date": booking_date.isoformat(), "unavailable": unavailable}
+
+
 @router.get("/bookings")
 def list_bookings(
     x_telegram_init_data: str | None = Header(
@@ -711,7 +808,8 @@ def list_admin_bookings(
             """
             SELECT id, telegram_user_id, first_name, username, client_name, phone,
                    service_id, service_name, master_id, master_name,
-                   booking_date, booking_time, status, created_at
+                   booking_date, booking_time, status, created_at,
+                   note, booking_source, price_snapshot
             FROM beauty_bookings
             ORDER BY booking_date ASC, booking_time ASC, id ASC
             """
@@ -723,50 +821,275 @@ def list_admin_bookings(
     }
 
 
+@router.post("/admin/bookings")
+def create_admin_booking(
+    payload: AdminBookingCreate,
+    background_tasks: BackgroundTasks,
+    x_telegram_init_data: str | None = Header(default=None, alias="X-Telegram-Init-Data"),
+):
+    admin_user, app_user = _identity(x_telegram_init_data)
+    _require_staff(app_user)
+
+    client_name = payload.client_name.strip()
+    phone = (payload.phone or "").strip() or None
+    note = (payload.note or "").strip() or None
+    telegram_user_id = payload.telegram_user_id
+    first_name = None
+    username = None
+
+    try:
+        with db() as conn:
+            service = conn.execute(
+                """
+                SELECT id, name, price
+                FROM beauty_services
+                WHERE id=%s AND deleted_at IS NULL
+                """,
+                (payload.service_id,),
+            ).fetchone()
+            if not service:
+                raise HTTPException(status_code=409, detail="Услуга недоступна")
+
+            if _slot_is_blocked(conn, payload.booking_date, payload.booking_time):
+                raise HTTPException(status_code=409, detail="Это время закрыто в календаре")
+
+            if telegram_user_id:
+                person = conn.execute(
+                    "SELECT first_name, username FROM app_users WHERE telegram_user_id=%s",
+                    (telegram_user_id,),
+                ).fetchone()
+                if person:
+                    first_name = person.get("first_name")
+                    username = person.get("username")
+
+            row = conn.execute(
+                """
+                INSERT INTO beauty_bookings (
+                    telegram_user_id, first_name, username, client_name, phone,
+                    service_id, service_name, master_id, master_name,
+                    booking_date, booking_time, status, note, booking_source, price_snapshot
+                )
+                VALUES (%s,%s,%s,%s,%s,%s,%s,1,'Людмила',%s,%s,'confirmed',%s,'admin',%s)
+                RETURNING id, telegram_user_id, first_name, username, client_name, phone,
+                          service_id, service_name, master_id, master_name,
+                          booking_date, booking_time, status, created_at,
+                          note, booking_source, price_snapshot
+                """,
+                (
+                    telegram_user_id, first_name, username, client_name, phone,
+                    payload.service_id, str(service["name"]),
+                    payload.booking_date, payload.booking_time, note, service.get("price"),
+                ),
+            ).fetchone()
+    except UniqueViolation:
+        raise HTTPException(status_code=409, detail="Это время уже занято")
+
+    if row.get("telegram_user_id") is not None:
+        background_tasks.add_task(
+            send_notification,
+            int(row["telegram_user_id"]),
+            _manual_booking_client_text(row),
+        )
+
+    return {"ok": True, "booking": _booking_payload(row, include_client=True)}
+
+
 @router.patch("/admin/bookings/{booking_id}")
 def update_admin_booking(
     booking_id: int,
-    payload: BookingStatusUpdate,
+    payload: AdminBookingUpdate,
     background_tasks: BackgroundTasks,
-    x_telegram_init_data: str | None = Header(
-        default=None, alias="X-Telegram-Init-Data"
-    ),
+    x_telegram_init_data: str | None = Header(default=None, alias="X-Telegram-Init-Data"),
 ):
     _, app_user = _identity(x_telegram_init_data)
     _require_staff(app_user)
 
-    with db() as conn:
-        row = conn.execute(
-            """
-            WITH previous AS (
-                SELECT status AS previous_status
-                FROM beauty_bookings
+    changes = _model_changes(payload)
+    if not changes:
+        raise HTTPException(status_code=400, detail="Нет изменений")
+
+    try:
+        with db() as conn:
+            current = conn.execute(
+                """
+                SELECT id, telegram_user_id, first_name, username, client_name, phone,
+                       service_id, service_name, master_id, master_name,
+                       booking_date, booking_time, status, created_at,
+                       note, booking_source, price_snapshot
+                FROM beauty_bookings WHERE id=%s
+                """,
+                (booking_id,),
+            ).fetchone()
+            if not current:
+                raise HTTPException(status_code=404, detail="Запись не найдена")
+
+            new_date = changes.get("booking_date", current["booking_date"])
+            new_time = changes.get("booking_time", current["booking_time"])
+            moved = new_date != current["booking_date"] or new_time != current["booking_time"]
+
+            if moved and _slot_is_blocked(conn, new_date, new_time):
+                raise HTTPException(status_code=409, detail="Это время закрыто в календаре")
+
+            sets=[]
+            values=[]
+            for field, column in (
+                ("status","status"),
+                ("booking_date","booking_date"),
+                ("booking_time","booking_time"),
+                ("note","note"),
+            ):
+                if field in changes:
+                    sets.append(f"{column}=%s")
+                    value=changes[field]
+                    if field=="note" and value is not None:
+                        value=value.strip() or None
+                    values.append(value)
+            sets.append("updated_at=NOW()")
+            values.append(booking_id)
+
+            row = conn.execute(
+                f"""
+                UPDATE beauty_bookings
+                SET {', '.join(sets)}
                 WHERE id=%s
-            )
-            UPDATE beauty_bookings
-            SET status=%s, updated_at=NOW()
-            WHERE id=%s
-            RETURNING id, telegram_user_id, first_name, username, client_name, phone,
-                      service_id, service_name, master_id, master_name,
-                      booking_date, booking_time, status, created_at,
-                      (SELECT previous_status FROM previous) AS previous_status
+                RETURNING id, telegram_user_id, first_name, username, client_name, phone,
+                          service_id, service_name, master_id, master_name,
+                          booking_date, booking_time, status, created_at,
+                          note, booking_source, price_snapshot
+                """,
+                tuple(values),
+            ).fetchone()
+    except UniqueViolation:
+        raise HTTPException(status_code=409, detail="Это время уже занято")
+
+    row = dict(row)
+    row["previous_status"] = current.get("status")
+    uid=row.get("telegram_user_id")
+    if uid is not None:
+        if moved:
+            background_tasks.add_task(send_notification, int(uid), _reschedule_client_text(row))
+        elif "status" in changes:
+            background_tasks.add_task(send_notification, int(uid), _status_client_text(row))
+
+    return {"ok": True, "booking": _booking_payload(row, include_client=True)}
+
+
+@router.get("/admin/blocks")
+def list_admin_blocks(
+    from_date: Optional[date] = None,
+    to_date: Optional[date] = None,
+    x_telegram_init_data: str | None = Header(default=None, alias="X-Telegram-Init-Data"),
+):
+    _, app_user = _identity(x_telegram_init_data)
+    _require_staff(app_user)
+    start = from_date or (date.today() - timedelta(days=1))
+    end = to_date or (date.today() + timedelta(days=180))
+    with db() as conn:
+        rows=conn.execute(
+            """
+            SELECT id, master_id, booking_date, booking_time, label, created_at
+            FROM beauty_blocked_slots
+            WHERE master_id=1 AND booking_date BETWEEN %s AND %s
+            ORDER BY booking_date, booking_time
             """,
-            (booking_id, payload.status, booking_id),
-        ).fetchone()
+            (start,end),
+        ).fetchall()
+    return {"ok":True,"blocks":[{
+        "id":str(r["id"]),
+        "masterId":r["master_id"],
+        "date":r["booking_date"].isoformat(),
+        "time":r["booking_time"].strftime("%H:%M"),
+        "label":r.get("label") or "Закрыто",
+    } for r in rows]}
 
+
+@router.post("/admin/blocks")
+def create_admin_block(
+    payload: BlockedSlotCreate,
+    x_telegram_init_data: str | None = Header(default=None, alias="X-Telegram-Init-Data"),
+):
+    user, app_user = _identity(x_telegram_init_data)
+    _require_staff(app_user)
+    try:
+        with db() as conn:
+            busy=conn.execute(
+                """
+                SELECT 1 FROM beauty_bookings
+                WHERE master_id=1 AND booking_date=%s AND booking_time=%s
+                  AND status IN ('pending','confirmed')
+                LIMIT 1
+                """,
+                (payload.booking_date,payload.booking_time),
+            ).fetchone()
+            if busy:
+                raise HTTPException(status_code=409,detail="На это время уже есть запись")
+            row=conn.execute(
+                """
+                INSERT INTO beauty_blocked_slots(master_id,booking_date,booking_time,label,created_by)
+                VALUES(1,%s,%s,%s,%s)
+                RETURNING id,master_id,booking_date,booking_time,label
+                """,
+                (payload.booking_date,payload.booking_time,(payload.label or "").strip() or "Закрыто",int(user["id"])),
+            ).fetchone()
+    except UniqueViolation:
+        raise HTTPException(status_code=409,detail="Это время уже закрыто")
+    return {"ok":True,"block":{
+        "id":str(row["id"]),"masterId":row["master_id"],
+        "date":row["booking_date"].isoformat(),"time":row["booking_time"].strftime("%H:%M"),
+        "label":row.get("label") or "Закрыто",
+    }}
+
+
+@router.delete("/admin/blocks/{block_id}")
+def delete_admin_block(
+    block_id:int,
+    x_telegram_init_data: str | None = Header(default=None, alias="X-Telegram-Init-Data"),
+):
+    _, app_user = _identity(x_telegram_init_data)
+    _require_staff(app_user)
+    with db() as conn:
+        row=conn.execute("DELETE FROM beauty_blocked_slots WHERE id=%s RETURNING id",(block_id,)).fetchone()
     if not row:
-        raise HTTPException(status_code=404, detail="Запись не найдена")
+        raise HTTPException(status_code=404,detail="Закрытое окно не найдено")
+    return {"ok":True}
 
-    background_tasks.add_task(
-        send_notification,
-        int(row["telegram_user_id"]),
-        _status_client_text(row),
-    )
 
-    return {
-        "ok": True,
-        "booking": _booking_payload(row, include_client=True),
-    }
+@router.get("/admin/client-notes")
+def list_admin_client_notes(
+    x_telegram_init_data: str | None = Header(default=None, alias="X-Telegram-Init-Data"),
+):
+    _, app_user = _identity(x_telegram_init_data)
+    _require_staff(app_user)
+    with db() as conn:
+        rows=conn.execute("SELECT client_key,note,updated_at FROM beauty_client_notes ORDER BY updated_at DESC").fetchall()
+    return {"ok":True,"notes":{str(r["client_key"]):r.get("note") or "" for r in rows}}
+
+
+@router.put("/admin/client-notes/{client_key:path}")
+def update_admin_client_note(
+    client_key:str,
+    payload:ClientNoteUpdate,
+    x_telegram_init_data: str | None = Header(default=None, alias="X-Telegram-Init-Data"),
+):
+    user, app_user = _identity(x_telegram_init_data)
+    _require_staff(app_user)
+    key=client_key.strip()[:220]
+    if not key:
+        raise HTTPException(status_code=400,detail="Не удалось определить клиента")
+    note=payload.note.strip()
+    with db() as conn:
+        if note:
+            conn.execute(
+                """
+                INSERT INTO beauty_client_notes(client_key,note,updated_by,updated_at)
+                VALUES(%s,%s,%s,NOW())
+                ON CONFLICT(client_key) DO UPDATE SET note=EXCLUDED.note,updated_by=EXCLUDED.updated_by,updated_at=NOW()
+                """,
+                (key,note,int(user["id"])),
+            )
+        else:
+            conn.execute("DELETE FROM beauty_client_notes WHERE client_key=%s",(key,))
+    return {"ok":True,"clientKey":key,"note":note}
 
 
 @router.post("/bookings")
@@ -786,7 +1109,7 @@ def create_booking(
         with db() as conn:
             service = conn.execute(
                 """
-                SELECT id, name
+                SELECT id, name, price
                 FROM beauty_services
                 WHERE id=%s
                   AND is_active=TRUE
@@ -803,15 +1126,21 @@ def create_booking(
 
             service_name = str(service["name"])
 
+            if _slot_is_blocked(conn, payload.booking_date, payload.booking_time):
+                raise HTTPException(
+                    status_code=409,
+                    detail="Это время больше недоступно. Выберите другое.",
+                )
+
             row = conn.execute(
                 """
                 INSERT INTO beauty_bookings (
                     telegram_user_id, first_name, username, client_name, phone,
                     service_id, service_name,
                     master_id, master_name,
-                    booking_date, booking_time, status
+                    booking_date, booking_time, status, booking_source, price_snapshot
                 )
-                VALUES (%s,%s,%s,%s,%s,%s,%s,1,'Людмила',%s,%s,'pending')
+                VALUES (%s,%s,%s,%s,%s,%s,%s,1,'Людмила',%s,%s,'pending','client',%s)
                 RETURNING id, created_at
                 """,
                 (
@@ -824,6 +1153,7 @@ def create_booking(
                     service_name,
                     payload.booking_date,
                     payload.booking_time,
+                    service.get("price"),
                 ),
             ).fetchone()
     except UniqueViolation:

@@ -417,6 +417,65 @@ def init_db() -> None:
         conn.execute(
             "ALTER TABLE beauty_bookings ADD COLUMN IF NOT EXISTS phone TEXT"
         )
+        # Manual bookings may come from phone / Instagram and therefore do not
+        # necessarily have a Telegram account linked to them.
+        conn.execute(
+            "ALTER TABLE beauty_bookings ALTER COLUMN telegram_user_id DROP NOT NULL"
+        )
+        conn.execute(
+            "ALTER TABLE beauty_bookings ADD COLUMN IF NOT EXISTS note TEXT"
+        )
+        conn.execute(
+            "ALTER TABLE beauty_bookings ADD COLUMN IF NOT EXISTS booking_source TEXT NOT NULL DEFAULT 'client'"
+        )
+        conn.execute(
+            "ALTER TABLE beauty_bookings ADD COLUMN IF NOT EXISTS price_snapshot INTEGER"
+        )
+        conn.execute(
+            """
+            UPDATE beauty_bookings b
+            SET price_snapshot=s.price
+            FROM beauty_services s
+            WHERE b.price_snapshot IS NULL AND s.id=b.service_id
+            """
+        )
+
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS beauty_blocked_slots (
+                id BIGSERIAL PRIMARY KEY,
+                master_id INTEGER NOT NULL DEFAULT 1,
+                booking_date DATE NOT NULL,
+                booking_time TIME NOT NULL,
+                label TEXT,
+                created_by BIGINT,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS uq_beauty_blocked_slot
+            ON beauty_blocked_slots (master_id, booking_date, booking_time)
+            """
+        )
+        conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_beauty_blocked_slot_date
+            ON beauty_blocked_slots (booking_date, booking_time)
+            """
+        )
+
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS beauty_client_notes (
+                client_key TEXT PRIMARY KEY,
+                note TEXT NOT NULL DEFAULT '',
+                updated_by BIGINT,
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+            """
+        )
 
         conn.execute(
             """

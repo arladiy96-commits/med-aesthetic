@@ -54,9 +54,9 @@ async def cache_policy(request, call_next):
     if path == "/":
         # index.html must always pick up the newest deployment.
         response.headers["Cache-Control"] = "no-cache, must-revalidate"
-    elif path in {"/api/services", "/api/admin/services"}:
-        # Metadata must always be current. Speed comes from the server RAM cache,
-        # not from a stale browser cache.
+    elif path in {"/api/services", "/api/admin/services"} or path.startswith("/api/admin/") or path.startswith("/api/availability"):
+        # Live admin/availability data must never be stale. Service catalog speed
+        # still comes from the server RAM cache, not from browser caching.
         response.headers["Cache-Control"] = "no-store"
     elif path.startswith("/assets/"):
         # Static image assets almost never change and have their own filenames.
