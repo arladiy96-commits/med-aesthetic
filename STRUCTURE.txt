@@ -1,0 +1,21 @@
+MED AESTHETIC — isolated frontend structure
+
+/client/
+  index.html
+  css/                  client styles only
+  js/                   client runtime
+
+/admin/mobile/
+  index.html
+  css/foundation/       private mobile-admin copy of base admin styles
+  css/device/           mobile-only section overrides
+  js/                   mobile-admin runtime
+
+/admin/desktop/
+  index.html
+  css/foundation/       private desktop-admin copy of base admin styles
+  css/device/           desktop-only section overrides
+  js/                   desktop-admin runtime
+
+The root /css folder is not used.
+No frontend imports CSS from another mode.
