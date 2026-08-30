@@ -1,0 +1,118 @@
+/* ADMIN ACCESS — CALM MOBILE */
+.admin-access-page .access-hero{
+  margin:3px 0 14px;
+  padding:14px;
+  border:1px solid var(--admin-border);
+  border-radius:18px;
+  background:#111218;
+}
+.admin-access-page .access-hero h2{
+  margin:0 0 6px;
+  color:var(--admin-text);
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:18px;
+  font-weight:600;
+}
+.admin-access-page .access-hero p{
+  margin:0;
+  color:var(--admin-muted);
+  font-size:9.5px;
+  line-height:1.55;
+}
+.admin-access-page .admin-id-form{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:7px;
+  margin-top:12px;
+}
+.admin-access-page .admin-id-form input{
+  min-width:0;
+  height:43px;
+  padding:0 11px;
+  border:1px solid var(--admin-border);
+  border-radius:12px;
+  outline:0;
+  background:#0d0e13;
+  color:var(--admin-text);
+  font-size:10px;
+}
+.admin-access-page .admin-id-form input:focus{
+  border-color:rgba(156,132,216,.25);
+}
+.admin-access-page .access-primary{
+  min-height:43px;
+  padding:0 12px;
+  border:1px solid rgba(156,132,216,.22);
+  border-radius:12px;
+  background:rgba(156,132,216,.065);
+  color:#c5b9dc;
+  font-size:9.5px;
+  font-weight:700;
+  box-shadow:none;
+}
+.admin-access-page .admin-id-help{
+  margin-top:8px;
+  color:#706b75;
+  font-size:8.5px;
+}
+.admin-access-page .admins-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin:17px 0 9px;
+}
+.admin-access-page .admins-head h2{
+  margin:0;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:17px;
+  font-weight:600;
+}
+.admin-access-page .admins-head button{
+  border:0;
+  background:none;
+  color:#9b95a0;
+  padding:5px;
+  font-size:9.5px;
+}
+.admin-access-page .admin-person{
+  display:grid;
+  grid-template-columns:40px minmax(0,1fr) auto;
+  align-items:center;
+  gap:9px;
+  margin-bottom:7px;
+  padding:10px;
+  border:1px solid var(--admin-border);
+  border-radius:14px;
+  background:#111218;
+}
+.admin-access-page .admin-person-avatar{
+  width:40px;
+  height:40px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(156,132,216,.12);
+  border-radius:12px;
+  background:#18171e;
+  color:#ad9dcc;
+  font-size:11px;
+  font-weight:750;
+}
+.admin-access-page .admin-person h3{
+  margin:0 0 3px;
+  font-size:10.5px;
+}
+.admin-access-page .admin-person p{
+  margin:0;
+  color:var(--admin-muted);
+  font-size:8.7px;
+}
+.admin-access-page .admin-remove{
+  min-height:32px;
+  padding:0 9px;
+  border:1px solid rgba(201,120,134,.17);
+  border-radius:9px;
+  background:rgba(201,120,134,.035);
+  color:#c8808c;
+  font-size:8.5px;
+}

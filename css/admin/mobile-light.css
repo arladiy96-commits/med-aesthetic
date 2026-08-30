@@ -1,0 +1,413 @@
+/* MED AESTHETIC — ADMIN MOBILE LIGHT THEME
+   Mobile staff UI only. Client mode and desktop admin are intentionally untouched. */
+@media (max-width:899px){
+  body.admin-mobile-light{
+    --admin-bg:#f6f4f1;
+    --admin-panel:#ffffff;
+    --admin-panel-2:#faf9f7;
+    --admin-panel-3:#f2f0ed;
+    --admin-border:#e4e0dc;
+    --admin-border-strong:#d8d2cc;
+    --admin-text:#211e24;
+    --admin-muted:#77717a;
+    --admin-muted-2:#9b959d;
+    --admin-purple:#7557b7;
+    --admin-purple-soft:#f0ebfb;
+    --admin-gold:#a8792f;
+    --admin-gold-soft:#fbf1dc;
+    --admin-green:#2e8a57;
+    --admin-red:#c14f5d;
+    background:#f6f4f1!important;
+    color:#211e24!important;
+  }
+  body.admin-mobile-light #app{
+    background:
+      radial-gradient(420px 220px at 100% 0,rgba(117,87,183,.055),transparent 70%),
+      linear-gradient(180deg,#f9f7f4 0,#f4f2ef 100%)!important;
+    color:#211e24!important;
+  }
+
+  /* Header / hierarchy */
+  body.admin-mobile-light .admin-page{color:#211e24!important}
+  body.admin-mobile-light .admin-brand-title{color:#211e24!important}
+  body.admin-mobile-light .admin-brand-title span{color:#7557b7!important}
+  body.admin-mobile-light .admin-role{color:#918a93!important}
+  body.admin-mobile-light .admin-date-row h1,
+  body.admin-mobile-light .admin-section-title h2,
+  body.admin-mobile-light .v3-admin-title,
+  body.admin-mobile-light .v3-section-head h2,
+  body.admin-mobile-light .finance-head h2,
+  body.admin-mobile-light .admin-access-page .admins-head h2{color:#211e24!important}
+  body.admin-mobile-light .admin-date-row p,
+  body.admin-mobile-light .admin-section-title span{color:#817a84!important}
+  body.admin-mobile-light .admin-link,
+  body.admin-mobile-light .admin-section-title button{color:#684fa2!important}
+  body.admin-mobile-light .admin-round,
+  body.admin-mobile-light .creator-crown{
+    border-color:#ddd7e4!important;background:#fff!important;color:#7557b7!important;
+    box-shadow:0 4px 14px rgba(45,35,55,.055)!important;
+  }
+  body.admin-mobile-light .admin-avatar{border-color:#ddd7e4!important;background:#fff!important}
+
+  /* Bottom navigation */
+  body.admin-mobile-light .admin-bottom{
+    background:linear-gradient(180deg,rgba(246,244,241,0),rgba(246,244,241,.96) 27%)!important;
+  }
+  body.admin-mobile-light .admin-bottom .nav-inner{
+    border-color:#ded9d5!important;background:rgba(255,255,255,.97)!important;
+    box-shadow:0 -8px 30px rgba(50,39,55,.08)!important;
+  }
+  body.admin-mobile-light .admin-bottom .nav-btn{color:#8a848c!important}
+  body.admin-mobile-light .admin-bottom .nav-btn.active{color:#684fa2!important}
+  body.admin-mobile-light .admin-bottom .nav-btn.active .nav-icon{
+    background:#f0ebfb!important;border-color:#ded3f3!important;color:#684fa2!important;
+  }
+  body.admin-mobile-light .admin-nav-badge{
+    background:#d18b39!important;color:#fff!important;border-color:#fff!important;
+  }
+
+  /* Shared cards */
+  body.admin-mobile-light .admin-empty,
+  body.admin-mobile-light .admin-empty-mini,
+  body.admin-mobile-light .v3-admin-empty{
+    border-color:#ddd7d2!important;background:#faf9f7!important;color:#89828a!important;
+  }
+  body.admin-mobile-light .admin-action{
+    border-color:#e2ddd9!important;background:#fff!important;color:#262229!important;
+    box-shadow:0 5px 18px rgba(47,38,50,.045)!important;
+  }
+  body.admin-mobile-light .admin-action i{
+    border-color:#ddd2f0!important;background:#f2edfb!important;color:#7557b7!important;
+  }
+
+  /* DASHBOARD: unmistakable status blocks */
+  body.admin-mobile-light .admin-next-card{
+    border-color:#d9cce8!important;
+    background:linear-gradient(145deg,#fff 0%,#faf7fd 100%)!important;
+    box-shadow:0 10px 28px rgba(82,60,96,.085)!important;
+  }
+  body.admin-mobile-light .admin-next-card::before{
+    background:linear-gradient(90deg,transparent,#a583c2,transparent)!important;
+  }
+  body.admin-mobile-light .admin-next-card.late{
+    border-color:#ebc4c9!important;background:linear-gradient(145deg,#fff 0%,#fff7f8 100%)!important;
+  }
+  body.admin-mobile-light .admin-next-top span{color:#7d7580!important}
+  body.admin-mobile-light .admin-next-top b{
+    border-color:#e8cbd0!important;background:#fff0f2!important;color:#b74656!important;
+  }
+  body.admin-mobile-light .admin-next-main strong,
+  body.admin-mobile-light .admin-next-main h3{color:#242027!important}
+  body.admin-mobile-light .admin-next-main p{color:#77717a!important}
+  body.admin-mobile-light .admin-next-actions{border-top-color:#ece7e3!important}
+  body.admin-mobile-light .admin-next-actions button{
+    border-color:#e2ddd9!important;background:#fff!important;color:#5f5862!important;
+  }
+
+  body.admin-mobile-light .v3-admin-stats{gap:8px!important}
+  body.admin-mobile-light .v3-stat-card{
+    border-color:#e3ded9!important;background:#fff!important;
+    box-shadow:0 6px 18px rgba(47,38,50,.05)!important;
+  }
+  body.admin-mobile-light .v3-stat-card:nth-child(1){border-top:3px solid #7557b7!important}
+  body.admin-mobile-light .v3-stat-card:nth-child(2){border-top:3px solid #3284b8!important}
+  body.admin-mobile-light .v3-stat-card:nth-child(3){border-top:3px solid #d18b39!important}
+  body.admin-mobile-light .v3-stat-card span{color:#706a73!important}
+  body.admin-mobile-light .v3-stat-card strong{color:#252127!important}
+  body.admin-mobile-light .v3-stat-icon{background:#f4f1f7!important;border-color:#e4dde9!important;color:#7557b7!important}
+  body.admin-mobile-light .v3-stat-card.attention .v3-stat-icon{background:#fff4df!important;border-color:#f0d8a9!important;color:#aa7422!important}
+
+  body.admin-mobile-light .v3-admin-section{
+    border-color:#e2ddd9!important;background:#fff!important;
+    box-shadow:0 8px 24px rgba(47,38,50,.055)!important;
+  }
+  body.admin-mobile-light .v3-admin-section::before{background:linear-gradient(90deg,transparent,#d9cfea,transparent)!important}
+  body.admin-mobile-light .v3-pending-section{
+    border-color:#ead8bb!important;background:#fffdf8!important;
+    box-shadow:0 8px 24px rgba(91,66,27,.055)!important;
+  }
+  body.admin-mobile-light .v3-pending-section::before{background:linear-gradient(90deg,transparent,#ddb968,transparent)!important}
+  body.admin-mobile-light .v3-count-badge{border-color:#e7c98d!important;background:#fff4dc!important;color:#a16d20!important}
+  body.admin-mobile-light .v3-admin-row,
+  body.admin-mobile-light .v3-pending-row{
+    border-color:#e8e3df!important;background:#faf9f7!important;color:#252127!important;
+    box-shadow:none!important;
+  }
+  body.admin-mobile-light .v3-admin-row-time{color:#684fa2!important}
+  body.admin-mobile-light .v3-admin-row-main b,
+  body.admin-mobile-light .v3-pending-copy b{color:#252127!important}
+  body.admin-mobile-light .v3-admin-row-main span,
+  body.admin-mobile-light .v3-pending-copy span{color:#7c7580!important}
+  body.admin-mobile-light .v3-pending-avatar{border-color:#ded3ed!important;background:#f1ecf8!important;color:#6f51aa!important}
+  body.admin-mobile-light .v3-confirm-btn{
+    border-color:#dfc17d!important;background:#fff6e4!important;color:#98681e!important;
+  }
+  body.admin-mobile-light .v3-reject-btn{
+    border-color:#e9c4ca!important;background:#fff3f5!important;color:#bd4d5b!important;
+  }
+  body.admin-mobile-light .v3-more-pending{color:#8a6728!important}
+
+  /* BOOKINGS */
+  body.admin-mobile-light .admin-bookings-page .admin-filter button{
+    border-color:#e1dcd8!important;background:#fff!important;color:#736d76!important;
+  }
+  body.admin-mobile-light .admin-bookings-page .admin-filter button.active{
+    border-color:#cfc0e6!important;background:#eee8f8!important;color:#684ba3!important;
+  }
+  body.admin-mobile-light .admin-bookings-page .admin-book-row{
+    border-color:#e3ded9!important;background:#fff!important;color:#242027!important;
+    box-shadow:0 5px 17px rgba(47,38,50,.045)!important;
+  }
+  body.admin-mobile-light .admin-bookings-page .admin-book-row .t{color:#694da2!important}
+  body.admin-mobile-light .admin-bookings-page .admin-book-row p{color:#77717a!important}
+  body.admin-mobile-light .admin-row-status{border-color:#ded9d5!important;background:#f6f4f1!important;color:#6e6870!important}
+  body.admin-mobile-light .admin-row-status.status-confirmed{color:#26734a!important;border-color:#bfe0cc!important;background:#ebf7ef!important}
+  body.admin-mobile-light .admin-row-status.status-pending{color:#9b6718!important;border-color:#edd098!important;background:#fff5df!important}
+  body.admin-mobile-light .admin-row-status.status-cancelled,
+  body.admin-mobile-light .admin-row-status.status-no_show{color:#b44050!important;border-color:#edc1c8!important;background:#fff0f2!important}
+  body.admin-mobile-light .admin-create-main,
+  body.admin-mobile-light .admin-bookings-page .admin-section .btn-primary{
+    border-color:#cfc1e4!important;background:#f2ecfb!important;color:#684ba3!important;
+  }
+
+  /* CALENDAR: high scanability */
+  body.admin-mobile-light .admin-calendar-page .admin-calendar{
+    border-color:#e1dcd7!important;background:#fff!important;
+    box-shadow:0 7px 24px rgba(47,38,50,.05)!important;
+  }
+  body.admin-mobile-light .admin-calendar-page .admin-day{
+    border-color:#eeeae6!important;background:#f8f7f5!important;color:#88818a!important;
+  }
+  body.admin-mobile-light .admin-calendar-page .admin-day b{color:#4c464f!important}
+  body.admin-mobile-light .admin-calendar-page .admin-day.active{
+    border-color:#c6b4df!important;background:#eee8f8!important;
+    box-shadow:inset 0 0 0 1px rgba(117,87,183,.06)!important;
+  }
+  body.admin-mobile-light .admin-calendar-page .admin-day.active span,
+  body.admin-mobile-light .admin-calendar-page .admin-day.active b{color:#684ba3!important}
+  body.admin-mobile-light .admin-calendar-date-label{color:#4d4750!important}
+  body.admin-mobile-light .admin-calendar-page .admin-slot-time{color:#716a73!important}
+  body.admin-mobile-light .admin-calendar-page .admin-slot-card{
+    border:1px solid #d9cfeb!important;border-left:4px solid #7557b7!important;
+    background:#f7f3fc!important;box-shadow:0 3px 10px rgba(72,51,92,.04)!important;
+  }
+  body.admin-mobile-light .admin-calendar-page .admin-slot-card b{color:#2c2730!important}
+  body.admin-mobile-light .admin-calendar-page .admin-slot-card span{color:#776f7b!important}
+  body.admin-mobile-light .admin-calendar-page .admin-slot-free{
+    border:1px dashed #bcdcc8!important;border-left:4px solid #4a9b69!important;
+    background:#f0f8f3!important;
+  }
+  body.admin-mobile-light .admin-calendar-page .admin-slot-free b{color:#287247!important}
+  body.admin-mobile-light .admin-calendar-page .admin-slot-free span{color:#66806f!important}
+  body.admin-mobile-light .admin-calendar-page .admin-slot-blocked{
+    border:1px solid #ead1a1!important;border-left:4px solid #c38a2f!important;
+    background:#fff7e8!important;color:#98681e!important;
+  }
+  body.admin-mobile-light .admin-calendar-page .admin-slot-blocked span{color:#94794e!important}
+  body.admin-mobile-light .admin-calendar-hint{color:#928b93!important}
+
+  /* CLIENTS */
+  body.admin-mobile-light .admin-clients-page .search-box{
+    border-color:#e1dcd8!important;background:#fff!important;color:#918a92!important;
+    box-shadow:0 4px 14px rgba(47,38,50,.035)!important;
+  }
+  body.admin-mobile-light .admin-clients-page .search-box input{color:#252127!important}
+  body.admin-mobile-light .admin-clients-page .search-box input::placeholder{color:#a49da5!important}
+  body.admin-mobile-light .admin-clients-page .admin-kpi,
+  body.admin-mobile-light .admin-client-row{
+    border-color:#e2ddd9!important;background:#fff!important;color:#252127!important;
+    box-shadow:0 5px 17px rgba(47,38,50,.04)!important;
+  }
+  body.admin-mobile-light .admin-clients-page .admin-kpi small{color:#7c7580!important}
+  body.admin-mobile-light .admin-clients-page .admin-kpi strong{color:#252127!important}
+  body.admin-mobile-light .admin-client-avatar{border-color:#ddd0ef!important;background:#f1ebfa!important;color:#684ba3!important}
+  body.admin-mobile-light .admin-client-copy small{color:#736d76!important}
+  body.admin-mobile-light .admin-client-copy em{color:#9a939b!important}
+  body.admin-mobile-light .admin-client-row>i{color:#a39ca4!important}
+
+  /* SERVICES */
+  body.admin-mobile-light .admin-services-page .admin-services-summary>div,
+  body.admin-mobile-light .admin-services-page .admin-service-card{
+    border-color:#e2ddd9!important;background:#fff!important;
+    box-shadow:0 6px 20px rgba(47,38,50,.045)!important;
+  }
+  body.admin-mobile-light .admin-services-page .admin-services-summary strong,
+  body.admin-mobile-light .admin-services-page .admin-service-body h3{color:#252127!important}
+  body.admin-mobile-light .admin-services-page .admin-services-summary span,
+  body.admin-mobile-light .admin-services-page .admin-service-body p{color:#79727b!important}
+  body.admin-mobile-light .admin-services-page .admin-service-body>small{color:#684ba3!important}
+  body.admin-mobile-light .admin-services-page .admin-service-meta span{
+    border-color:#e5e0dc!important;background:#f7f5f3!important;color:#665f68!important;
+  }
+  body.admin-mobile-light .admin-services-page .admin-service-buttons button{
+    border-color:#e0dbd7!important;background:#f8f6f4!important;color:#5d5760!important;
+  }
+  body.admin-mobile-light .admin-services-page .admin-service-buttons button:first-child{
+    border-color:#d3c6e7!important;background:#f1ebfa!important;color:#684ba3!important;
+  }
+  body.admin-mobile-light .admin-services-page .admin-service-buttons button.show{
+    border-color:#c2ddcc!important;background:#eff8f2!important;color:#287247!important;
+  }
+
+  /* MORE / ACCESS / FINANCE */
+  body.admin-mobile-light .admin-more-page .admin-menu,
+  body.admin-mobile-light .admin-access-page .access-hero,
+  body.admin-mobile-light .admin-access-page .admin-person,
+  body.admin-mobile-light .admin-finance-page .finance-kpis>div,
+  body.admin-mobile-light .finance-panel{
+    border-color:#e2ddd9!important;background:#fff!important;
+    box-shadow:0 5px 18px rgba(47,38,50,.04)!important;
+  }
+  body.admin-mobile-light .admin-more-page .admin-menu>button{border-bottom-color:#ece8e4!important;color:#252127!important}
+  body.admin-mobile-light .admin-more-page .admin-menu>button:active{background:#f8f6f4!important}
+  body.admin-mobile-light .admin-more-page .admin-menu .ico{border-color:#ddd2ef!important;background:#f1ecfa!important;color:#684ba3!important}
+  body.admin-mobile-light .admin-more-page .admin-menu small,
+  body.admin-mobile-light .admin-more-page .admin-client-switch p,
+  body.admin-mobile-light .admin-access-page .access-hero p,
+  body.admin-mobile-light .admin-access-page .admin-person p{color:#77717a!important}
+  body.admin-mobile-light .admin-more-page .admin-menu .go{color:#aaa3aa!important}
+  body.admin-mobile-light .admin-more-page .admin-client-switch{
+    border-color:#ead6aa!important;background:#fff7e8!important;
+  }
+  body.admin-mobile-light .admin-more-page .switch-pill{border-color:#ded9d5!important;background:#e8e4e0!important}
+  body.admin-mobile-light .admin-more-page .switch-pill:after{background:#a59ea5!important}
+  body.admin-mobile-light .admin-access-page .admin-id-form input{
+    border-color:#dfdad6!important;background:#faf9f7!important;color:#252127!important;
+  }
+  body.admin-mobile-light .admin-access-page .access-primary{
+    border-color:#cfc0e6!important;background:#eee8f8!important;color:#684ba3!important;
+  }
+  body.admin-mobile-light .admin-access-page .admin-person-avatar{border-color:#ddd0ef!important;background:#f1ebfa!important;color:#684ba3!important}
+  body.admin-mobile-light .admin-access-page .admin-remove{border-color:#ebc1c8!important;background:#fff1f3!important;color:#b84453!important}
+  body.admin-mobile-light .finance-list{border-color:#e5e0dc!important;background:#faf9f7!important}
+  body.admin-mobile-light .finance-list>div{border-bottom-color:#ebe7e3!important}
+  body.admin-mobile-light .finance-list>div>b{color:#817a83!important}
+  body.admin-mobile-light .finance-list span strong{color:#2a262c!important}
+  body.admin-mobile-light .finance-list span small{color:#817a83!important}
+  body.admin-mobile-light .finance-list em{color:#95661f!important}
+  body.admin-mobile-light .finance-mini>div{border-color:#e4dfda!important;background:#faf9f7!important}
+  body.admin-mobile-light .finance-mini strong{color:#28242a!important}
+  body.admin-mobile-light .finance-note{border-color:#ddd7d2!important;color:#847d86!important}
+
+  /* ALL ADMIN SHEETS / MODALS */
+  body.admin-mobile-light .role-sheet-backdrop,
+  body.admin-mobile-light .admin-booking-backdrop,
+  body.admin-mobile-light .admin-form-backdrop,
+  body.admin-mobile-light .admin-client-backdrop,
+  body.admin-mobile-light .admin-service-backdrop,
+  body.admin-mobile-light .admin-search-backdrop{
+    background:rgba(39,32,43,.34)!important;backdrop-filter:blur(7px)!important;
+  }
+  body.admin-mobile-light .role-sheet,
+  body.admin-mobile-light .admin-booking-sheet,
+  body.admin-mobile-light .admin-form-sheet,
+  body.admin-mobile-light .admin-client-sheet,
+  body.admin-mobile-light .admin-service-sheet,
+  body.admin-mobile-light .admin-search-sheet{
+    border-color:#ddd7d2!important;background:#fff!important;color:#252127!important;
+    box-shadow:0 -22px 55px rgba(52,42,56,.16)!important;
+  }
+  body.admin-mobile-light .admin-booking-sheet-head,
+  body.admin-mobile-light .admin-service-sheet-head{
+    background:linear-gradient(180deg,#fff 78%,rgba(255,255,255,0))!important;
+  }
+  body.admin-mobile-light .role-sheet h3,
+  body.admin-mobile-light .admin-booking-sheet-head h3,
+  body.admin-mobile-light .admin-form-head h3,
+  body.admin-mobile-light .admin-service-sheet-head h3{color:#252127!important}
+  body.admin-mobile-light .role-sheet p,
+  body.admin-mobile-light .admin-booking-sheet-head small,
+  body.admin-mobile-light .admin-form-head small,
+  body.admin-mobile-light .admin-service-sheet-head small{color:#7b747d!important}
+  body.admin-mobile-light .admin-booking-sheet-head>button,
+  body.admin-mobile-light .admin-form-head>button,
+  body.admin-mobile-light .admin-service-sheet-head>button{
+    border-color:#e0dbd7!important;background:#f7f5f3!important;color:#655e67!important;
+  }
+  body.admin-mobile-light .admin-booking-client,
+  body.admin-mobile-light .admin-booking-details>div,
+  body.admin-mobile-light .admin-booking-note,
+  body.admin-mobile-light .admin-client-contact button,
+  body.admin-mobile-light .admin-client-stats>div,
+  body.admin-mobile-light .admin-client-note,
+  body.admin-mobile-light .admin-client-history,
+  body.admin-mobile-light .service-static-photo-note,
+  body.admin-mobile-light .service-active-row,
+  body.admin-mobile-light .admin-form-note{
+    border-color:#e5e0dc!important;background:#faf9f7!important;
+  }
+  body.admin-mobile-light .admin-booking-client b,
+  body.admin-mobile-light .admin-booking-details b,
+  body.admin-mobile-light .admin-client-stats strong,
+  body.admin-mobile-light .service-static-photo-note b,
+  body.admin-mobile-light .service-active-row b{color:#29252b!important}
+  body.admin-mobile-light .admin-booking-client span,
+  body.admin-mobile-light .admin-booking-details span,
+  body.admin-mobile-light .admin-client-stats span,
+  body.admin-mobile-light .service-static-photo-note span,
+  body.admin-mobile-light .service-active-row small{color:#7d7680!important}
+
+  body.admin-mobile-light .admin-form-grid input,
+  body.admin-mobile-light .admin-form-grid select,
+  body.admin-mobile-light .admin-form-field input,
+  body.admin-mobile-light .admin-form-field select,
+  body.admin-mobile-light .admin-form-field textarea,
+  body.admin-mobile-light .admin-booking-note textarea,
+  body.admin-mobile-light .admin-client-note textarea,
+  body.admin-mobile-light .service-edit-grid input,
+  body.admin-mobile-light .service-edit-wide textarea,
+  body.admin-mobile-light .admin-search-input{
+    border-color:#dfdad6!important;background:#fff!important;color:#252127!important;
+  }
+  body.admin-mobile-light .admin-form-grid span,
+  body.admin-mobile-light .admin-form-field>span,
+  body.admin-mobile-light .admin-booking-note>span,
+  body.admin-mobile-light .admin-client-note>span,
+  body.admin-mobile-light .service-edit-grid span,
+  body.admin-mobile-light .service-edit-wide>span{color:#756f77!important}
+
+  body.admin-mobile-light .booking-action.contact,
+  body.admin-mobile-light .booking-action.neutral{
+    border-color:#dfdad6!important;background:#f8f6f4!important;color:#5e5861!important;
+  }
+  body.admin-mobile-light .booking-action.confirm,
+  body.admin-mobile-light .booking-action.done{
+    border-color:#bcdcc8!important;background:#edf8f1!important;color:#26734a!important;
+  }
+  body.admin-mobile-light .booking-action.danger{
+    border-color:#ebc1c8!important;background:#fff1f3!important;color:#b84453!important;
+  }
+  body.admin-mobile-light .admin-form-primary,
+  body.admin-mobile-light .service-sheet-actions .save,
+  body.admin-mobile-light .admin-booking-note button,
+  body.admin-mobile-light .admin-client-note button{
+    border-color:#cfc0e6!important;background:#eee8f8!important;color:#684ba3!important;
+  }
+  body.admin-mobile-light .admin-form-secondary{
+    border-color:#e5cb98!important;background:#fff5df!important;color:#95651d!important;
+  }
+  body.admin-mobile-light .service-sheet-actions .delete{
+    border-color:#ebc1c8!important;background:#fff1f3!important;color:#b84453!important;
+  }
+  body.admin-mobile-light .admin-slot-choice{
+    border-color:#d6c8e9!important;background:#f4effb!important;color:#29252b!important;
+  }
+  body.admin-mobile-light .admin-slot-choice span{color:#736b76!important}
+
+  /* Search sheet */
+  body.admin-mobile-light .admin-search-head{border-bottom-color:#eee9e5!important}
+  body.admin-mobile-light .admin-search-group h4{color:#7b747d!important}
+  body.admin-mobile-light .admin-search-group button{border-color:#e8e3df!important;background:#faf9f7!important;color:#28242a!important}
+  body.admin-mobile-light .admin-search-empty{color:#8d868e!important}
+
+  /* Selected status colors stay consistent everywhere */
+  body.admin-mobile-light .status-confirmed{color:#26734a!important}
+  body.admin-mobile-light .status-pending{color:#9b6718!important}
+  body.admin-mobile-light .status-cancelled,
+  body.admin-mobile-light .status-no_show{color:#b44050!important}
+
+  /* System toast on staff screens */
+  body.admin-mobile-light .toast{
+    background:#27222a!important;color:#fff!important;box-shadow:0 8px 25px rgba(39,34,42,.2)!important;
+  }
+}
