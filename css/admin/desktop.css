@@ -5,6 +5,130 @@
 
 .admin-desktop-only{display:none!important}
 
+/* Mobile navigation compatibility.
+   adminNav() has an .admin-nav-menu wrapper for desktop sidebar support,
+   so on phones that wrapper itself must be the five-column row. */
+@media (max-width:899px){
+  body.admin-mobile-light .admin-bottom{
+    position:fixed!important;
+    left:14px!important;
+    right:14px!important;
+    bottom:max(10px,env(safe-area-inset-bottom))!important;
+    top:auto!important;
+    width:auto!important;
+    height:auto!important;
+    padding:0!important;
+    z-index:80!important;
+    background:transparent!important;
+    border:0!important;
+    box-shadow:none!important;
+  }
+
+  body.admin-mobile-light .admin-bottom .nav-inner{
+    position:relative!important;
+    width:100%!important;
+    height:72px!important;
+    min-height:72px!important;
+    max-width:none!important;
+    margin:0!important;
+    padding:6px 7px!important;
+    display:block!important;
+    border:1px solid #dedfe4!important;
+    border-radius:24px!important;
+    background:rgba(255,255,255,.97)!important;
+    box-shadow:0 10px 30px rgba(37,40,50,.10)!important;
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+  }
+
+  body.admin-mobile-light .admin-nav-menu{
+    width:100%!important;
+    height:100%!important;
+    display:grid!important;
+    grid-template-columns:repeat(5,minmax(0,1fr))!important;
+    align-items:stretch!important;
+    gap:2px!important;
+    padding:0!important;
+    margin:0!important;
+  }
+
+  body.admin-mobile-light .admin-bottom .nav-btn{
+    width:100%!important;
+    min-width:0!important;
+    height:60px!important;
+    min-height:60px!important;
+    padding:5px 2px 4px!important;
+    margin:0!important;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    justify-content:center!important;
+    gap:3px!important;
+    border:0!important;
+    border-radius:15px!important;
+    background:transparent!important;
+    box-shadow:none!important;
+    color:#8c8991!important;
+  }
+
+  body.admin-mobile-light .admin-bottom .nav-btn.active{
+    background:#f0eafa!important;
+    color:#7357b3!important;
+    box-shadow:none!important;
+  }
+
+  body.admin-mobile-light .admin-bottom .nav-icon{
+    position:relative!important;
+    width:26px!important;
+    height:26px!important;
+    min-width:26px!important;
+    margin:0!important;
+    display:grid!important;
+    place-items:center!important;
+    border:0!important;
+    border-radius:8px!important;
+    background:transparent!important;
+    color:inherit!important;
+    font-size:17px!important;
+    line-height:1!important;
+    box-shadow:none!important;
+  }
+
+  body.admin-mobile-light .admin-bottom .nav-btn>span{
+    display:block!important;
+    max-width:100%!important;
+    overflow:hidden!important;
+    color:inherit!important;
+    font-size:9px!important;
+    font-weight:650!important;
+    line-height:1.05!important;
+    white-space:nowrap!important;
+    text-overflow:ellipsis!important;
+  }
+
+  body.admin-mobile-light .admin-nav-badge{
+    position:absolute!important;
+    top:-7px!important;
+    right:-9px!important;
+    min-width:17px!important;
+    height:17px!important;
+    padding:0 4px!important;
+    display:grid!important;
+    place-items:center!important;
+    border:2px solid #fff!important;
+    border-radius:999px!important;
+    background:#d28a35!important;
+    color:#fff!important;
+    font-size:8px!important;
+    font-style:normal!important;
+    font-weight:800!important;
+  }
+
+  body.admin-mobile-light .admin-page{
+    padding-bottom:104px!important;
+  }
+}
+
 @media (min-width:900px){
   body.admin-mobile-light{
     --admin-bg:#f3f4f7;
