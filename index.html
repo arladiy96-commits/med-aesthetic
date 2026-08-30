@@ -1830,36 +1830,69 @@ button:disabled.is-busy{
     return adminBookings.filter(b=>String(b.status||"")==="pending").length;
   }
 
+  function adminIsDesktopLayout(){
+    const platform=String(window.Telegram?.WebApp?.platform||"").toLowerCase();
+    // Telegram tells us reliably when the Mini App is running on a phone.
+    // Phone always wins, regardless of any unusual WebView CSS viewport size.
+    if(platform==="ios"||platform==="android")return false;
+
+    // Native Telegram desktop clients always get the desktop admin.
+    if(platform==="tdesktop"||platform==="macos")return true;
+
+    // Telegram Web / unknown browser: use the real workspace width.
+    return window.matchMedia?.("(min-width: 900px)")?.matches ?? window.innerWidth>=900;
+  }
+
+  function syncAdminLayoutClass(){
+    const staff=isStaffMode();
+    const desktop=staff&&adminIsDesktopLayout();
+    const mobile=staff&&!desktop;
+
+    // Old shared class is deliberately never used anymore.
+    document.body?.classList.remove("admin-mobile-light");
+    document.body?.classList.toggle("admin-layout-mobile",mobile);
+    document.body?.classList.toggle("admin-layout-desktop",desktop);
+    return desktop;
+  }
+
   function adminNav(active){
     const pending=adminPendingCount();
-    const mobileItems=[
-      ["admin-home","⌂","Главная"],
-      ["admin-bookings","▣","Записи"],
-      ["admin-calendar","□","Календарь"],
-      ["admin-clients","♙","Клиенты"],
-      ["admin-more","☷","Ещё"]
-    ];
-    const desktopItems=[
-      ["admin-home","⌂","Главная"],
-      ["admin-bookings","▣","Записи"],
-      ["admin-calendar","□","Календарь"],
-      ["admin-clients","♙","Клиенты"],
-      ["admin-services","◇","Услуги"],
-      ["admin-finance","₸","Финансы"],
-      ["admin-access","♛","Доступ"],
-      ["admin-more","☷","Ещё"]
-    ];
-    const navButton=([v,i,l])=>`<button class="nav-btn ${active===v?"active":""}" onclick="Beauty.go('${v}')"><div class="nav-icon">${i}${v==="admin-bookings"&&pending?`<em class="admin-nav-badge">${pending>99?"99+":pending}</em>`:""}</div><span>${l}</span></button>`;
-    return `<nav class="bottom-nav admin-bottom">
-      <div class="nav-inner">
-        <div class="admin-mobile-nav">${mobileItems.map(navButton).join("")}</div>
-        <div class="admin-desktop-shell">
-          <div class="admin-nav-brand"><strong>MED <span>AESTHETIC</span></strong><small>Панель управления</small></div>
-          <div class="admin-nav-menu">${desktopItems.map(navButton).join("")}</div>
-          <div class="admin-nav-foot">MED AESTHETIC · admin</div>
-        </div>
+    const desktop=adminIsDesktopLayout();
+    const items=desktop
+      ? [
+          ["admin-home","⌂","Главная"],
+          ["admin-bookings","▣","Записи"],
+          ["admin-calendar","□","Календарь"],
+          ["admin-clients","♙","Клиенты"],
+          ["admin-services","◇","Услуги"],
+          ["admin-finance","₸","Финансы"],
+          ["admin-access","♛","Доступ"],
+          ["admin-more","☷","Ещё"]
+        ]
+      : [
+          ["admin-home","⌂","Главная"],
+          ["admin-bookings","▣","Записи"],
+          ["admin-calendar","□","Календарь"],
+          ["admin-clients","♙","Клиенты"],
+          ["admin-more","☷","Ещё"]
+        ];
+
+    const buttons=items.map(([v,i,l])=>`<button class="nav-btn ${active===v?"active":""}" onclick="Beauty.go('${v}')"><div class="nav-icon">${i}${v==="admin-bookings"&&pending?`<em class="admin-nav-badge">${pending>99?"99+":pending}</em>`:""}</div><span>${l}</span></button>`).join("");
+
+    if(!desktop){
+      // Pure mobile DOM: only five direct buttons, exactly as the original
+      // mobile bottom navigation expects. No desktop nodes exist here.
+      return `<nav class="bottom-nav admin-bottom admin-mobile-bottom"><div class="nav-inner">${buttons}</div></nav>`;
+    }
+
+    // Pure desktop DOM: no mobile bottom-navigation nodes inside the sidebar.
+    return `<aside class="admin-desktop-sidebar">
+      <div class="admin-desktop-sidebar-inner">
+        <div class="admin-nav-brand"><strong>MED <span>AESTHETIC</span></strong><small>Панель управления</small></div>
+        <nav class="admin-nav-menu">${buttons}</nav>
+        <div class="admin-nav-foot">MED AESTHETIC · admin</div>
       </div>
-    </nav>`;
+    </aside>`;
   }
 
   function adminHeader(){
@@ -2748,7 +2781,7 @@ button:disabled.is-busy{
   }
 
   function render(){
-    document.body?.classList.toggle("admin-mobile-light", isStaffMode());
+    syncAdminLayoutClass();
     let html="";
     if(S.view==="role-loading")html=roleLoadingView();
     else if(S.view==="admin-home")html=adminHome();
@@ -3378,6 +3411,21 @@ button:disabled.is-busy{
   // Refresh only the data belonging to the screen the user is looking at.
   // Important: opening the native photo picker also triggers visibilitychange,
   // therefore an open service editor is deliberately left completely untouched.
+  let __adminLayoutDesktopLast=null;
+  function refreshAdminLayoutIfNeeded(){
+    if(!isStaffMode())return;
+    const next=adminIsDesktopLayout();
+    if(__adminLayoutDesktopLast===null){
+      __adminLayoutDesktopLast=next;
+      return;
+    }
+    if(next!==__adminLayoutDesktopLast){
+      __adminLayoutDesktopLast=next;
+      render();
+    }
+  }
+  window.addEventListener("resize",()=>requestAnimationFrame(refreshAdminLayoutIfNeeded),{passive:true});
+
   document.addEventListener("visibilitychange",()=>{
     if(document.visibilityState!=="visible")return;
 
