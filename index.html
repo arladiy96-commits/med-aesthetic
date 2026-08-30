@@ -3216,9 +3216,12 @@ button:disabled.is-busy{
       S.time=null;
       resetBookingAvailabilityForService(found.id);
       S.view="service";
+      // Start the 14-day availability request immediately, before painting the
+      // service screen. While the client reads the service details, the calendar
+      // is already filling its in-memory cache.
+      loadBookingAvailabilityRange(true);
       render();
       setAppScrollTop(0,"auto");
-      setTimeout(()=>loadBookingAvailabilityRange(true),0);
       haptic();
     },
     startBooking(id){
@@ -3341,7 +3344,9 @@ button:disabled.is-busy{
   const startupDataLoad =
     startupRole==="creator" || startupRole==="admin"
       ? Promise.allSettled([loadAdminBookings(true),loadServices(true),loadAdminBlocks(true),loadAdminClientNotes(true)])
-      : loadServices(true);
+      : startupRole==="client"
+        ? Promise.allSettled([loadServices(true),loadBookings(true)])
+        : loadServices(true);
 
   Promise.allSettled([
     loadIdentity(),
@@ -3349,8 +3354,11 @@ button:disabled.is-busy{
   ]).then(()=>{
     if(isStaffMode() && !adminBookingsLoaded){
       loadAdminBookings(true);
-    }else if(S.roleMode==="client" && !lastServicesSignature){
-      loadServices(true);
+    }else if(S.roleMode==="client"){
+      // If the app was opened without ?entry=client, identity becomes known only
+      // after /api/me. Warm both client datasets immediately at that point.
+      if(!lastServicesSignature)loadServices(true);
+      if(!lastBookingsSignature)loadBookings(true);
     }
   });
 
