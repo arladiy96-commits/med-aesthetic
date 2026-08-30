@@ -410,4 +410,103 @@
   body.admin-mobile-light .toast{
     background:#27222a!important;color:#fff!important;box-shadow:0 8px 25px rgba(39,34,42,.2)!important;
   }
+
+  /* SUBTLE 3D DEPTH — visual only, no layout/function changes */
+  body.admin-mobile-light .admin-action,
+  body.admin-mobile-light .admin-next-card,
+  body.admin-mobile-light .v3-stat-card,
+  body.admin-mobile-light .v3-admin-section,
+  body.admin-mobile-light .admin-bookings-page .admin-book-row,
+  body.admin-mobile-light .admin-calendar-page .admin-calendar,
+  body.admin-mobile-light .admin-clients-page .admin-kpi,
+  body.admin-mobile-light .admin-client-row,
+  body.admin-mobile-light .admin-services-page .admin-services-summary>div,
+  body.admin-mobile-light .admin-services-page .admin-service-card,
+  body.admin-mobile-light .admin-more-page .admin-menu,
+  body.admin-mobile-light .admin-access-page .access-hero,
+  body.admin-mobile-light .admin-access-page .admin-person,
+  body.admin-mobile-light .admin-finance-page .finance-kpis>div,
+  body.admin-mobile-light .finance-panel{
+    box-shadow:
+      0 10px 22px rgba(42,34,48,.075),
+      0 2px 5px rgba(42,34,48,.045),
+      inset 0 1px 0 rgba(255,255,255,.92)!important;
+    transform:translateZ(0);
+  }
+
+  body.admin-mobile-light .admin-next-card{
+    box-shadow:
+      0 14px 30px rgba(82,60,96,.12),
+      0 3px 8px rgba(82,60,96,.06),
+      inset 0 1px 0 rgba(255,255,255,.95)!important;
+  }
+
+  body.admin-mobile-light .v3-pending-section{
+    box-shadow:
+      0 12px 26px rgba(91,66,27,.09),
+      inset 0 1px 0 rgba(255,255,255,.96)!important;
+  }
+
+  body.admin-mobile-light .admin-calendar-page .admin-slot-card,
+  body.admin-mobile-light .admin-calendar-page .admin-slot-free,
+  body.admin-mobile-light .admin-calendar-page .admin-slot-blocked{
+    box-shadow:
+      0 5px 12px rgba(55,45,62,.055),
+      inset 0 1px 0 rgba(255,255,255,.78)!important;
+  }
+
+  body.admin-mobile-light .admin-bookings-page .admin-filter button,
+  body.admin-mobile-light .admin-create-main,
+  body.admin-mobile-light .admin-bookings-page .admin-section .btn-primary,
+  body.admin-mobile-light .admin-services-page .admin-service-buttons button,
+  body.admin-mobile-light .admin-access-page .access-primary,
+  body.admin-mobile-light .booking-action.contact,
+  body.admin-mobile-light .booking-action.neutral,
+  body.admin-mobile-light .booking-action.confirm,
+  body.admin-mobile-light .booking-action.done,
+  body.admin-mobile-light .booking-action.danger,
+  body.admin-mobile-light .admin-form-primary,
+  body.admin-mobile-light .admin-form-secondary,
+  body.admin-mobile-light .service-sheet-actions .save,
+  body.admin-mobile-light .service-sheet-actions .delete,
+  body.admin-mobile-light .admin-booking-note button,
+  body.admin-mobile-light .admin-client-note button{
+    box-shadow:
+      0 4px 9px rgba(44,35,50,.07),
+      inset 0 1px 0 rgba(255,255,255,.82)!important;
+    transition:transform .12s ease,box-shadow .12s ease,filter .12s ease!important;
+  }
+
+  body.admin-mobile-light .admin-bookings-page .admin-filter button:active,
+  body.admin-mobile-light .admin-create-main:active,
+  body.admin-mobile-light .admin-bookings-page .admin-section .btn-primary:active,
+  body.admin-mobile-light .admin-services-page .admin-service-buttons button:active,
+  body.admin-mobile-light .admin-access-page .access-primary:active,
+  body.admin-mobile-light .booking-action:active,
+  body.admin-mobile-light .admin-form-primary:active,
+  body.admin-mobile-light .admin-form-secondary:active,
+  body.admin-mobile-light .service-sheet-actions button:active,
+  body.admin-mobile-light .admin-booking-note button:active,
+  body.admin-mobile-light .admin-client-note button:active{
+    transform:translateY(1px) scale(.992)!important;
+    box-shadow:
+      0 2px 5px rgba(44,35,50,.055),
+      inset 0 1px 2px rgba(35,27,40,.08)!important;
+  }
+
+  body.admin-mobile-light .admin-bottom .nav-inner{
+    box-shadow:
+      0 -10px 28px rgba(50,39,55,.075),
+      0 8px 20px rgba(50,39,55,.055),
+      inset 0 1px 0 rgba(255,255,255,.9)!important;
+  }
+
+  body.admin-mobile-light .admin-bottom .nav-btn.active .nav-icon,
+  body.admin-mobile-light .admin-round,
+  body.admin-mobile-light .creator-crown{
+    box-shadow:
+      0 5px 11px rgba(75,56,95,.10),
+      inset 0 1px 0 rgba(255,255,255,.9)!important;
+  }
+
 }
