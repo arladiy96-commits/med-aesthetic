@@ -1832,23 +1832,32 @@ button:disabled.is-busy{
 
   function adminNav(active){
     const pending=adminPendingCount();
-    const items=[
-      ["admin-home","⌂","Главная",false],
-      ["admin-bookings","▣","Записи",false],
-      ["admin-calendar","□","Календарь",false],
-      ["admin-clients","♙","Клиенты",false],
-      ["admin-services","◇","Услуги",true],
-      ["admin-finance","₸","Финансы",true],
-      ["admin-access","♛","Доступ",true],
-      ["admin-more","☷","Ещё",false]
+    const mobileItems=[
+      ["admin-home","⌂","Главная"],
+      ["admin-bookings","▣","Записи"],
+      ["admin-calendar","□","Календарь"],
+      ["admin-clients","♙","Клиенты"],
+      ["admin-more","☷","Ещё"]
     ];
+    const desktopItems=[
+      ["admin-home","⌂","Главная"],
+      ["admin-bookings","▣","Записи"],
+      ["admin-calendar","□","Календарь"],
+      ["admin-clients","♙","Клиенты"],
+      ["admin-services","◇","Услуги"],
+      ["admin-finance","₸","Финансы"],
+      ["admin-access","♛","Доступ"],
+      ["admin-more","☷","Ещё"]
+    ];
+    const navButton=([v,i,l])=>`<button class="nav-btn ${active===v?"active":""}" onclick="Beauty.go('${v}')"><div class="nav-icon">${i}${v==="admin-bookings"&&pending?`<em class="admin-nav-badge">${pending>99?"99+":pending}</em>`:""}</div><span>${l}</span></button>`;
     return `<nav class="bottom-nav admin-bottom">
       <div class="nav-inner">
-        <div class="admin-nav-brand admin-desktop-only"><strong>MED <span>AESTHETIC</span></strong><small>Панель управления</small></div>
-        <div class="admin-nav-menu">
-          ${items.map(([v,i,l,desktopOnly])=>`<button class="nav-btn ${active===v?"active":""} ${desktopOnly?"admin-desktop-only":""}" onclick="Beauty.go('${v}')"><div class="nav-icon">${i}${v==="admin-bookings"&&pending?`<em class="admin-nav-badge">${pending>99?"99+":pending}</em>`:""}</div><span>${l}</span></button>`).join("")}
+        <div class="admin-mobile-nav">${mobileItems.map(navButton).join("")}</div>
+        <div class="admin-desktop-shell">
+          <div class="admin-nav-brand"><strong>MED <span>AESTHETIC</span></strong><small>Панель управления</small></div>
+          <div class="admin-nav-menu">${desktopItems.map(navButton).join("")}</div>
+          <div class="admin-nav-foot">MED AESTHETIC · admin</div>
         </div>
-        <div class="admin-nav-foot admin-desktop-only">MED AESTHETIC · admin</div>
       </div>
     </nav>`;
   }
