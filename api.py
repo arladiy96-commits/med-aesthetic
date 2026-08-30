@@ -4,6 +4,7 @@ import json
 from datetime import date, time, timedelta
 from functools import lru_cache
 from threading import RLock
+from time import monotonic
 from pathlib import Path
 import hashlib
 from typing import Literal, Optional
@@ -700,6 +701,71 @@ def delete_admin_service(
     return {"ok": True}
 
 
+AVAILABILITY_CACHE_TTL_SECONDS = 15.0
+_availability_cache_lock = RLock()
+_availability_cache: dict[tuple[int, str, int], tuple[float, dict]] = {}
+
+
+def _clear_availability_cache() -> None:
+    with _availability_cache_lock:
+        _availability_cache.clear()
+
+
+def _availability_range_payload(start_date: date, days: int, master_id: int = 1) -> dict:
+    days = max(1, min(int(days), 31))
+    end_date = start_date + timedelta(days=days - 1)
+    cache_key = (int(master_id), start_date.isoformat(), days)
+    now = monotonic()
+
+    # Keep the lock while the cache miss is filled. This deliberately acts as
+    # a single-flight guard: if 10 clients open the calendar at once, only the
+    # first request reaches Neon; the others wait briefly and reuse the result.
+    with _availability_cache_lock:
+        cached = _availability_cache.get(cache_key)
+        if cached and cached[0] > now:
+            return cached[1]
+
+        with db() as conn:
+            rows = conn.execute(
+                """
+                SELECT booking_date, booking_time
+                FROM beauty_bookings
+                WHERE master_id=%s
+                  AND booking_date BETWEEN %s AND %s
+                  AND status IN ('pending','confirmed')
+                UNION
+                SELECT booking_date, booking_time
+                FROM beauty_blocked_slots
+                WHERE master_id=%s
+                  AND booking_date BETWEEN %s AND %s
+                ORDER BY booking_date, booking_time
+                """,
+                (master_id, start_date, end_date, master_id, start_date, end_date),
+            ).fetchall()
+
+        availability = {
+            (start_date + timedelta(days=i)).isoformat(): []
+            for i in range(days)
+        }
+        for row in rows:
+            day_key = row["booking_date"].isoformat()
+            if day_key in availability:
+                availability[day_key].append(row["booking_time"].strftime("%H:%M"))
+
+        payload = {
+            "startDate": start_date.isoformat(),
+            "endDate": end_date.isoformat(),
+            "days": days,
+            "cacheTtlSeconds": int(AVAILABILITY_CACHE_TTL_SECONDS),
+            "availability": availability,
+        }
+        _availability_cache[cache_key] = (
+            monotonic() + AVAILABILITY_CACHE_TTL_SECONDS,
+            payload,
+        )
+        return payload
+
+
 def _slot_is_blocked(conn, booking_date: date, booking_time: time) -> bool:
     return bool(
         conn.execute(
@@ -712,6 +778,43 @@ def _slot_is_blocked(conn, booking_date: date, booking_time: time) -> bool:
             (booking_date, booking_time),
         ).fetchone()
     )
+
+
+def _slot_has_active_booking(
+    conn,
+    booking_date: date,
+    booking_time: time,
+    *,
+    exclude_booking_id: int | None = None,
+) -> bool:
+    if exclude_booking_id is None:
+        row = conn.execute(
+            """
+            SELECT 1
+            FROM beauty_bookings
+            WHERE master_id=1
+              AND booking_date=%s
+              AND booking_time=%s
+              AND status IN ('pending','confirmed')
+            LIMIT 1
+            """,
+            (booking_date, booking_time),
+        ).fetchone()
+    else:
+        row = conn.execute(
+            """
+            SELECT 1
+            FROM beauty_bookings
+            WHERE master_id=1
+              AND booking_date=%s
+              AND booking_time=%s
+              AND status IN ('pending','confirmed')
+              AND id<>%s
+            LIMIT 1
+            """,
+            (booking_date, booking_time, exclude_booking_id),
+        ).fetchone()
+    return bool(row)
 
 
 def _reschedule_client_text(row: dict) -> str:
@@ -734,37 +837,35 @@ def _manual_booking_client_text(row: dict) -> str:
     )
 
 
+@router.get("/availability-range")
+def booking_availability_range(
+    start_date: date,
+    days: int = 14,
+    x_telegram_init_data: str | None = Header(default=None, alias="X-Telegram-Init-Data"),
+):
+    # One request returns the whole visible calendar. Server RAM keeps it for
+    # 15 seconds, so simultaneous clients reuse one Neon result.
+    _identity(x_telegram_init_data)
+    if days < 1 or days > 31:
+        raise HTTPException(status_code=400, detail="days должен быть от 1 до 31")
+    payload = _availability_range_payload(start_date, days, master_id=1)
+    return {"ok": True, **payload}
+
+
 @router.get("/availability")
 def booking_availability(
     booking_date: date,
     x_telegram_init_data: str | None = Header(default=None, alias="X-Telegram-Init-Data"),
 ):
-    # Require a valid Telegram Mini App session, but this endpoint is public to clients.
+    # Kept for compatibility with older deployed clients.
     _identity(x_telegram_init_data)
-    with db() as conn:
-        booking_rows = conn.execute(
-            """
-            SELECT booking_time
-            FROM beauty_bookings
-            WHERE master_id=1 AND booking_date=%s
-              AND status IN ('pending','confirmed')
-            """,
-            (booking_date,),
-        ).fetchall()
-        block_rows = conn.execute(
-            """
-            SELECT booking_time
-            FROM beauty_blocked_slots
-            WHERE master_id=1 AND booking_date=%s
-            """,
-            (booking_date,),
-        ).fetchall()
-
-    unavailable = sorted({
-        *(r["booking_time"].strftime("%H:%M") for r in booking_rows),
-        *(r["booking_time"].strftime("%H:%M") for r in block_rows),
-    })
-    return {"ok": True, "date": booking_date.isoformat(), "unavailable": unavailable}
+    payload = _availability_range_payload(booking_date, 1, master_id=1)
+    return {
+        "ok": True,
+        "date": booking_date.isoformat(),
+        "unavailable": payload["availability"].get(booking_date.isoformat(), []),
+        "cacheTtlSeconds": payload["cacheTtlSeconds"],
+    }
 
 
 @router.get("/bookings")
@@ -852,6 +953,8 @@ def create_admin_booking(
 
             if _slot_is_blocked(conn, payload.booking_date, payload.booking_time):
                 raise HTTPException(status_code=409, detail="Это время закрыто в календаре")
+            if _slot_has_active_booking(conn, payload.booking_date, payload.booking_time):
+                raise HTTPException(status_code=409, detail="Это время уже занято")
 
             if telegram_user_id:
                 person = conn.execute(
@@ -883,6 +986,8 @@ def create_admin_booking(
             ).fetchone()
     except UniqueViolation:
         raise HTTPException(status_code=409, detail="Это время уже занято")
+
+    _clear_availability_cache()
 
     if row.get("telegram_user_id") is not None:
         background_tasks.add_task(
@@ -929,6 +1034,10 @@ def update_admin_booking(
 
             if moved and _slot_is_blocked(conn, new_date, new_time):
                 raise HTTPException(status_code=409, detail="Это время закрыто в календаре")
+            if moved and _slot_has_active_booking(
+                conn, new_date, new_time, exclude_booking_id=booking_id
+            ):
+                raise HTTPException(status_code=409, detail="Это время уже занято")
 
             sets=[]
             values=[]
@@ -961,6 +1070,9 @@ def update_admin_booking(
             ).fetchone()
     except UniqueViolation:
         raise HTTPException(status_code=409, detail="Это время уже занято")
+
+    if moved or "status" in changes:
+        _clear_availability_cache()
 
     row = dict(row)
     row["previous_status"] = current.get("status")
@@ -1033,6 +1145,7 @@ def create_admin_block(
             ).fetchone()
     except UniqueViolation:
         raise HTTPException(status_code=409,detail="Это время уже закрыто")
+    _clear_availability_cache()
     return {"ok":True,"block":{
         "id":str(row["id"]),"masterId":row["master_id"],
         "date":row["booking_date"].isoformat(),"time":row["booking_time"].strftime("%H:%M"),
@@ -1051,6 +1164,7 @@ def delete_admin_block(
         row=conn.execute("DELETE FROM beauty_blocked_slots WHERE id=%s RETURNING id",(block_id,)).fetchone()
     if not row:
         raise HTTPException(status_code=404,detail="Закрытое окно не найдено")
+    _clear_availability_cache()
     return {"ok":True}
 
 
@@ -1131,6 +1245,11 @@ def create_booking(
                     status_code=409,
                     detail="Это время больше недоступно. Выберите другое.",
                 )
+            if _slot_has_active_booking(conn, payload.booking_date, payload.booking_time):
+                raise HTTPException(
+                    status_code=409,
+                    detail="Это время уже занято. Выберите другое время.",
+                )
 
             row = conn.execute(
                 """
@@ -1161,6 +1280,8 @@ def create_booking(
             status_code=409,
             detail="Это время уже занято. Выберите другое время.",
         )
+
+    _clear_availability_cache()
 
     staff_ids = _staff_chat_ids()
     if staff_ids:
@@ -1227,6 +1348,8 @@ def cancel_booking(
 
     if not row:
         raise HTTPException(status_code=404, detail="Запись не найдена")
+
+    _clear_availability_cache()
 
     staff_ids = _staff_chat_ids()
     if staff_ids:
