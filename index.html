@@ -178,6 +178,8 @@ button:disabled.is-busy{
 }
 </style>
 
+
+
 </head>
 <body>
   <div id="app"></div>
@@ -1700,40 +1702,173 @@ button:disabled.is-busy{
     return `<button class="admin-book-row" onclick="Beauty.openAdminBooking('${b.id}')"><div class="t">${esc(b.time||"—")}</div><div><h3>${esc(b.serviceName||s.name||"Запись")}</h3><p>${esc(client)} · ${esc(b.date||"")}</p></div><span class="admin-row-status status-${esc(status)}">${esc(bookingStatusRu(status))}</span></button>`;
   }
 
+  function adminHomeTimeValue(b){
+    return String(b?.time||"—").slice(0,5);
+  }
+
+  function adminHomeDateLabel(dateValue){
+    const raw=String(dateValue||"").slice(0,10);
+    if(!raw)return "—";
+    if(raw===todayISO())return "Сегодня";
+    if(raw===addDaysISO(1))return "Завтра";
+    const d=new Date(raw+"T12:00:00");
+    if(!Number.isFinite(d.getTime()))return raw;
+    return new Intl.DateTimeFormat("ru-RU",{day:"numeric",month:"short"}).format(d).replace(".","");
+  }
+
+  function adminHomeClient(b){
+    return b?.clientName || (b?.clientUsername?`@${b.clientUsername}`:"Клиент");
+  }
+
+  function adminHomeStatusClass(status){
+    return ({
+      pending:"pending",
+      confirmed:"confirmed",
+      completed:"completed",
+      cancelled:"cancelled",
+      no_show:"no-show"
+    })[String(status||"")] || "default";
+  }
+
+  function adminHomeRow(b,{showDate=false,compact=false}={}){
+    const status=String(b.status||"confirmed");
+    return `<button class="v3-admin-row ${compact?"compact":""}" onclick="Beauty.openAdminBooking('${b.id}')">
+      <div class="v3-admin-row-time">
+        ${showDate?`<small>${esc(adminHomeDateLabel(b.date))}</small>`:""}
+        <strong>${esc(adminHomeTimeValue(b))}</strong>
+      </div>
+      <div class="v3-admin-row-main">
+        <b>${esc(adminHomeClient(b))}</b>
+        <span>${esc(b.serviceName||"Запись")}</span>
+      </div>
+      <span class="v3-admin-status ${adminHomeStatusClass(status)}">${esc(bookingStatusRu(status))}</span>
+      <i>›</i>
+    </button>`;
+  }
+
+  function adminHomePendingRow(b){
+    return `<div class="v3-pending-row">
+      <button class="v3-pending-info" onclick="Beauty.openAdminBooking('${b.id}')">
+        <span class="v3-pending-avatar">${esc((adminHomeClient(b)||"К").slice(0,1).toUpperCase())}</span>
+        <span class="v3-pending-copy">
+          <b>${esc(adminHomeClient(b))}</b>
+          <small>${esc(adminHomeDateLabel(b.date))} · ${esc(adminHomeTimeValue(b))} · ${esc(b.serviceName||"Запись")}</small>
+        </span>
+      </button>
+      <div class="v3-pending-actions">
+        <button class="v3-confirm-btn" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','confirmed',this);event.stopPropagation()">Подтвердить</button>
+        <button class="v3-reject-btn" data-admin-status-action aria-label="Отклонить" onclick="Beauty.updateAdminBookingStatus('${b.id}','cancelled',this);event.stopPropagation()">×</button>
+      </div>
+    </div>`;
+  }
+
   /* ===== ADMIN MODULE — visual styles are isolated in css/admin/*.css by screen ===== */
   function adminHome(){
-    const today=adminTodayBookings();
-    const nearest=adminNearest();
-    const active=adminBookings.filter(isActiveAdminBooking);
-    const total=active.length;
-    const clients=new Set(adminBookings.map(b=>String(b.telegramUserId||"")).filter(Boolean)).size;
-    const attention=adminBookings.filter(b=>String(b.status||"")==="pending").length;
-    const metricTotal=adminBookingsLoaded?String(total):"—";
-    const metricToday=adminBookingsLoaded?String(today.length):"—";
-    const metricClients=adminBookingsLoaded?String(clients):"—";
-    const metricAttention=adminBookingsLoaded?String(attention):"—";
-    return `<main class="admin-page admin-dashboard-page">${adminHeader()}
-      <div class="admin-date-row"><div><h1>Сегодня</h1><p>${esc(niceToday())}</p></div><button class="admin-link" onclick="Beauty.go('admin-calendar')">Открыть календарь ›</button></div>
-      <div class="admin-metrics">
-        ${adminMetric(metricTotal,"Записи",Math.min(100,total*13),adminBookingsLoaded?(total?"активные":"пока нет"):"загрузка")}
-        ${adminMetric(metricToday,"Сегодня",Math.min(100,today.length*20),adminBookingsLoaded?(today.length?"по плану":"свободно"):"загрузка")}
-        ${adminMetric(metricClients,"Клиенты",Math.min(100,clients*12),adminBookingsLoaded?(clients?"в базе":"пока нет"):"загрузка")}
-        ${adminMetric(metricAttention,"Требует внимания",Math.min(100,attention*25),adminBookingsLoaded?(attention?"проверьте":"всё спокойно"):"загрузка")}
+    const loaded=adminBookingsLoaded;
+    const now=new Date();
+
+    const today=adminTodayBookings()
+      .sort((a,b)=>String(a.time||"").localeCompare(String(b.time||"")));
+
+    const active=sortedAdminBookings().filter(isActiveAdminBooking);
+
+    const upcoming=active.filter(b=>{
+      const d=new Date(`${String(b.date||"").slice(0,10)}T${String(b.time||"00:00").slice(0,5)}:00`);
+      return Number.isFinite(d.getTime()) && d>=now;
+    });
+
+    const pending=sortedAdminBookings()
+      .filter(b=>String(b.status||"")==="pending");
+
+    const todayCount=loaded?today.length:"—";
+    const upcomingCount=loaded?upcoming.length:"—";
+    const pendingCount=loaded?pending.length:"—";
+
+    return `<main class="admin-page admin-dashboard-page v3-admin-home">${adminHeader()}
+      <div class="v3-admin-title">
+        <div>
+          <h1>Главная</h1>
+          <p>${esc(niceToday())}</p>
+        </div>
+        <button onclick="Beauty.go('admin-calendar')">Календарь</button>
       </div>
-      <section class="admin-section"><div class="admin-section-title"><h2>Ближайшая запись</h2><button onclick="Beauty.go('admin-bookings')">Все записи</button></div>
-        ${nearest?`<div class="admin-next" role="button" onclick="Beauty.openAdminBooking('${nearest.id}')"><div class="admin-time">${esc(nearest.time||"—")}</div><div><h3>${esc(nearest.serviceName||"Услуга")}</h3><p>${esc(nearest.clientName||"Клиент")}</p><p>${esc(nearest.date||"")}</p></div><span class="admin-status">${esc(bookingStatusRu(nearest.status||"confirmed"))}</span></div>`:`<div class="admin-empty">Ближайших записей пока нет. Как только клиент запишется, запись появится здесь автоматически.</div>`}
+
+      <div class="v3-admin-stats">
+        <button class="v3-stat-card" onclick="Beauty.setAdminFilter('Сегодня');Beauty.go('admin-bookings')">
+          <span class="v3-stat-icon">□</span>
+          <small>Записи сегодня</small>
+          <strong>${esc(String(todayCount))}</strong>
+        </button>
+        <button class="v3-stat-card" onclick="Beauty.go('admin-bookings')">
+          <span class="v3-stat-icon">◷</span>
+          <small>Ближайшие</small>
+          <strong>${esc(String(upcomingCount))}</strong>
+        </button>
+        <button class="v3-stat-card attention" onclick="Beauty.go('admin-bookings')">
+          <span class="v3-stat-icon">!</span>
+          <small>Неподтверждённые</small>
+          <strong>${esc(String(pendingCount))}</strong>
+        </button>
+      </div>
+
+      <section class="v3-admin-section">
+        <div class="v3-section-head">
+          <div>
+            <h2>Сегодня</h2>
+            <span>${loaded?(today.length?`${today.length} ${today.length===1?"запись":"записей"}`:"Записей нет"):"Загрузка…"}</span>
+          </div>
+          <button onclick="Beauty.setAdminFilter('Сегодня');Beauty.go('admin-bookings')">Все записи ›</button>
+        </div>
+
+        <div class="v3-today-list">
+          ${!loaded
+            ? `<div class="v3-admin-empty">Загружаем расписание…</div>`
+            : today.length
+              ? today.slice(0,5).map(b=>adminHomeRow(b)).join("")
+              : `<div class="v3-admin-empty">На сегодня записей пока нет.</div>`
+          }
+        </div>
       </section>
-      <section class="admin-section"><div class="admin-section-title"><h2>Быстрые действия</h2><span>1–2 касания</span></div><div class="admin-actions">
-        <button class="admin-action" onclick="Beauty.toast('Ручную запись подключим к расписанию')"><i>＋</i><b>Новая запись</b></button>
-        <button class="admin-action" onclick="Beauty.go('admin-clients')"><i>♙</i><b>Клиент</b></button>
-        <button class="admin-action" onclick="Beauty.toast('Редактор услуг — следующий этап')"><i>⌘</i><b>Услуги</b></button>
-        <button class="admin-action" onclick="Beauty.go('admin-calendar')"><i>□</i><b>Расписание</b></button>
-      </div></section>
-      <section class="admin-section"><div class="admin-section-title"><h2>Автоматизация</h2><span>Работает без ручной рутины</span></div><div class="automation-card">
-        <div class="auto-row"><div class="auto-ico">✓</div><div><b>Онлайн-запись</b><p>Клиент записывается самостоятельно</p></div><span class="auto-state">Включено</span></div>
-        <div class="auto-row"><div class="auto-ico">♧</div><div><b>Напоминания</b><p>Подготовлено место под автоматические уведомления</p></div><span class="auto-state">Следом</span></div>
-        <div class="auto-row"><div class="auto-ico">↻</div><div><b>Освободившиеся окна</b><p>Автопредложение свободного времени</p></div><span class="auto-state">Следом</span></div>
-      </div></section>
+
+      <section class="v3-admin-section">
+        <div class="v3-section-head">
+          <div>
+            <h2>Ближайшие</h2>
+            <span>Следующие записи</span>
+          </div>
+          <button onclick="Beauty.go('admin-bookings')">Смотреть все ›</button>
+        </div>
+
+        <div class="v3-upcoming-list">
+          ${!loaded
+            ? `<div class="v3-admin-empty">Загружаем записи…</div>`
+            : upcoming.length
+              ? upcoming.slice(0,4).map(b=>adminHomeRow(b,{showDate:true,compact:true})).join("")
+              : `<div class="v3-admin-empty">Ближайших записей пока нет.</div>`
+          }
+        </div>
+      </section>
+
+      <section class="v3-admin-section v3-pending-section">
+        <div class="v3-section-head">
+          <div>
+            <h2>Неподтверждённые</h2>
+            <span>${loaded?(pending.length?`${pending.length} требуют внимания`:"Всё подтверждено"):"Загрузка…"}</span>
+          </div>
+          ${pending.length?`<span class="v3-count-badge">${pending.length}</span>`:""}
+        </div>
+
+        <div class="v3-pending-list admin-booking-actions">
+          ${!loaded
+            ? `<div class="v3-admin-empty">Проверяем новые заявки…</div>`
+            : pending.length
+              ? pending.slice(0,4).map(adminHomePendingRow).join("")
+              : `<div class="v3-admin-empty success">Новых заявок на подтверждение нет.</div>`
+          }
+        </div>
+
+        ${pending.length>4?`<button class="v3-more-pending" onclick="Beauty.go('admin-bookings')">Показать остальные ›</button>`:""}
+      </section>
     </main>${adminNav("admin-home")}${roleSheet()}`;
   }
 
