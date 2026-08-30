@@ -26,7 +26,7 @@
       if(res.ok)actualRole=data?.user?.actualRole||"client";
     }catch(e){}
     if(actualRole!=="creator"&&actualRole!=="admin") {
-      location.replace("/client/index.html?entry=client");
+      location.replace("/client/index.html?entry=client&build=20260830-clientfix1");
       return;
     }
     const platform=String(tg?.platform||"").toLowerCase();

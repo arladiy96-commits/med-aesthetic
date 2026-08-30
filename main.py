@@ -56,9 +56,11 @@ async def cache_policy(request, call_next):
     response = await call_next(request)
     path = request.url.path
 
-    if path == "/":
-        # index.html must always pick up the newest deployment.
-        response.headers["Cache-Control"] = "no-cache, must-revalidate"
+    if path == "/" or path.startswith("/client/"):
+        # Telegram WebView can aggressively reuse static client files.
+        # The client UI is actively edited, so never serve stale HTML/CSS/JS.
+        response.headers["Cache-Control"] = "no-store, max-age=0"
+        response.headers["Pragma"] = "no-cache"
     elif path in {"/api/services", "/api/admin/services"} or path.startswith("/api/admin/") or path.startswith("/api/availability"):
         # Live admin/availability data must never be stale. Service catalog speed
         # still comes from the server RAM cache, not from browser caching.
