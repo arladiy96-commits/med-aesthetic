@@ -1,21 +1,28 @@
-MED AESTHETIC — isolated frontend structure
+MED AESTHETIC — FINAL SIMPLE STRUCTURE
 
-/client/
-  index.html
-  css/                  client styles only
-  js/                   client runtime
+/
+├── index.html
+├── main.py
+├── api.py
+├── database.py
+├── requirements.txt
+│
+├── client/
+│   ├── index.html
+│   ├── css/
+│   └── js/
+│
+└── admin/
+    ├── mobile/
+    │   ├── index.html
+    │   ├── css/
+    │   └── js/
+    │
+    └── desktop/
+        ├── index.html
+        ├── css/
+        └── js/
 
-/admin/mobile/
-  index.html
-  css/foundation/       private mobile-admin copy of base admin styles
-  css/device/           mobile-only section overrides
-  js/                   mobile-admin runtime
-
-/admin/desktop/
-  index.html
-  css/foundation/       private desktop-admin copy of base admin styles
-  css/device/           desktop-only section overrides
-  js/                   desktop-admin runtime
-
-The root /css folder is not used.
-No frontend imports CSS from another mode.
+No foundation/device folders.
+No shared root /css folder.
+Each frontend has its own physically separate CSS and JS.
