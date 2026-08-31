@@ -1832,7 +1832,7 @@ button:disabled.is-busy{
     const name=[user?.first_name,user?.last_name].filter(Boolean).join(" ") || "Клиент";
     const avatar=user?.photo_url || masters[0].img;
     const phone=serverBookings.find(b=>String(b?.clientPhone||"").trim())?.clientPhone || S.bookingPhone || "";
-    return `<main class="page page-profile">${topbar()}
+    return `<main class="page page-profile profile-main">${topbar()}
       <div class="profile-head"><img class="profile-avatar" src="${avatar}" alt=""><div><h2>${esc(name)}</h2><p class="profile-phone">${esc(phone || "Телефон не указан")}</p></div></div>
       <div class="menu-list">
         <button class="menu-item" onclick="Beauty.toast('Редактирование профиля подключим позже')"><span class="mi">♙</span><b>Личные данные</b><span>›</span></button>
