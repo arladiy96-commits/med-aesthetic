@@ -849,48 +849,56 @@ button:disabled.is-busy{
 
 
 <style id="sticky-action-above-nav-css">
-  :root{
-    --premium-bottom-nav-height: 92px;
-    --premium-bottom-nav-gap: 10px;
-  }
-
   .sticky-action{
     position:fixed !important;
-    left:0;
-    right:0;
-    bottom:calc(
-      var(--premium-bottom-nav-height)
-      + var(--premium-bottom-nav-gap)
-      + env(safe-area-inset-bottom, 0px)
-    ) !important;
     z-index:1200 !important;
-    padding-left:30px !important;
-    padding-right:30px !important;
-    pointer-events:none;
+
+    left:50% !important;
+    right:auto !important;
+    top:auto !important;
+
+    width:min(calc(100vw - 60px), 560px) !important;
+    margin:0 !important;
+    padding:0 !important;
+    transform:translateX(-50%) !important;
+
+    bottom:calc(
+      102px
+      + max(env(safe-area-inset-bottom,0px), var(--tg-safe-bottom,0px))
+    ) !important;
+
+    background:transparent !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+    pointer-events:none !important;
+    overflow:visible !important;
   }
 
   .sticky-action > *{
-    pointer-events:auto;
-    width:100%;
+    width:100% !important;
+    margin:0 !important;
+    pointer-events:auto !important;
+  }
+
+  .sticky-action .btn-primary{
+    border-radius:20px !important;
+    overflow:hidden !important;
   }
 
   .page{
     padding-bottom:calc(
-      var(--premium-bottom-nav-height)
-      + 92px
-      + env(safe-area-inset-bottom, 0px)
+      188px
+      + max(env(safe-area-inset-bottom,0px), var(--tg-safe-bottom,0px))
     ) !important;
   }
 
   @media (max-width:520px){
-    :root{
-      --premium-bottom-nav-height: 88px;
-      --premium-bottom-nav-gap: 8px;
-    }
-
     .sticky-action{
-      padding-left:30px !important;
-      padding-right:30px !important;
+      width:calc(100vw - 60px) !important;
+      bottom:calc(
+        98px
+        + max(env(safe-area-inset-bottom,0px), var(--tg-safe-bottom,0px))
+      ) !important;
     }
   }
 </style>
