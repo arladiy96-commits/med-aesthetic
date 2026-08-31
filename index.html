@@ -692,6 +692,161 @@ button:disabled.is-busy{
   }
 </style>
 
+
+<style id="premium-bottom-nav-css">
+  .premium-bottom-nav .nav-inner{
+    overflow:visible;
+  }
+
+  .premium-bottom-nav .premium-nav-btn{
+    position:relative;
+    isolation:isolate;
+    overflow:visible;
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  .premium-nav-icon{
+    position:relative;
+    z-index:2;
+    width:30px;
+    height:30px;
+    display:grid;
+    place-items:center;
+    margin:0 auto 4px;
+    transform:translateZ(0);
+    will-change:transform;
+  }
+
+  .premium-nav-icon svg{
+    width:28px;
+    height:28px;
+    overflow:visible;
+    fill:none;
+    stroke:rgba(163,156,174,.74);
+    stroke-width:1.55;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.18));
+    transition:
+      stroke 220ms ease,
+      filter 260ms ease,
+      transform 260ms cubic-bezier(.2,.8,.2,1);
+  }
+
+  .premium-nav-icon .nav-gem{
+    stroke:rgba(190,180,202,.82);
+    stroke-width:1.9;
+  }
+
+  .premium-nav-label{
+    position:relative;
+    z-index:2;
+    display:block;
+    color:rgba(157,150,166,.76);
+    transition:
+      color 220ms ease,
+      text-shadow 260ms ease,
+      transform 220ms ease;
+  }
+
+  .premium-nav-glow{
+    position:absolute;
+    z-index:0;
+    left:50%;
+    top:3px;
+    width:46px;
+    height:46px;
+    border-radius:50%;
+    transform:translateX(-50%) scale(.62);
+    opacity:0;
+    pointer-events:none;
+    background:
+      radial-gradient(circle, rgba(246,203,111,.20) 0%, rgba(201,142,58,.08) 42%, transparent 72%);
+    filter:blur(5px);
+    transition:
+      opacity 250ms ease,
+      transform 300ms cubic-bezier(.2,.8,.2,1);
+  }
+
+  .premium-nav-btn.active .premium-nav-icon svg{
+    stroke:#f1cf7b;
+    filter:
+      drop-shadow(0 0 3px rgba(255,224,148,.52))
+      drop-shadow(0 0 9px rgba(220,163,70,.20));
+    animation:premiumNavIconIn 420ms cubic-bezier(.2,.9,.25,1);
+  }
+
+  .premium-nav-btn.active .premium-nav-icon .nav-gem{
+    stroke:#ffe5a3;
+    filter:drop-shadow(0 0 4px rgba(255,223,140,.72));
+  }
+
+  .premium-nav-btn.active .premium-nav-label{
+    color:#e9c873;
+    text-shadow:0 0 10px rgba(229,185,91,.15);
+    animation:premiumNavLabelIn 360ms ease-out;
+  }
+
+  .premium-nav-btn.active .premium-nav-glow{
+    opacity:1;
+    transform:translateX(-50%) scale(1);
+  }
+
+  .premium-nav-btn::after{
+    content:"";
+    position:absolute;
+    z-index:1;
+    left:50%;
+    top:34px;
+    width:17px;
+    height:1px;
+    border-radius:99px;
+    transform:translateX(-50%) scaleX(.25);
+    opacity:0;
+    background:linear-gradient(90deg, transparent, #f2cf78, transparent);
+    box-shadow:0 0 7px rgba(236,193,99,.36);
+    transition:opacity 240ms ease, transform 280ms ease;
+  }
+
+  .premium-nav-btn.active::after{
+    opacity:.9;
+    transform:translateX(-50%) scaleX(1);
+  }
+
+  .premium-nav-btn:active .premium-nav-icon{
+    transform:scale(.88);
+    transition-duration:90ms;
+  }
+
+  .premium-nav-btn:active .premium-nav-glow{
+    opacity:.78;
+    transform:translateX(-50%) scale(.82);
+    transition-duration:90ms;
+  }
+
+  @keyframes premiumNavIconIn{
+    0%{transform:translateY(2px) scale(.88);opacity:.68}
+    58%{transform:translateY(-1px) scale(1.08);opacity:1}
+    100%{transform:translateY(0) scale(1);opacity:1}
+  }
+
+  @keyframes premiumNavLabelIn{
+    from{transform:translateY(1px);opacity:.72}
+    to{transform:translateY(0);opacity:1}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    .premium-nav-icon,
+    .premium-nav-icon svg,
+    .premium-nav-label,
+    .premium-nav-glow,
+    .premium-nav-btn::after{
+      animation:none!important;
+      transition:none!important;
+    }
+  }
+</style>
+
 </head>
 <body>
   <div id="app"></div>
@@ -1824,16 +1979,51 @@ button:disabled.is-busy{
   }
 
   function nav(active){
+    const icons={
+      home:`<svg viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M5.5 14.7 16 5.8l10.5 8.9"/>
+        <path d="M8.6 13.2v12.2h14.8V13.2"/>
+        <path d="M13.2 25.4v-7.2h5.6v7.2"/>
+        <path class="nav-gem" d="M16 8.7v.1"/>
+      </svg>`,
+      services:`<svg viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M16 5.1c2.3 2.1 3.4 4.3 3.4 6.5 0 2.5-1.1 4-3.4 4.4-2.3-.4-3.4-1.9-3.4-4.4 0-2.2 1.1-4.4 3.4-6.5Z"/>
+        <path d="M26.9 16c-2.1 2.3-4.3 3.4-6.5 3.4-2.5 0-4-1.1-4.4-3.4.4-2.3 1.9-3.4 4.4-3.4 2.2 0 4.4 1.1 6.5 3.4Z"/>
+        <path d="M16 26.9c-2.3-2.1-3.4-4.3-3.4-6.5 0-2.5 1.1-4 3.4-4.4 2.3.4 3.4 1.9 3.4 4.4 0 2.2-1.1 4.4-3.4 6.5Z"/>
+        <path d="M5.1 16c2.1-2.3 4.3-3.4 6.5-3.4 2.5 0 4 1.1 4.4 3.4-.4 2.3-1.9 3.4-4.4 3.4-2.2 0-4.4-1.1-6.5-3.4Z"/>
+        <circle class="nav-gem" cx="16" cy="16" r="1.8"/>
+      </svg>`,
+      booking:`<svg viewBox="0 0 32 32" aria-hidden="true">
+        <rect x="6.2" y="7.7" width="19.6" height="18" rx="3.1"/>
+        <path d="M10.5 5.5v4.4M21.5 5.5v4.4M6.2 12.5h19.6"/>
+        <path class="nav-gem" d="m11.6 19 3 3 6.2-6.4"/>
+      </svg>`,
+      history:`<svg viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M8.1 10.2A10 10 0 1 1 6.4 19"/>
+        <path d="M5.5 8.4v5.4h5.4"/>
+        <path d="M16 10.4v6.2l4.2 2.6"/>
+        <circle class="nav-gem" cx="16" cy="16" r="1.2"/>
+      </svg>`,
+      profile:`<svg viewBox="0 0 32 32" aria-hidden="true">
+        <circle cx="16" cy="11.1" r="4.3"/>
+        <path d="M8.2 25.8c.6-5.2 3.3-8 7.8-8s7.2 2.8 7.8 8"/>
+        <path class="nav-gem" d="M12.3 6.4c1.1-.8 2.3-1.2 3.7-1.2 1.4 0 2.6.4 3.7 1.2"/>
+      </svg>`
+    };
     const items=[
-      ["home","⌂","Главная"],
-      ["services","⌘","Услуги"],
-      ["booking","▣","Запись"],
-      ["history","◷","История"],
-      ["profile","♙","Профиль"]
+      ["home","Главная"],
+      ["services","Услуги"],
+      ["booking","Запись"],
+      ["history","История"],
+      ["profile","Профиль"]
     ];
-    return `<nav class="bottom-nav"><div class="nav-inner">${items.map(([v,i,l])=>`<button class="nav-btn ${active===v?"active":""}" onclick="Beauty.go('${v}')"><div class="nav-icon">${i}</div><span>${l}</span></button>`).join("")}</div></nav>`;
+    return `<nav class="bottom-nav premium-bottom-nav"><div class="nav-inner">${items.map(([v,l])=>`
+      <button class="nav-btn premium-nav-btn ${active===v?"active":""}" onclick="Beauty.go('${v}')" aria-label="${l}">
+        <span class="premium-nav-glow" aria-hidden="true"></span>
+        <span class="premium-nav-icon">${icons[v]}</span>
+        <span class="premium-nav-label">${l}</span>
+      </button>`).join("")}</div></nav>`;
   }
-
   function topbar(opts={}){
     return `<div class="safe-top"></div><header class="topbar"><div class="toprow">
       ${opts.back?`<button class="icon-btn" onclick="${opts.back}">‹</button>`:`<button class="icon-btn" onclick="Beauty.toast('Меню появится позже')">☰</button>`}
