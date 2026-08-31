@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 from psycopg.errors import UniqueViolation
 
 from auth import validate_telegram_init_data
-from bot import make_admin_invite_link, safe_set_role_menu_button, send_notification, send_notifications
+from bot import make_admin_invite_link, safe_set_role_menu_button, send_notification, send_notifications, send_test_reminder
 from database import (
     create_admin_invite,
     db,
@@ -72,6 +72,11 @@ class ClientNoteUpdate(BaseModel):
 
 class AdminGrant(BaseModel):
     telegram_user_id: int = Field(gt=0)
+
+
+class ReminderTestRequest(BaseModel):
+    kind: Literal["client_24h", "client_2h", "admin_1h", "admin_daily"]
+    booking_id: Optional[int] = Field(default=None, gt=0)
 
 
 class ServiceCreate(BaseModel):
@@ -1074,6 +1079,22 @@ def _manual_booking_client_text(row: dict) -> str:
         f"{_date_ru(row['booking_date'])} в {row['booking_time'].strftime('%H:%M')}\n"
         f"Мастер: {row.get('master_name') or 'Людмила'}"
     )
+
+
+@router.post("/admin/reminder-tests/send")
+def send_admin_reminder_test(
+    payload: ReminderTestRequest,
+    x_telegram_init_data: str | None = Header(default=None, alias="X-Telegram-Init-Data"),
+):
+    telegram_user, app_user = _identity(x_telegram_init_data)
+    _require_creator(app_user)
+    try:
+        result = send_test_reminder(payload.kind, payload.booking_id, int(telegram_user["id"]))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Не удалось отправить тест: {str(exc)[:180]}") from exc
+    return result
 
 
 @router.get("/availability-range")

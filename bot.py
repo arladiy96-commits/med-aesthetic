@@ -5,11 +5,14 @@ import json
 import os
 import urllib.error
 import urllib.request
+import threading
+from datetime import date, datetime, time as dt_time, timedelta
 from functools import lru_cache
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 
-from database import consume_admin_invite, create_admin_access_request, get_app_user, list_role_users, upsert_app_user
+from database import consume_admin_invite, create_admin_access_request, db, get_app_user, list_role_users, upsert_app_user
 
 router = APIRouter()
 
@@ -188,6 +191,216 @@ def send_notifications(chat_ids: list[int], text: str) -> None:
         seen.add(chat_id)
         send_notification(chat_id, text)
 
+
+
+# ---------------------------------------------------------------------------
+# Automatic booking reminders
+# ---------------------------------------------------------------------------
+_REMINDER_THREAD: threading.Thread | None = None
+_REMINDER_STOP = threading.Event()
+
+
+def _app_timezone() -> ZoneInfo:
+    name = os.getenv("APP_TIMEZONE", "Asia/Almaty").strip() or "Asia/Almaty"
+    try:
+        return ZoneInfo(name)
+    except Exception:
+        return ZoneInfo("Asia/Almaty")
+
+
+def _booking_datetime(row: dict) -> datetime:
+    return datetime.combine(row["booking_date"], row["booking_time"]).replace(tzinfo=_app_timezone())
+
+
+def _reminder_client_text(row: dict, kind: str, *, test: bool = False) -> str:
+    prefix = "🧪 ТЕСТ · клиентское напоминание\n\n" if test else ""
+    if kind == "client_24h":
+        title = "Напоминаем о вашей записи завтра"
+    else:
+        title = "Ждём вас сегодня"
+    return (
+        f"{prefix}MED AESTHETIC\n\n"
+        f"{title}\n"
+        f"{row['service_name']}\n"
+        f"{row['booking_date'].strftime('%d.%m.%Y')} в {row['booking_time'].strftime('%H:%M')}\n"
+        f"Мастер: {row.get('master_name') or 'Людмила'}"
+    )
+
+
+def _reminder_admin_text(row: dict, *, test: bool = False) -> str:
+    prefix = "🧪 ТЕСТ · напоминание администратору\n\n" if test else ""
+    client = row.get("client_name") or row.get("first_name") or (f"@{row['username']}" if row.get("username") else "Клиент")
+    phone = row.get("phone") or "не указан"
+    return (
+        f"{prefix}⏰ Запись через 1 час\n\n"
+        f"Клиент: {client}\n"
+        f"Услуга: {row['service_name']}\n"
+        f"Время: {row['booking_time'].strftime('%H:%M')}\n"
+        f"Телефон: {phone}\n"
+        f"Запись #{row['id']}"
+    )
+
+
+def _today_admin_summary_text(rows: list[dict], *, test: bool = False) -> str:
+    prefix = "🧪 ТЕСТ · утренняя сводка\n\n" if test else ""
+    if not rows:
+        return f"{prefix}MED AESTHETIC\n\nНа сегодня подтверждённых записей нет."
+    lines = [f"{prefix}MED AESTHETIC", "", f"Записи на сегодня: {len(rows)}", ""]
+    for row in rows:
+        client = row.get("client_name") or row.get("first_name") or (f"@{row['username']}" if row.get("username") else "Клиент")
+        lines.append(f"{row['booking_time'].strftime('%H:%M')} · {client} · {row['service_name']}")
+    return "\n".join(lines)
+
+
+def _claim_reminder(event_key: str, reminder_type: str, recipient_id: int, booking_id: int | None = None) -> bool:
+    with db() as conn:
+        row = conn.execute(
+            """
+            INSERT INTO beauty_reminder_log(event_key, reminder_type, booking_id, recipient_id)
+            VALUES (%s,%s,%s,%s)
+            ON CONFLICT (event_key) DO NOTHING
+            RETURNING event_key
+            """,
+            (event_key, reminder_type, booking_id, int(recipient_id)),
+        ).fetchone()
+    return bool(row)
+
+
+def _finish_reminder(event_key: str) -> None:
+    with db() as conn:
+        conn.execute("UPDATE beauty_reminder_log SET sent_at=NOW() WHERE event_key=%s", (event_key,))
+
+
+def _release_reminder(event_key: str) -> None:
+    with db() as conn:
+        conn.execute("DELETE FROM beauty_reminder_log WHERE event_key=%s AND sent_at IS NULL", (event_key,))
+
+
+def _send_logged_reminder(event_key: str, reminder_type: str, recipient_id: int, text: str, booking_id: int | None = None) -> None:
+    if not _claim_reminder(event_key, reminder_type, recipient_id, booking_id):
+        return
+    try:
+        _send_message(int(recipient_id), text, with_app_button=True)
+        _finish_reminder(event_key)
+    except Exception:
+        _release_reminder(event_key)
+        raise
+
+
+def _confirmed_booking_rows(start_date: date, end_date: date) -> list[dict]:
+    with db() as conn:
+        rows = conn.execute(
+            """
+            SELECT id, telegram_user_id, first_name, username, client_name, phone,
+                   service_name, master_name, booking_date, booking_time, status
+            FROM beauty_bookings
+            WHERE status='confirmed'
+              AND booking_date BETWEEN %s AND %s
+            ORDER BY booking_date, booking_time, id
+            """,
+            (start_date, end_date),
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def _staff_ids() -> list[int]:
+    return [int(x["telegram_user_id"]) for x in list_role_users() if str(x.get("role")) in {"creator", "admin"}]
+
+
+def run_due_reminders_once(now: datetime | None = None) -> None:
+    tz = _app_timezone()
+    now = (now or datetime.now(tz)).astimezone(tz)
+    rows = _confirmed_booking_rows(now.date(), (now + timedelta(days=2)).date())
+    staff_ids = _staff_ids()
+
+    for row in rows:
+        booking_at = _booking_datetime(row)
+        seconds = (booking_at - now).total_seconds()
+        if seconds <= 0:
+            continue
+        stamp = f"{row['booking_date'].isoformat()}-{row['booking_time'].strftime('%H%M')}"
+        client_id = row.get("telegram_user_id")
+
+        # Client: one reminder in the 24h→2h window, then one in the final 2h.
+        if client_id and 2 * 3600 < seconds <= 24 * 3600:
+            key = f"booking:{row['id']}:{stamp}:client24:{int(client_id)}"
+            _send_logged_reminder(key, "client_24h", int(client_id), _reminder_client_text(row, "client_24h"), int(row["id"]))
+        elif client_id and 0 < seconds <= 2 * 3600:
+            key = f"booking:{row['id']}:{stamp}:client2:{int(client_id)}"
+            _send_logged_reminder(key, "client_2h", int(client_id), _reminder_client_text(row, "client_2h"), int(row["id"]))
+
+        # Staff: one hour before the booking.
+        if 0 < seconds <= 3600:
+            for staff_id in staff_ids:
+                key = f"booking:{row['id']}:{stamp}:admin1:{staff_id}"
+                _send_logged_reminder(key, "admin_1h", staff_id, _reminder_admin_text(row), int(row["id"]))
+
+    # Daily summary, once per staff member after 08:00 local time.
+    if now.time() >= dt_time(8, 0):
+        today_rows = [r for r in rows if r["booking_date"] == now.date()]
+        if today_rows:
+            for staff_id in staff_ids:
+                key = f"daily:{now.date().isoformat()}:summary:{staff_id}"
+                _send_logged_reminder(key, "admin_daily", staff_id, _today_admin_summary_text(today_rows))
+
+
+def _reminder_worker_loop() -> None:
+    # Small initial delay lets startup/database migrations finish first.
+    if _REMINDER_STOP.wait(5):
+        return
+    while not _REMINDER_STOP.is_set():
+        try:
+            run_due_reminders_once()
+        except Exception as exc:
+            print(f"[reminders] cycle failed: {exc}")
+        _REMINDER_STOP.wait(60)
+
+
+def start_reminder_worker() -> None:
+    global _REMINDER_THREAD
+    if _REMINDER_THREAD and _REMINDER_THREAD.is_alive():
+        return
+    _REMINDER_STOP.clear()
+    _REMINDER_THREAD = threading.Thread(target=_reminder_worker_loop, name="beauty-reminders", daemon=True)
+    _REMINDER_THREAD.start()
+    print("[reminders] worker started")
+
+
+def send_test_reminder(kind: str, booking_id: int | None, creator_chat_id: int) -> dict:
+    allowed = {"client_24h", "client_2h", "admin_1h", "admin_daily"}
+    if kind not in allowed:
+        raise ValueError("Неизвестный тип тестового напоминания")
+
+    today = datetime.now(_app_timezone()).date()
+    if kind == "admin_daily":
+        rows = _confirmed_booking_rows(today, today)
+        _send_message(int(creator_chat_id), _today_admin_summary_text(rows, test=True), with_app_button=True)
+        return {"ok": True, "recipient": int(creator_chat_id), "kind": kind}
+
+    if not booking_id:
+        raise ValueError("Выберите запись для теста")
+    with db() as conn:
+        row = conn.execute(
+            """
+            SELECT id, telegram_user_id, first_name, username, client_name, phone,
+                   service_name, master_name, booking_date, booking_time, status
+            FROM beauty_bookings WHERE id=%s
+            """,
+            (int(booking_id),),
+        ).fetchone()
+    if not row:
+        raise ValueError("Запись не найдена")
+    row = dict(row)
+
+    if kind in {"client_24h", "client_2h"}:
+        client_id = row.get("telegram_user_id")
+        if not client_id:
+            raise ValueError("У этой записи нет привязанного Telegram клиента")
+        _send_message(int(client_id), _reminder_client_text(row, kind, test=True), with_app_button=True)
+        return {"ok": True, "recipient": int(client_id), "kind": kind}
+
+    _send_message(int(creator_chat_id), _reminder_admin_text(row, test=True), with_app_button=True)
+    return {"ok": True, "recipient": int(creator_chat_id), "kind": kind}
 
 
 def _admin_request_phrase() -> str:

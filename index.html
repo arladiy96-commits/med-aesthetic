@@ -377,7 +377,8 @@ button:disabled.is-busy{
     adminSlotDate: null,
     adminSlotTime: null,
     adminClientKey: null,
-    adminBlocksLoading: false
+    adminBlocksLoading: false,
+    reminderTestSending: ""
   };
 
   const HERO_EXACT_CARD = "/assets/hero.webp";
@@ -707,6 +708,13 @@ button:disabled.is-busy{
     const data = await res.json().catch(()=>({}));
     if(!res.ok) throw new Error(data.detail || data.error || "Ошибка сервера");
     return data;
+  }
+
+  async function reminderTestApi(kind, bookingId=null){
+    return accessApi("/admin/reminder-tests/send",{
+      method:"POST",
+      body:JSON.stringify({kind,booking_id:bookingId?Number(bookingId):null})
+    });
   }
 
   async function serviceCatalogApi(){
@@ -2397,8 +2405,57 @@ button:disabled.is-busy{
     </div>`;
   }
 
+  function adminReminderTestsView(){
+    if(S.actualRole!=="creator")return adminMoreView();
+    const upcoming=adminBookings
+      .filter(b=>String(b.status)==="confirmed" && `${b.date||""}T${b.time||"00:00"}`>=`${todayISO()}T00:00`)
+      .sort((a,b)=>`${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`))
+      .slice(0,12);
+    const rows=upcoming.length?upcoming.map(b=>{
+      const client=b.clientName||b.clientTelegramName||(b.clientUsername?`@${b.clientUsername}`:"Клиент");
+      const noTelegram=!b.telegramUserId;
+      return `<section class="reminder-test-card">
+        <div class="reminder-test-copy"><b>${esc(b.date)} · ${esc(b.time)}</b><strong>${esc(client)}</strong><small>${esc(b.serviceName||"Запись")}</small></div>
+        <div class="reminder-test-actions">
+          <button ${noTelegram?'disabled':''} onclick="Beauty.sendReminderTest('client_24h','${b.id}',this)">Клиенту · 24 ч</button>
+          <button ${noTelegram?'disabled':''} onclick="Beauty.sendReminderTest('client_2h','${b.id}',this)">Клиенту · 2 ч</button>
+          <button onclick="Beauty.sendReminderTest('admin_1h','${b.id}',this)">Мне · 1 ч</button>
+        </div>
+        ${noTelegram?`<p>Telegram клиента не привязан — клиентский тест недоступен.</p>`:""}
+      </section>`;
+    }).join(""):`<div class="admin-empty">Нет будущих подтверждённых записей для теста.</div>`;
+    return `<main class="admin-page admin-more-page admin-reminder-tests-page">${adminHeader()}
+      <div class="admin-date-row"><div><h1>Тест напоминаний</h1><p>Только для создателя · тестовые сообщения помечены</p></div><button class="admin-link" onclick="Beauty.go('admin-more')">Назад</button></div>
+      <section class="reminder-test-summary"><div><b>Утренняя сводка</b><small>Отправится только вам, как создателю</small></div><button onclick="Beauty.sendReminderTest('admin_daily',null,this)">Проверить</button></section>
+      <div class="reminder-test-note">Кнопки «Клиенту» отправляют тест реальному Telegram-клиенту выбранной записи. Автоматические напоминания и их отметки при этом не затрагиваются.</div>
+      <div class="reminder-test-list">${rows}</div>
+    </main>${adminNav("admin-more")}${roleSheet()}`;
+  }
+
+  async function sendReminderTest(kind,bookingId=null,button=null){
+    if(S.actualRole!=="creator")return;
+    const old=button?.textContent||"";
+    if(button){button.disabled=true;button.textContent="Отправляем…"}
+    try{
+      await reminderTestApi(kind,bookingId);
+      toast(kind.startsWith("client_")?"Тест отправлен клиенту":"Тест отправлен вам в Telegram");
+      haptic("medium");
+    }catch(e){
+      toast(e.message||"Не удалось отправить тест");
+    }finally{
+      if(button){button.disabled=false;button.textContent=old}
+    }
+  }
+
+  async function openAdminReminderTests(){
+    if(S.actualRole!=="creator")return;
+    S.view="admin-reminder-tests";
+    render();
+    await loadAdminBookings(true);
+  }
+
   function adminMoreView(){
-    const creatorItem=S.actualRole==="creator"?`<button onclick="Beauty.openAdminAccess()"><span class="ico">♛</span><div><b>Администраторы</b><small>Telegram ID и права доступа</small></div><span class="go">›</span></button>`:"";
+    const creatorItem=S.actualRole==="creator"?`<button onclick="Beauty.openAdminAccess()"><span class="ico">♛</span><div><b>Администраторы</b><small>Telegram ID и права доступа</small></div><span class="go">›</span></button><button onclick="Beauty.openAdminReminderTests()"><span class="ico">⏰</span><div><b>Тест напоминаний</b><small>Проверка клиентских и админских сообщений</small></div><span class="go">›</span></button>`:"";
     return `<main class="admin-page admin-more-page">${adminHeader()}<div class="admin-date-row"><div><h1>Ещё</h1><p>Управление студией</p></div></div><div class="admin-menu">
       <button onclick="Beauty.openAdminServices()"><span class="ico">⌘</span><div><b>Услуги</b><small>Описание, цены и доступность</small></div><span class="go">›</span></button>
       <button onclick="Beauty.go('admin-finance')"><span class="ico">₸</span><div><b>Выручка и аналитика</b><small>Отдельно от рабочей главной</small></div><span class="go">›</span></button>
@@ -2829,6 +2886,7 @@ button:disabled.is-busy{
     else if(S.view==="admin-services")html=adminServicesView();
     else if(S.view==="admin-access")html=adminAccessView();
     else if(S.view==="admin-finance")html=adminFinanceView();
+    else if(S.view==="admin-reminder-tests")html=adminReminderTestsView();
     else if(S.view==="home")html=home();
     else if(S.view==="services")html=servicesView();
     else if(S.view==="service")html=serviceDetail();
@@ -3196,6 +3254,8 @@ button:disabled.is-busy{
       render();
       await Promise.all([loadAdmins(true),loadAdminAccessRequests(true)]);
     },
+    openAdminReminderTests,
+    sendReminderTest,
     loadAdmins(){return loadAdmins(false)},
     loadAdminAccessRequests(){return loadAdminAccessRequests(false)},
     decideAdminAccessRequest,

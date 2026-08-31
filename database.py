@@ -528,6 +528,28 @@ def init_db() -> None:
             """
         )
 
+        # Idempotency ledger for automatic Telegram reminders.  The event key
+        # includes the current booking date/time, so a rescheduled booking can
+        # legitimately receive a fresh set of reminders.
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS beauty_reminder_log (
+                event_key TEXT PRIMARY KEY,
+                reminder_type TEXT NOT NULL,
+                booking_id BIGINT,
+                recipient_id BIGINT NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                sent_at TIMESTAMPTZ
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_beauty_reminder_log_booking
+            ON beauty_reminder_log (booking_id, reminder_type)
+            """
+        )
+
         conn.execute(
             """
             CREATE UNIQUE INDEX IF NOT EXISTS uq_beauty_master_slot_active

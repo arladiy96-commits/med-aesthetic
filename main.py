@@ -11,6 +11,7 @@ from bot import (
     bot_webhook_enabled,
     router as telegram_router,
     setup_telegram_webhook,
+    start_reminder_worker,
 )
 from database import database_status, init_db
 
@@ -44,6 +45,7 @@ def startup() -> None:
     # This removes the Neon round-trip from every Mini App opening.
     warm_service_catalog_cache()
     setup_telegram_webhook()
+    start_reminder_worker()
 
 
 @app.middleware("http")
