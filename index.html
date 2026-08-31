@@ -2182,7 +2182,7 @@ button:disabled.is-busy{
             <i>›</i>
           </button>
           <div class="admin-next-actions">
-            ${phone?`<button onclick="Beauty.callBookingClient('${next.id}')">Позвонить</button>`:""}
+            ${phone?`<button onclick="Beauty.callBookingClient('${next.id}')">Скопировать номер</button>`:""}
             ${next.clientUsername?`<button onclick="Beauty.messageBookingClient('${next.id}')">Telegram</button>`:""}
             <button onclick="Beauty.openAdminBooking('${next.id}')">Открыть</button>
           </div>`:`<div class="admin-next-empty"><b>Ближайших записей нет</b><span>Можно добавить запись вручную.</span></div>`}
@@ -2499,7 +2499,7 @@ button:disabled.is-busy{
       <div class="admin-booking-details"><div><span>Дата</span><b>${esc(bookingPrettyDate(b.date))}</b></div><div><span>Время</span><b>${esc(b.time||"—")}</b></div><div><span>Мастер</span><b>${esc(b.masterName||"Людмила")}</b></div><div><span>Статус</span><b>${esc(bookingStatusRu(status))}</b></div></div>
       <label class="admin-booking-note"><span>Заметка к этой записи</span><textarea id="adminBookingNote" maxlength="2000" rows="3" placeholder="Например: просила позвонить перед визитом">${esc(b.note||"")}</textarea><button onclick="Beauty.saveAdminBookingNote('${b.id}',this)">Сохранить заметку</button></label>
       <div class="admin-booking-actions">
-        ${phone?`<a class="booking-action contact" href="tel:${esc(phone.replace(/[^+\d]/g,""))}" onclick="Beauty.haptic()">Позвонить · ${esc(phone)}</a>`:""}
+        ${phone?`<button class="booking-action contact" onclick="Beauty.callBookingClient(\'${b.id}\')">Скопировать номер · ${esc(phone)}</button>`:""}
         ${b.clientUsername?`<button class="booking-action contact" onclick="Beauty.messageBookingClient('${b.id}')">Написать в Telegram</button>`:""}
         ${isActiveAdminBooking(b)?`<button class="booking-action neutral" onclick="Beauty.openAdminReschedule('${b.id}')">Перенести запись</button>`:""}
         ${status==="pending"?`<button class="booking-action confirm" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','confirmed',this)">Подтвердить запись</button><button class="booking-action danger" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','cancelled',this)">Отклонить заявку</button>`:""}
@@ -2565,7 +2565,7 @@ button:disabled.is-busy{
   function closeAdminClient(){S.adminClientKey=null;render()}
   function openBookingFromClient(id){S.adminClientKey=null;S.adminBookingId=String(id);render()}
   function createBookingForClient(token){const key=adminClientKeyFromToken(token);S.adminClientKey=null;openAdminCreateBooking("","",key)}
-  function callClientByKey(token){const key=adminClientKeyFromToken(token);const c=adminClientByKey(key);if(!c?.phone){toast("Номер телефона не указан");return}window.location.href="tel:"+String(c.phone).replace(/[^+\d]/g,"");haptic()}
+  function callClientByKey(token){const key=adminClientKeyFromToken(token);const c=adminClientByKey(key);if(!c?.phone){toast("Номер телефона не указан");return}copyPhoneToClipboard(c.phone)}
   function messageClientByKey(token){const key=adminClientKeyFromToken(token);const c=adminClientByKey(key);if(!openClientTelegram(c?.username,c?.telegramUserId)){toast("Telegram клиента не привязан");return}haptic()}
   async function saveAdminClientNote(token,button=null){const key=adminClientKeyFromToken(token);const note=String(document.querySelector("#adminClientNote")?.value||"").trim();setActionButtonBusy(button,"Сохраняем…");try{const data=await adminClientNotesApi("/"+encodeURIComponent(key),{method:"PUT",body:JSON.stringify({note})});adminClientNotes[key]=data.note||"";restoreActionButton(button);toast("Заметка клиента сохранена");haptic()}catch(e){restoreActionButton(button);toast(e.message||"Не удалось сохранить заметку")}}
 
@@ -2746,25 +2746,37 @@ button:disabled.is-busy{
     haptic();
   }
 
+  async function copyPhoneToClipboard(phone){
+    const value=String(phone||"").trim();
+    if(!value){toast("Номер телефона не указан");return false}
+    try{
+      if(navigator.clipboard?.writeText){
+        await navigator.clipboard.writeText(value);
+      }else{
+        const input=document.createElement("textarea");
+        input.value=value;
+        input.setAttribute("readonly","");
+        input.style.position="fixed";
+        input.style.opacity="0";
+        document.body.appendChild(input);
+        input.select();
+        const ok=document.execCommand("copy");
+        input.remove();
+        if(!ok)throw new Error("copy failed");
+      }
+      toast("Номер скопирован");
+      haptic();
+      return true;
+    }catch(e){
+      toast("Не удалось скопировать номер");
+      return false;
+    }
+  }
+
   function callBookingClient(id){
-    const b=adminBookings.find(x=>String(x.id)===String(id));
-    const phone=String(b?.clientPhone||"").trim();
-    if(!phone){
-      toast("Номер телефона не указан");
-      return;
-    }
-    const dial=phone.replace(/[^+\d]/g,"");
-    if(!dial){
-      toast("Номер телефона указан неверно");
-      return;
-    }
-    const link=document.createElement("a");
-    link.href="tel:"+dial;
-    link.style.display="none";
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    haptic();
+    const b=serverBookings.find(x=>String(x.id)===String(id));
+    if(!b){toast("Запись не найдена");return}
+    copyPhoneToClipboard(b.clientPhone||"");
   }
 
   function bookingInfo(id){
