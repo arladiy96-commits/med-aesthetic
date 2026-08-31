@@ -183,6 +183,99 @@ button:disabled.is-busy{
 
 
 
+
+<style id="booking-success-effect-css">
+  .booking-success-effect{
+    position:fixed;
+    inset:0;
+    z-index:99999;
+    display:grid;
+    place-items:center;
+    pointer-events:none;
+    opacity:0;
+    background:
+      radial-gradient(circle at 50% 48%, rgba(204,165,92,.18) 0%, rgba(115,76,160,.10) 28%, rgba(8,7,12,0) 64%);
+    backdrop-filter:blur(0px);
+    -webkit-backdrop-filter:blur(0px);
+    animation:bookingSuccessFade 1250ms ease-out forwards;
+  }
+  .booking-success-effect::before{
+    content:"";
+    position:absolute;
+    width:56vmax;
+    height:56vmax;
+    max-width:560px;
+    max-height:560px;
+    border-radius:50%;
+    border:1px solid rgba(220,185,118,.22);
+    box-shadow:
+      0 0 60px rgba(198,158,83,.12),
+      inset 0 0 55px rgba(118,76,158,.08);
+    transform:scale(.72);
+    opacity:0;
+    animation:bookingSuccessHalo 1100ms cubic-bezier(.2,.75,.25,1) forwards;
+  }
+  .booking-success-mark{
+    position:relative;
+    width:86px;
+    height:86px;
+    border-radius:50%;
+    display:grid;
+    place-items:center;
+    background:rgba(17,14,23,.82);
+    border:1px solid rgba(220,185,118,.42);
+    box-shadow:
+      0 14px 45px rgba(0,0,0,.34),
+      0 0 36px rgba(200,160,83,.15),
+      inset 0 0 24px rgba(126,82,162,.08);
+    transform:translateY(8px) scale(.9);
+    opacity:0;
+    animation:bookingSuccessMark 620ms cubic-bezier(.2,.85,.25,1) 90ms forwards;
+  }
+  .booking-success-mark svg{
+    width:42px;
+    height:42px;
+    overflow:visible;
+  }
+  .booking-success-mark path{
+    fill:none;
+    stroke:#e6c983;
+    stroke-width:2.1;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+    stroke-dasharray:44;
+    stroke-dashoffset:44;
+    filter:drop-shadow(0 0 7px rgba(230,201,131,.28));
+    animation:bookingSuccessTick 430ms ease-out 250ms forwards;
+  }
+  @keyframes bookingSuccessFade{
+    0%{opacity:0}
+    14%{opacity:1}
+    72%{opacity:1}
+    100%{opacity:0}
+  }
+  @keyframes bookingSuccessHalo{
+    0%{opacity:0;transform:scale(.72)}
+    24%{opacity:1}
+    100%{opacity:0;transform:scale(1.16)}
+  }
+  @keyframes bookingSuccessMark{
+    to{opacity:1;transform:translateY(0) scale(1)}
+  }
+  @keyframes bookingSuccessTick{
+    to{stroke-dashoffset:0}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .booking-success-effect,
+    .booking-success-effect::before,
+    .booking-success-mark,
+    .booking-success-mark path{
+      animation-duration:1ms !important;
+      animation-delay:0ms !important;
+    }
+  }
+</style>
+
 </head>
 <body>
   <div id="app"></div>
@@ -2781,6 +2874,21 @@ button:disabled.is-busy{
     copyPhoneToClipboard(b.clientPhone||"");
   }
 
+
+  function showBookingSuccessEffect(){
+    document.querySelector(".booking-success-effect")?.remove();
+    const effect=document.createElement("div");
+    effect.className="booking-success-effect";
+    effect.setAttribute("aria-hidden","true");
+    effect.innerHTML=`<div class="booking-success-mark">
+      <svg viewBox="0 0 48 48" aria-hidden="true">
+        <path d="M13.5 24.5 21 32l14-16"/>
+      </svg>
+    </div>`;
+    document.body.appendChild(effect);
+    window.setTimeout(()=>effect.remove(),1300);
+  }
+
   function bookingInfo(id){
     const b=serverBookings.find(x=>String(x.id)===String(id));
     if(!b){toast("Запись из истории");return}
@@ -3503,6 +3611,7 @@ button:disabled.is-busy{
         bookingSubmitPending=false;
         S.view="confirm";
         render();
+        requestAnimationFrame(()=>showBookingSuccessEffect());
         haptic("medium");
       }catch(e){
         bookingSubmitPending=false;
