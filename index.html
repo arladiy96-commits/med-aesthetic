@@ -1777,11 +1777,52 @@ button:disabled.is-busy{
   }
 
   /* ===== CLIENT HISTORY MODULE — css/history.css ===== */
+  function historyCard(b){
+    const d=bookingDisplayData(b);
+    return `<button class="history-record-card history-status-${esc(d.status)}" onclick="Beauty.bookingInfo('${b.id}')">
+      <div class="history-record-photo">
+        ${d.image?`<img src="${esc(d.image)}" alt="${esc(d.serviceName)}" loading="lazy" decoding="async">`:`<div class="history-photo-empty">MED</div>`}
+      </div>
+      <div class="history-record-copy">
+        <h3>${esc(d.serviceName)}</h3>
+        <div class="history-record-line">
+          <span>${bookingMetaIcon("calendar")}</span>
+          <b>${esc(d.date)} · ${esc(d.time)}</b>
+        </div>
+        <div class="history-record-line">
+          <span>${bookingMetaIcon("person")}</span>
+          <b>Мастер: ${esc(d.masterName)}</b>
+        </div>
+        <div class="history-record-line history-price-line">
+          <span>${bookingMetaIcon("price")}</span>
+          <b>${esc(d.price)}</b>
+        </div>
+      </div>
+      <span class="history-status">${esc(d.statusText)}</span>
+      <span class="history-chevron" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg>
+      </span>
+    </button>`;
+  }
+
   function historyView(){
-    const done=serverBookings.filter(b=>["completed","cancelled","no_show"].includes(String(b.status||"")));
+    const done=serverBookings
+      .filter(b=>["completed","cancelled","no_show"].includes(String(b.status||"")))
+      .slice()
+      .sort((a,b)=>`${b.date||""}T${b.time||""}`.localeCompare(`${a.date||""}T${a.time||""}`));
+
     return `<main class="page page-history">${topbar()}
-      <h1 class="page-title">История</h1><p class="page-sub">Прошлые посещения и изменения записей.</p>
-      ${done.length?done.map(b=>bookingCard(b,true)).join(""):`<div class="empty">История пока пуста.</div>`}
+      <section class="history-heading">
+        <h1>История</h1>
+        <p>Прошлые посещения и изменения записей.</p>
+      </section>
+      ${done.length
+        ? `<div class="history-records-list">${done.map(historyCard).join("")}</div>`
+        : `<div class="history-empty">
+            <div class="history-empty-mark">◷</div>
+            <h2>История пока пуста</h2>
+            <p>Здесь появятся завершённые и отменённые записи.</p>
+          </div>`}
     </main>${nav("history")}`;
   }
 
