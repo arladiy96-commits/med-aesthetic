@@ -2754,7 +2754,16 @@ button:disabled.is-busy{
       return;
     }
     const dial=phone.replace(/[^+\d]/g,"");
-    window.location.href="tel:"+dial;
+    if(!dial){
+      toast("Номер телефона указан неверно");
+      return;
+    }
+    const link=document.createElement("a");
+    link.href="tel:"+dial;
+    link.style.display="none";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
     haptic();
   }
 
