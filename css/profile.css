@@ -10,3 +10,203 @@
   font-weight:500;
   letter-spacing:.01em;
 }
+
+/* PROFILE MAIN — premium visual redesign only.
+   Functionality of menu buttons is unchanged. */
+
+.page-profile.profile-main{
+  padding-left:15px;
+  padding-right:15px;
+  padding-bottom:150px;
+}
+
+.page-profile.profile-main .profile-head{
+  position:relative;
+  display:flex;
+  align-items:center;
+  gap:17px;
+  margin:20px 0 24px;
+  padding:18px;
+  border:1px solid rgba(194,169,221,.14);
+  border-radius:26px;
+  background:
+    radial-gradient(circle at 12% 15%,rgba(130,72,176,.14),transparent 34%),
+    linear-gradient(145deg,rgba(24,19,31,.98),rgba(12,10,17,.98));
+  box-shadow:
+    0 16px 38px rgba(0,0,0,.24),
+    inset 0 1px 0 rgba(255,255,255,.045);
+  overflow:hidden;
+}
+
+.page-profile.profile-main .profile-head::after{
+  content:"";
+  position:absolute;
+  left:26px;
+  right:26px;
+  bottom:0;
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(216,181,105,.35),transparent);
+}
+
+.page-profile.profile-main .profile-avatar{
+  width:78px;
+  height:78px;
+  flex:0 0 78px;
+  border-radius:24px;
+  object-fit:cover;
+  border:1px solid rgba(222,186,108,.42);
+  background:#17131c;
+  box-shadow:
+    0 8px 22px rgba(0,0,0,.26),
+    0 0 0 4px rgba(215,181,106,.045),
+    inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+.page-profile.profile-main .profile-head>div{
+  min-width:0;
+}
+
+.page-profile.profile-main .profile-head h2{
+  margin:0;
+  color:#f4eff8;
+  font-size:25px;
+  line-height:1.05;
+  font-weight:800;
+  letter-spacing:-.025em;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.page-profile.profile-main .profile-head .profile-phone{
+  margin:9px 0 0;
+  color:#a49cac;
+  font-size:13px;
+  line-height:1.25;
+  font-weight:500;
+  letter-spacing:.015em;
+}
+
+.page-profile.profile-main .menu-list{
+  display:grid;
+  gap:10px;
+  margin:0;
+  padding:0;
+  border:0;
+  background:none;
+  box-shadow:none;
+  overflow:visible;
+}
+
+.page-profile.profile-main .menu-item{
+  position:relative;
+  min-height:68px;
+  display:grid;
+  grid-template-columns:42px minmax(0,1fr) auto;
+  align-items:center;
+  gap:12px;
+  width:100%;
+  margin:0;
+  padding:12px 15px 12px 12px;
+  border:1px solid rgba(184,166,200,.13);
+  border-radius:20px;
+  background:
+    radial-gradient(circle at 9% 50%,rgba(116,69,151,.075),transparent 25%),
+    linear-gradient(145deg,rgba(21,18,27,.98),rgba(13,11,18,.98));
+  color:#f0ebf4;
+  text-align:left;
+  box-shadow:
+    0 9px 24px rgba(0,0,0,.16),
+    inset 0 1px 0 rgba(255,255,255,.032);
+  overflow:hidden;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.page-profile.profile-main .menu-item::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:16px;
+  bottom:16px;
+  width:2px;
+  border-radius:0 3px 3px 0;
+  background:linear-gradient(180deg,rgba(225,190,111,.15),rgba(225,190,111,.62),rgba(225,190,111,.15));
+  opacity:.72;
+}
+
+.page-profile.profile-main button.menu-item:active{
+  transform:translateY(1px) scale(.995);
+  border-color:rgba(219,184,108,.24);
+}
+
+.page-profile.profile-main .menu-item .mi{
+  width:42px;
+  height:42px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(215,181,106,.18);
+  border-radius:14px;
+  background:
+    linear-gradient(145deg,rgba(73,54,91,.32),rgba(29,23,36,.84));
+  color:#d8b568;
+  font-size:16px;
+  font-weight:700;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.04),
+    0 5px 12px rgba(0,0,0,.12);
+}
+
+.page-profile.profile-main .menu-item b{
+  min-width:0;
+  color:#eee9f2;
+  font-size:14.5px;
+  line-height:1.2;
+  font-weight:700;
+  letter-spacing:-.005em;
+}
+
+.page-profile.profile-main .menu-item>span:last-child{
+  color:#8e8795;
+  font-size:13px;
+  line-height:1;
+  white-space:nowrap;
+}
+
+.page-profile.profile-main .menu-item:nth-child(3)>span:last-child{
+  color:#d8b568;
+}
+
+@media (max-width:390px){
+  .page-profile.profile-main .profile-head{
+    gap:14px;
+    padding:16px;
+  }
+
+  .page-profile.profile-main .profile-avatar{
+    width:70px;
+    height:70px;
+    flex-basis:70px;
+    border-radius:22px;
+  }
+
+  .page-profile.profile-main .profile-head h2{
+    font-size:23px;
+  }
+
+  .page-profile.profile-main .menu-item{
+    min-height:64px;
+    grid-template-columns:39px minmax(0,1fr) auto;
+    gap:10px;
+    padding-right:13px;
+  }
+
+  .page-profile.profile-main .menu-item .mi{
+    width:39px;
+    height:39px;
+    border-radius:13px;
+  }
+
+  .page-profile.profile-main .menu-item b{
+    font-size:13.5px;
+  }
+}
