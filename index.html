@@ -851,50 +851,58 @@ button:disabled.is-busy{
 <style id="sticky-action-above-nav-css">
   .sticky-action{
     position:fixed !important;
-    z-index:1200 !important;
+    z-index:2147483000 !important;
     left:50% !important;
     right:auto !important;
     top:auto !important;
 
-    width:min(calc(100vw - 60px), 560px) !important;
+    width:min(calc(100vw - 60px),560px) !important;
     margin:0 !important;
     padding:0 !important;
     transform:translateX(-50%) !important;
 
-    /* Поднято выше панели, чтобы нижнее скругление кнопки
-       было полностью видно и ничем не перекрывалось. */
+    /* ВАЖНО: кнопка теперь не касается верхней области bottom-nav.
+       Оставляем отдельный видимый зазор под всем скруглением. */
     bottom:calc(
-      122px
-      + max(env(safe-area-inset-bottom,0px), var(--tg-safe-bottom,0px))
+      142px
+      + max(env(safe-area-inset-bottom,0px),var(--tg-safe-bottom,0px))
     ) !important;
 
-    background:transparent !important;
+    background:none !important;
+    box-shadow:none !important;
     backdrop-filter:none !important;
     -webkit-backdrop-filter:none !important;
     pointer-events:none !important;
     overflow:visible !important;
+    contain:none !important;
   }
 
   .sticky-action > *{
-    width:100% !important;
-    margin:0 !important;
     pointer-events:auto !important;
   }
 
   .sticky-action .btn-primary{
-    position:relative !important;
-    display:block !important;
+    box-sizing:border-box !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
     width:100% !important;
+    height:58px !important;
     min-height:58px !important;
+    max-height:none !important;
+    margin:0 !important;
+    padding:0 18px !important;
     border-radius:22px !important;
-    overflow:visible !important;
+    overflow:hidden !important;
     clip-path:none !important;
+    -webkit-mask-image:none !important;
+    mask-image:none !important;
   }
 
   .page{
     padding-bottom:calc(
-      210px
-      + max(env(safe-area-inset-bottom,0px), var(--tg-safe-bottom,0px))
+      228px
+      + max(env(safe-area-inset-bottom,0px),var(--tg-safe-bottom,0px))
     ) !important;
   }
 
@@ -902,8 +910,8 @@ button:disabled.is-busy{
     .sticky-action{
       width:calc(100vw - 60px) !important;
       bottom:calc(
-        116px
-        + max(env(safe-area-inset-bottom,0px), var(--tg-safe-bottom,0px))
+        136px
+        + max(env(safe-area-inset-bottom,0px),var(--tg-safe-bottom,0px))
       ) !important;
     }
   }
