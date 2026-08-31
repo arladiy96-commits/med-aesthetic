@@ -363,6 +363,8 @@ button:disabled.is-busy{
     adminDate: null,
     admins: [],
     adminsLoading: false,
+    adminAccessRequests: [],
+    adminAccessRequestsLoading: false,
     adminInviteLink: "",
     adminBookingId: null,
     adminServiceId: null,
@@ -911,6 +913,39 @@ button:disabled.is-busy{
     }finally{
       S.adminsLoading=false;
       if(S.view==="admin-access")backgroundRender();
+    }
+  }
+
+
+  async function loadAdminAccessRequests(silent=false){
+    if(S.actualRole!=="creator")return;
+    S.adminAccessRequestsLoading=true;
+    if(!silent&&S.view==="admin-access")render();
+    try{
+      const data=await accessApi("/admin-access-requests");
+      S.adminAccessRequests=Array.isArray(data.requests)?data.requests:[];
+    }catch(e){
+      if(!silent)toast(e.message||"Не удалось загрузить заявки");
+    }finally{
+      S.adminAccessRequestsLoading=false;
+      if(S.view==="admin-access")backgroundRender();
+    }
+  }
+
+  async function decideAdminAccessRequest(id,decision){
+    if(S.actualRole!=="creator")return;
+    const action=decision==="approve"?"approve":"reject";
+    try{
+      await accessApi(`/admin-access-requests/${encodeURIComponent(id)}/${action}`,{
+        method:"POST",
+        body:"{}"
+      });
+      await Promise.all([loadAdminAccessRequests(true),loadAdmins(true)]);
+      render();
+      toast(action==="approve"?"Права администратора выданы":"Заявка отклонена");
+      haptic("medium");
+    }catch(e){
+      toast(e.message||"Не удалось обработать заявку");
     }
   }
 
@@ -2217,21 +2252,35 @@ button:disabled.is-busy{
       return adminMoreView();
     }
     const admins=Array.isArray(S.admins)?S.admins:[];
+    const requests=Array.isArray(S.adminAccessRequests)?S.adminAccessRequests:[];
     return `<main class="admin-page admin-access-page">${adminHeader()}
       <div class="admin-date-row">
-        <div><h1>Администраторы</h1><p>Постоянная привязка по Telegram ID</p></div>
+        <div><h1>Администраторы</h1><p>Запросы доступа и действующие администраторы</p></div>
         <button class="admin-link" onclick="Beauty.go('admin-more')">Назад</button>
       </div>
 
-      <div class="access-hero">
-        <h2>Добавить администратора</h2>
-        <p>Введите Telegram ID человека. После добавления роль сохранится в базе и при открытии MED AESTHETIC у него сразу будет открываться админка — до тех пор, пока вы не уберёте доступ.</p>
-        <div class="admin-id-form">
-          <input id="adminTelegramId" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="Telegram ID">
-          <button id="addAdminByIdBtn" class="access-primary" onclick="Beauty.addAdminById()">＋ Добавить</button>
-        </div>
-        <div class="admin-id-help">ID можно узнать у бота командой <b>/id</b>.</div>
+      <div class="admins-head access-requests-head">
+        <h2>Запросы на доступ${requests.length?` <span class="access-request-count">${requests.length}</span>`:""}</h2>
+        <button onclick="Beauty.loadAdminAccessRequests()">↻ Обновить</button>
       </div>
+
+      ${S.adminAccessRequestsLoading
+        ? `<div class="admin-empty-mini">Обновляем заявки…</div>`
+        : requests.length
+          ? requests.map(r=>{
+              const name=[r.firstName,r.lastName].filter(Boolean).join(" ") || (r.username?"@"+r.username:"Telegram "+r.telegramUserId);
+              const sub=r.username?"@"+r.username:`ID ${r.telegramUserId}`;
+              return `<div class="admin-person access-request-card">
+                <div class="admin-person-avatar">${esc((name||"A").slice(0,1).toUpperCase())}</div>
+                <div><h3>${esc(name)}</h3><p>${esc(sub)}</p></div>
+                <div class="access-request-actions">
+                  <button class="access-approve" onclick="Beauty.decideAdminAccessRequest('${r.id}','approve')">Добавить</button>
+                  <button class="access-reject" onclick="Beauty.decideAdminAccessRequest('${r.id}','reject')">Отклонить</button>
+                </div>
+              </div>`;
+            }).join("")
+          : `<div class="admin-empty-mini">Новых запросов пока нет.</div>`
+      }
 
       <div class="admins-head">
         <h2>Действующие администраторы</h2>
@@ -2250,7 +2299,7 @@ button:disabled.is-busy{
                 <button class="admin-remove" onclick="Beauty.removeAdmin('${a.telegramUserId}')">Убрать</button>
               </div>`;
             }).join("")
-          : `<div class="admin-empty-mini">Администраторов пока нет. Введите Telegram ID выше.</div>`
+          : `<div class="admin-empty-mini">Администраторов пока нет.</div>`
       }
     </main>${adminNav("admin-more")}${roleSheet()}`;
   }
@@ -3145,9 +3194,11 @@ button:disabled.is-busy{
     async openAdminAccess(){
       S.view="admin-access";
       render();
-      await loadAdmins(true);
+      await Promise.all([loadAdmins(true),loadAdminAccessRequests(true)]);
     },
     loadAdmins(){return loadAdmins(false)},
+    loadAdminAccessRequests(){return loadAdminAccessRequests(false)},
+    decideAdminAccessRequest,
     openAdminServices,
     loadAdminServices(){return loadAdminServices(false)},
     openAdminServiceEditor,

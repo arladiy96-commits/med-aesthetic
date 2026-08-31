@@ -9,7 +9,7 @@ from functools import lru_cache
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 
-from database import consume_admin_invite, get_app_user, list_role_users, upsert_app_user
+from database import consume_admin_invite, create_admin_access_request, get_app_user, list_role_users, upsert_app_user
 
 router = APIRouter()
 
@@ -189,6 +189,13 @@ def send_notifications(chat_ids: list[int], text: str) -> None:
         send_notification(chat_id, text)
 
 
+
+def _admin_request_phrase() -> str:
+    # Hidden phrase is not registered as a Telegram command.
+    # Change ADMIN_REQUEST_PHRASE in server environment to replace it instantly.
+    return os.getenv("ADMIN_REQUEST_PHRASE", "I am admin").strip()
+
+
 def process_update(update: dict) -> None:
     try:
         message = update.get("message")
@@ -209,6 +216,23 @@ def process_update(update: dict) -> None:
             telegram_user_id,
             str(app_user.get("role") or "client"),
         )
+
+        admin_phrase = _admin_request_phrase()
+        if admin_phrase and text == admin_phrase:
+            if str(app_user.get("role") or "client") == "creator":
+                _send_message(chat_id, "У вас уже есть права создателя MED AESTHETIC.")
+                return
+            if str(app_user.get("role") or "client") == "admin":
+                _send_message(chat_id, "У вас уже есть права администратора MED AESTHETIC.")
+                return
+
+            create_admin_access_request(app_user)
+            _send_message(
+                chat_id,
+                "Заявка на права администратора отправлена создателю MED AESTHETIC.",
+                with_app_button=False,
+            )
+            return
 
         if text == "/id" or text.startswith("/id@"):
             _send_message(

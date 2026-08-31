@@ -90,6 +90,32 @@ def init_db() -> None:
 
         conn.execute(
             """
+            CREATE TABLE IF NOT EXISTS admin_access_requests (
+                id BIGSERIAL PRIMARY KEY,
+                telegram_user_id BIGINT NOT NULL,
+                first_name TEXT,
+                last_name TEXT,
+                username TEXT,
+                status TEXT NOT NULL DEFAULT 'pending',
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                decided_at TIMESTAMPTZ,
+                decided_by BIGINT,
+                CONSTRAINT admin_access_requests_status_check
+                    CHECK (status IN ('pending', 'approved', 'rejected'))
+            )
+            """
+        )
+
+        conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_admin_access_requests_status_created
+            ON admin_access_requests (status, created_at DESC)
+            """
+        )
+
+
+        conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS beauty_services (
                 id BIGSERIAL PRIMARY KEY,
                 category TEXT NOT NULL,
@@ -769,3 +795,91 @@ def revoke_admin(telegram_user_id: int) -> bool:
             (telegram_user_id,),
         ).fetchone()
     return bool(row)
+
+
+def create_admin_access_request(user: dict) -> dict:
+    """Create a new pending request. Intentionally no anti-spam/deduplication."""
+    telegram_user_id = int(user["telegram_user_id"])
+    with db() as conn:
+        row = conn.execute(
+            """
+            INSERT INTO admin_access_requests (
+                telegram_user_id, first_name, last_name, username, status
+            )
+            VALUES (%s, %s, %s, %s, 'pending')
+            RETURNING id, telegram_user_id, first_name, last_name, username,
+                      status, created_at
+            """,
+            (
+                telegram_user_id,
+                user.get("first_name"),
+                user.get("last_name"),
+                user.get("username"),
+            ),
+        ).fetchone()
+    return dict(row)
+
+
+def list_admin_access_requests(status: str = "pending") -> list[dict]:
+    with db() as conn:
+        rows = conn.execute(
+            """
+            SELECT id, telegram_user_id, first_name, last_name, username,
+                   status, created_at, decided_at, decided_by
+            FROM admin_access_requests
+            WHERE status=%s
+            ORDER BY created_at DESC, id DESC
+            """,
+            (status,),
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def decide_admin_access_request(request_id: int, decision: str, decided_by: int) -> dict:
+    if decision not in {"approved", "rejected"}:
+        return {"ok": False, "reason": "invalid_decision"}
+
+    with db() as conn:
+        request = conn.execute(
+            """
+            SELECT id, telegram_user_id, first_name, last_name, username, status
+            FROM admin_access_requests
+            WHERE id=%s
+            FOR UPDATE
+            """,
+            (request_id,),
+        ).fetchone()
+
+        if not request:
+            return {"ok": False, "reason": "not_found"}
+        if request["status"] != "pending":
+            return {"ok": False, "reason": "already_decided"}
+
+        telegram_user_id = int(request["telegram_user_id"])
+
+        if decision == "approved":
+            creator_id = get_creator_telegram_id()
+            if creator_id == telegram_user_id:
+                return {"ok": False, "reason": "creator"}
+
+            conn.execute(
+                """
+                UPDATE app_users
+                SET role='admin', updated_at=NOW(), last_seen_at=NOW()
+                WHERE telegram_user_id=%s
+                """,
+                (telegram_user_id,),
+            )
+
+        row = conn.execute(
+            """
+            UPDATE admin_access_requests
+            SET status=%s, decided_at=NOW(), decided_by=%s
+            WHERE id=%s
+            RETURNING id, telegram_user_id, first_name, last_name, username,
+                      status, created_at, decided_at, decided_by
+            """,
+            (decision, decided_by, request_id),
+        ).fetchone()
+
+    return {"ok": True, "request": dict(row)}

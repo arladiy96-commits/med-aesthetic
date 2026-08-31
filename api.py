@@ -18,7 +18,9 @@ from bot import make_admin_invite_link, safe_set_role_menu_button, send_notifica
 from database import (
     create_admin_invite,
     db,
+    decide_admin_access_request,
     grant_admin,
+    list_admin_access_requests,
     list_admins,
     resolve_effective_role,
     revoke_admin,
@@ -369,6 +371,93 @@ def new_admin_invite(
             "expiresAt": invite["expires_at"].isoformat(),
         },
     }
+
+
+@router.get("/admin-access-requests")
+def admin_access_requests(
+    x_telegram_init_data: str | None = Header(
+        default=None, alias="X-Telegram-Init-Data"
+    ),
+):
+    _, app_user = _identity(x_telegram_init_data)
+    _require_creator(app_user)
+
+    requests = []
+    for row in list_admin_access_requests("pending"):
+        requests.append(
+            {
+                "id": int(row["id"]),
+                "telegramUserId": int(row["telegram_user_id"]),
+                "firstName": row.get("first_name"),
+                "lastName": row.get("last_name"),
+                "username": row.get("username"),
+                "createdAt": row["created_at"].isoformat() if row.get("created_at") else None,
+            }
+        )
+    return {"ok": True, "requests": requests}
+
+
+@router.post("/admin-access-requests/{request_id}/approve")
+def approve_admin_access_request(
+    request_id: int,
+    background_tasks: BackgroundTasks,
+    x_telegram_init_data: str | None = Header(
+        default=None, alias="X-Telegram-Init-Data"
+    ),
+):
+    _, app_user = _identity(x_telegram_init_data)
+    _require_creator(app_user)
+
+    result = decide_admin_access_request(
+        request_id, "approved", int(app_user["telegram_user_id"])
+    )
+    if not result.get("ok"):
+        reason = result.get("reason")
+        if reason == "not_found":
+            raise HTTPException(status_code=404, detail="Заявка не найдена")
+        if reason == "already_decided":
+            raise HTTPException(status_code=409, detail="Заявка уже обработана")
+        raise HTTPException(status_code=400, detail="Не удалось одобрить заявку")
+
+    telegram_user_id = int(result["request"]["telegram_user_id"])
+    background_tasks.add_task(safe_set_role_menu_button, telegram_user_id, "admin")
+    background_tasks.add_task(
+        send_notification,
+        telegram_user_id,
+        "✅ Ваша заявка одобрена.\n\nВам предоставлены права администратора MED AESTHETIC.",
+    )
+    return {"ok": True}
+
+
+@router.post("/admin-access-requests/{request_id}/reject")
+def reject_admin_access_request(
+    request_id: int,
+    background_tasks: BackgroundTasks,
+    x_telegram_init_data: str | None = Header(
+        default=None, alias="X-Telegram-Init-Data"
+    ),
+):
+    _, app_user = _identity(x_telegram_init_data)
+    _require_creator(app_user)
+
+    result = decide_admin_access_request(
+        request_id, "rejected", int(app_user["telegram_user_id"])
+    )
+    if not result.get("ok"):
+        reason = result.get("reason")
+        if reason == "not_found":
+            raise HTTPException(status_code=404, detail="Заявка не найдена")
+        if reason == "already_decided":
+            raise HTTPException(status_code=409, detail="Заявка уже обработана")
+        raise HTTPException(status_code=400, detail="Не удалось отклонить заявку")
+
+    telegram_user_id = int(result["request"]["telegram_user_id"])
+    background_tasks.add_task(
+        send_notification,
+        telegram_user_id,
+        "Заявка на права администратора MED AESTHETIC отклонена.",
+    )
+    return {"ok": True}
 
 
 @router.post("/admins")
