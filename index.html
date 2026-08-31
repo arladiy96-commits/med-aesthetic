@@ -489,6 +489,41 @@ button:disabled.is-busy{
   }
 </style>
 
+
+<style id="confirm-hourglass-image-override">
+  .confirm-premium-orbit.confirm-premium-orbit-image{
+    width:260px;
+    height:260px;
+    margin:0 auto 26px;
+    display:grid;
+    place-items:center;
+  }
+  .confirm-premium-orbit.confirm-premium-orbit-image::before,
+  .confirm-premium-orbit.confirm-premium-orbit-image::after{
+    display:none !important;
+  }
+  .confirm-premium-orbit.confirm-premium-orbit-image .orbit-ring,
+  .confirm-premium-orbit.confirm-premium-orbit-image .confirm-premium-hourglass{
+    display:none !important;
+  }
+  .confirm-hourglass-image{
+    display:block;
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    object-position:center;
+    filter:none;
+    transform:none;
+  }
+  @media (max-width:520px){
+    .confirm-premium-orbit.confirm-premium-orbit-image{
+      width:248px;
+      height:248px;
+      margin-bottom:24px;
+    }
+  }
+</style>
+
 </head>
 <body>
   <div id="app"></div>
@@ -1955,15 +1990,8 @@ button:disabled.is-busy{
       <section class="confirm-premium-v1">
         <div class="confirm-premium-glow" aria-hidden="true"></div>
 
-        <div class="confirm-premium-orbit" aria-hidden="true">
-          <span class="orbit-ring orbit-ring-a"></span>
-          <span class="orbit-ring orbit-ring-b"></span>
-          <div class="confirm-premium-hourglass">
-            <svg viewBox="0 0 64 64" aria-hidden="true">
-              <path d="M20 13h24M20 51h24M23 15c0 9 4.5 13.5 9 17-4.5 3.5-9 8-9 17M41 15c0 9-4.5 13.5-9 17 4.5 3.5 9 8 9 17"/>
-              <path d="M27 22h10M27 42h10"/>
-            </svg>
-          </div>
+        <div class="confirm-premium-orbit confirm-premium-orbit-image" aria-hidden="true">
+          <img class="confirm-hourglass-image" src="./assets/booking-hourglass.png" alt="">
         </div>
 
         <div class="confirm-wrap confirm-wrap-premium">
