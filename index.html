@@ -2499,7 +2499,7 @@ button:disabled.is-busy{
       <div class="admin-booking-details"><div><span>Дата</span><b>${esc(bookingPrettyDate(b.date))}</b></div><div><span>Время</span><b>${esc(b.time||"—")}</b></div><div><span>Мастер</span><b>${esc(b.masterName||"Людмила")}</b></div><div><span>Статус</span><b>${esc(bookingStatusRu(status))}</b></div></div>
       <label class="admin-booking-note"><span>Заметка к этой записи</span><textarea id="adminBookingNote" maxlength="2000" rows="3" placeholder="Например: просила позвонить перед визитом">${esc(b.note||"")}</textarea><button onclick="Beauty.saveAdminBookingNote('${b.id}',this)">Сохранить заметку</button></label>
       <div class="admin-booking-actions">
-        ${phone?`<button class="booking-action contact" onclick="Beauty.callBookingClient('${b.id}')">Позвонить · ${esc(phone)}</button>`:""}
+        ${phone?`<a class="booking-action contact" href="tel:${esc(phone.replace(/[^+\d]/g,""))}" onclick="Beauty.haptic()">Позвонить · ${esc(phone)}</a>`:""}
         ${b.clientUsername?`<button class="booking-action contact" onclick="Beauty.messageBookingClient('${b.id}')">Написать в Telegram</button>`:""}
         ${isActiveAdminBooking(b)?`<button class="booking-action neutral" onclick="Beauty.openAdminReschedule('${b.id}')">Перенести запись</button>`:""}
         ${status==="pending"?`<button class="booking-action confirm" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','confirmed',this)">Подтвердить запись</button><button class="booking-action danger" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','cancelled',this)">Отклонить заявку</button>`:""}
