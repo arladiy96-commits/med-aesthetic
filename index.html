@@ -490,36 +490,204 @@ button:disabled.is-busy{
 </style>
 
 
-<style id="confirm-hourglass-image-override">
-  .confirm-premium-orbit.confirm-premium-orbit-image{
-    width:260px;
-    height:260px;
+
+
+<style id="confirm-hourglass-animated-css">
+  .confirm-premium-orbit.confirm-premium-orbit-animated{
+    position:relative;
+    width:250px;
+    height:250px;
     margin:0 auto 26px;
     display:grid;
     place-items:center;
+    isolation:isolate;
   }
-  .confirm-premium-orbit.confirm-premium-orbit-image::before,
-  .confirm-premium-orbit.confirm-premium-orbit-image::after{
-    display:none !important;
+
+  .confirm-premium-orbit.confirm-premium-orbit-animated::before{
+    content:"";
+    position:absolute;
+    inset:18px;
+    border-radius:50%;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(255,194,72,.10) 0%, rgba(230,147,37,.05) 42%, transparent 70%);
+    box-shadow:
+      0 0 34px rgba(231,160,48,.20),
+      0 0 72px rgba(157,83,145,.08);
+    pointer-events:none;
   }
-  .confirm-premium-orbit.confirm-premium-orbit-image .orbit-ring,
-  .confirm-premium-orbit.confirm-premium-orbit-image .confirm-premium-hourglass{
-    display:none !important;
+
+  .confirm-orbit-line{
+    position:absolute;
+    border-radius:50%;
+    will-change:transform,opacity;
+    pointer-events:none;
   }
-  .confirm-hourglass-image{
-    display:block;
-    width:100%;
-    height:100%;
-    object-fit:contain;
-    object-position:center;
-    filter:none;
-    transform:none;
+
+  .orbit-one{
+    inset:27px;
+    border:2px solid rgba(255,216,125,.96);
+    box-shadow:
+      0 0 5px rgba(255,239,188,.82),
+      0 0 15px rgba(255,196,79,.66),
+      0 0 34px rgba(232,150,40,.28);
+    animation:confirmOrbitBreath 3.8s ease-in-out infinite;
   }
+
+  .orbit-two{
+    inset:15px 20px 22px 10px;
+    border:1px solid rgba(223,154,53,.46);
+    transform:rotate(-11deg);
+    box-shadow:0 0 18px rgba(220,145,42,.15);
+    animation:confirmOrbitRotate 13s linear infinite;
+  }
+
+  .orbit-three{
+    inset:7px 13px 28px 24px;
+    border-top:1px solid rgba(252,203,102,.36);
+    border-right:1px solid rgba(169,100,185,.20);
+    transform:rotate(24deg);
+    opacity:.72;
+    animation:confirmOrbitRotateReverse 17s linear infinite;
+  }
+
+  .confirm-hourglass-core{
+    position:relative;
+    width:104px;
+    height:104px;
+    border-radius:50%;
+    display:grid;
+    place-items:center;
+    background:
+      radial-gradient(circle at 48% 42%, rgba(64,40,70,.30), rgba(13,10,19,.18) 62%, transparent 76%);
+    box-shadow:
+      0 0 26px rgba(224,154,50,.11),
+      inset 0 0 24px rgba(126,74,143,.06);
+    animation:confirmHourglassFloat 3.6s ease-in-out infinite;
+    will-change:transform;
+  }
+
+  .confirm-hourglass-svg{
+    width:72px;
+    height:72px;
+    overflow:visible;
+  }
+
+  .hourglass-frame path{
+    fill:none;
+    stroke:url(#hgGold);
+    stroke-width:2.25;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+  }
+
+  .hourglass-sand{
+    fill:#e8b957;
+    filter:drop-shadow(0 0 5px rgba(236,184,82,.28));
+  }
+
+  .sand-top{
+    transform-box:fill-box;
+    transform-origin:center bottom;
+    animation:confirmSandTop 5.2s ease-in-out infinite;
+  }
+
+  .sand-stream{
+    fill:none;
+    stroke:#efc263;
+    stroke-width:1.7;
+    stroke-linecap:round;
+    stroke-dasharray:3 3;
+    animation:confirmSandStream 1.05s linear infinite;
+  }
+
+  .sand-bottom{
+    transform-box:fill-box;
+    transform-origin:center bottom;
+    animation:confirmSandBottom 5.2s ease-in-out infinite;
+  }
+
+  .confirm-spark{
+    position:absolute;
+    width:3px;
+    height:3px;
+    border-radius:50%;
+    background:#ffd978;
+    box-shadow:0 0 8px rgba(255,204,104,.9);
+    opacity:0;
+    will-change:transform,opacity;
+  }
+
+  .spark-a{left:38px;top:76px;animation:confirmSpark 4.8s ease-in-out infinite .2s}
+  .spark-b{right:34px;top:108px;animation:confirmSpark 5.6s ease-in-out infinite 1.4s}
+  .spark-c{left:62px;bottom:42px;animation:confirmSpark 6.1s ease-in-out infinite 2.2s}
+  .spark-d{right:58px;bottom:57px;animation:confirmSpark 5.2s ease-in-out infinite 3.1s}
+
+  @keyframes confirmOrbitBreath{
+    0%,100%{transform:scale(1);opacity:.88}
+    50%{transform:scale(1.018);opacity:1}
+  }
+
+  @keyframes confirmOrbitRotate{
+    from{transform:rotate(-11deg)}
+    to{transform:rotate(349deg)}
+  }
+
+  @keyframes confirmOrbitRotateReverse{
+    from{transform:rotate(24deg)}
+    to{transform:rotate(-336deg)}
+  }
+
+  @keyframes confirmHourglassFloat{
+    0%,100%{transform:translateY(0)}
+    50%{transform:translateY(-3px)}
+  }
+
+  @keyframes confirmSandTop{
+    0%,8%{transform:scaleY(.82);opacity:.92}
+    54%,100%{transform:scaleY(.22);opacity:.55}
+  }
+
+  @keyframes confirmSandBottom{
+    0%,8%{transform:scaleY(.28);opacity:.55}
+    54%,100%{transform:scaleY(1);opacity:.96}
+  }
+
+  @keyframes confirmSandStream{
+    from{stroke-dashoffset:0;opacity:.42}
+    50%{opacity:.95}
+    to{stroke-dashoffset:6;opacity:.42}
+  }
+
+  @keyframes confirmSpark{
+    0%,75%,100%{opacity:0;transform:translate3d(0,0,0) scale(.65)}
+    82%{opacity:.92;transform:translate3d(0,-4px,0) scale(1)}
+    90%{opacity:.25;transform:translate3d(2px,-9px,0) scale(.75)}
+  }
+
   @media (max-width:520px){
-    .confirm-premium-orbit.confirm-premium-orbit-image{
-      width:248px;
-      height:248px;
+    .confirm-premium-orbit.confirm-premium-orbit-animated{
+      width:238px;
+      height:238px;
       margin-bottom:24px;
+    }
+    .confirm-hourglass-core{
+      width:100px;
+      height:100px;
+    }
+    .confirm-hourglass-svg{
+      width:70px;
+      height:70px;
+    }
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    .confirm-orbit-line,
+    .confirm-hourglass-core,
+    .sand-top,
+    .sand-bottom,
+    .sand-stream,
+    .confirm-spark{
+      animation:none !important;
     }
   }
 </style>
@@ -1990,8 +2158,54 @@ button:disabled.is-busy{
       <section class="confirm-premium-v1">
         <div class="confirm-premium-glow" aria-hidden="true"></div>
 
-        <div class="confirm-premium-orbit confirm-premium-orbit-image" aria-hidden="true">
-          <img class="confirm-hourglass-image" src="./assets/booking-hourglass.png" alt="">
+        <div class="confirm-premium-orbit confirm-premium-orbit-animated" aria-hidden="true">
+          <span class="confirm-orbit-line orbit-one"></span>
+          <span class="confirm-orbit-line orbit-two"></span>
+          <span class="confirm-orbit-line orbit-three"></span>
+
+          <div class="confirm-hourglass-core">
+            <svg class="confirm-hourglass-svg" viewBox="0 0 72 72" aria-hidden="true">
+              <defs>
+                <linearGradient id="hgGold" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#fff1bd"/>
+                  <stop offset="38%" stop-color="#f3ce75"/>
+                  <stop offset="72%" stop-color="#d99a35"/>
+                  <stop offset="100%" stop-color="#fff0b3"/>
+                </linearGradient>
+                <filter id="hgGlow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="1.5" result="blur"/>
+                  <feMerge>
+                    <feMergeNode in="blur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+                <clipPath id="hgTopClip">
+                  <path d="M23 20 C24 30 28 33 36 36 C44 33 48 30 49 20 Z"/>
+                </clipPath>
+                <clipPath id="hgBottomClip">
+                  <path d="M23 52 C24 42 28 39 36 36 C44 39 48 42 49 52 Z"/>
+                </clipPath>
+              </defs>
+
+              <g class="hourglass-frame" filter="url(#hgGlow)">
+                <path d="M20 16 H52"/>
+                <path d="M20 56 H52"/>
+                <path d="M23 18 C23 27 27 32 36 36 C27 40 23 45 23 54"/>
+                <path d="M49 18 C49 27 45 32 36 36 C45 40 49 45 49 54"/>
+              </g>
+
+              <g class="hourglass-sand">
+                <rect class="sand-top" x="22" y="18" width="28" height="18" clip-path="url(#hgTopClip)"/>
+                <path class="sand-stream" d="M36 34 V45"/>
+                <path class="sand-bottom" d="M27 51 Q36 42 45 51 Z"/>
+              </g>
+            </svg>
+          </div>
+
+          <span class="confirm-spark spark-a"></span>
+          <span class="confirm-spark spark-b"></span>
+          <span class="confirm-spark spark-c"></span>
+          <span class="confirm-spark spark-d"></span>
         </div>
 
         <div class="confirm-wrap confirm-wrap-premium">
