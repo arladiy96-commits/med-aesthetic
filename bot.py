@@ -86,10 +86,10 @@ def set_role_menu_button(chat_id: int, role: str) -> None:
         return
 
     label = {
-        "creator": "Открыть MED AESTHETIC",
-        "admin": "Открыть админку",
-        "client": "Открыть MED AESTHETIC",
-    }.get(role, "Открыть MED AESTHETIC")
+        "creator": "Открыть приложение",
+        "admin": "Открыть приложение",
+        "client": "Открыть приложение",
+    }.get(role, "Открыть приложение")
 
     telegram_api(
         "setChatMenuButton",
@@ -157,7 +157,7 @@ def _send_message(chat_id: int, text: str, with_app_button: bool = True) -> None
             "inline_keyboard": [
                 [
                     {
-                        "text": "Открыть MED AESTHETIC",
+                        "text": "Открыть приложение",
                         "web_app": {"url": app_url},
                     }
                 ]
