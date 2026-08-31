@@ -852,7 +852,6 @@ button:disabled.is-busy{
   .sticky-action{
     position:fixed !important;
     z-index:1200 !important;
-
     left:50% !important;
     right:auto !important;
     top:auto !important;
@@ -862,8 +861,10 @@ button:disabled.is-busy{
     padding:0 !important;
     transform:translateX(-50%) !important;
 
+    /* Поднято выше панели, чтобы нижнее скругление кнопки
+       было полностью видно и ничем не перекрывалось. */
     bottom:calc(
-      102px
+      122px
       + max(env(safe-area-inset-bottom,0px), var(--tg-safe-bottom,0px))
     ) !important;
 
@@ -881,13 +882,18 @@ button:disabled.is-busy{
   }
 
   .sticky-action .btn-primary{
-    border-radius:20px !important;
-    overflow:hidden !important;
+    position:relative !important;
+    display:block !important;
+    width:100% !important;
+    min-height:58px !important;
+    border-radius:22px !important;
+    overflow:visible !important;
+    clip-path:none !important;
   }
 
   .page{
     padding-bottom:calc(
-      188px
+      210px
       + max(env(safe-area-inset-bottom,0px), var(--tg-safe-bottom,0px))
     ) !important;
   }
@@ -896,7 +902,7 @@ button:disabled.is-busy{
     .sticky-action{
       width:calc(100vw - 60px) !important;
       bottom:calc(
-        98px
+        116px
         + max(env(safe-area-inset-bottom,0px), var(--tg-safe-bottom,0px))
       ) !important;
     }
