@@ -1829,10 +1829,11 @@ button:disabled.is-busy{
   /* ===== CLIENT PROFILE MODULE — css/profile.css ===== */
   function profileView(){
     const user=tg?.initDataUnsafe?.user;
-    const name=[user?.first_name,user?.last_name].filter(Boolean).join(" ") || "Алина";
+    const name=[user?.first_name,user?.last_name].filter(Boolean).join(" ") || "Клиент";
     const avatar=user?.photo_url || masters[0].img;
+    const phone=serverBookings.find(b=>String(b?.clientPhone||"").trim())?.clientPhone || S.bookingPhone || "";
     return `<main class="page page-profile">${topbar()}
-      <div class="profile-head"><img class="profile-avatar" src="${avatar}" alt=""><div><h2>${esc(name)}</h2><p>${user?.username?"@"+esc(user.username):"+7 (999) 123-45-67"}</p><div class="badge">♔ Gold клиент</div></div></div>
+      <div class="profile-head"><img class="profile-avatar" src="${avatar}" alt=""><div><h2>${esc(name)}</h2><p class="profile-phone">${esc(phone || "Телефон не указан")}</p></div></div>
       <div class="menu-list">
         <button class="menu-item" onclick="Beauty.toast('Редактирование профиля подключим позже')"><span class="mi">♙</span><b>Личные данные</b><span>›</span></button>
         <button class="menu-item" onclick="Beauty.go('masters')"><span class="mi">♡</span><b>Мои мастера</b><span>›</span></button>
