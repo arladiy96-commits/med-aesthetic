@@ -91,3 +91,94 @@
   transform:translateX(18px);
   background:#b9acd2;
 }
+
+/* CREATOR — REMINDER TESTS */
+.admin-reminder-test-page .reminder-test-card{
+  margin-top:12px;
+  padding:14px;
+  border:1px solid var(--admin-border);
+  border-radius:17px;
+  background:#111218;
+}
+
+.admin-reminder-test-page .reminder-test-card h3{
+  margin:0 0 5px;
+  color:var(--admin-text);
+  font-size:12px;
+  font-weight:700;
+}
+
+.admin-reminder-test-page .reminder-test-card p{
+  margin:0;
+  color:var(--admin-muted);
+  font-size:9px;
+  line-height:1.45;
+}
+
+.admin-reminder-test-page .reminder-test-booking{
+  margin-top:11px;
+  padding:11px 12px;
+  border:1px solid rgba(156,132,216,.12);
+  border-radius:14px;
+  background:rgba(156,132,216,.045);
+}
+
+.admin-reminder-test-page .reminder-test-booking b{
+  display:block;
+  color:var(--admin-text);
+  font-size:10.5px;
+  font-weight:650;
+}
+
+.admin-reminder-test-page .reminder-test-booking small{
+  display:block;
+  margin-top:4px;
+  color:var(--admin-muted);
+  font-size:8.5px;
+  line-height:1.35;
+}
+
+.admin-reminder-test-page .reminder-test-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:11px;
+}
+
+.admin-reminder-test-page .reminder-test-actions button{
+  min-height:43px;
+  padding:9px 8px;
+  border:1px solid rgba(156,132,216,.16);
+  border-radius:12px;
+  background:rgba(156,132,216,.065);
+  color:var(--admin-text);
+  font-size:9px;
+  font-weight:650;
+}
+
+.admin-reminder-test-page .reminder-test-actions button:active{
+  transform:translateY(1px);
+  background:rgba(156,132,216,.11);
+}
+
+.admin-reminder-test-page .reminder-test-actions button:disabled{
+  opacity:.48;
+}
+
+.admin-reminder-test-page .reminder-test-note{
+  margin-top:10px;
+  padding:9px 10px;
+  border:1px solid rgba(214,180,107,.14);
+  border-radius:12px;
+  background:rgba(214,180,107,.035);
+  color:var(--admin-muted);
+  font-size:8.5px;
+  line-height:1.4;
+}
+
+@media (max-width:360px){
+  .admin-reminder-test-page .reminder-test-actions{
+    grid-template-columns:1fr;
+  }
+}
+
