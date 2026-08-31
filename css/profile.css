@@ -1,2 +1,12 @@
 /* PROFILE / BONUS ONLY
    Scope every new rule under .page-profile. */
+
+/* PROFILE — identity block only: name + phone */
+.page-profile .profile-head .profile-phone{
+  margin:7px 0 0;
+  color:#9a93a1;
+  font-size:14px;
+  line-height:1.3;
+  font-weight:500;
+  letter-spacing:.01em;
+}
