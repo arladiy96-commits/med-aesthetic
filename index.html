@@ -847,6 +847,54 @@ button:disabled.is-busy{
   }
 </style>
 
+
+<style id="sticky-action-above-nav-css">
+  :root{
+    --premium-bottom-nav-height: 92px;
+    --premium-bottom-nav-gap: 10px;
+  }
+
+  .sticky-action{
+    position:fixed !important;
+    left:0;
+    right:0;
+    bottom:calc(
+      var(--premium-bottom-nav-height)
+      + var(--premium-bottom-nav-gap)
+      + env(safe-area-inset-bottom, 0px)
+    ) !important;
+    z-index:1200 !important;
+    padding-left:30px !important;
+    padding-right:30px !important;
+    pointer-events:none;
+  }
+
+  .sticky-action > *{
+    pointer-events:auto;
+    width:100%;
+  }
+
+  .page{
+    padding-bottom:calc(
+      var(--premium-bottom-nav-height)
+      + 92px
+      + env(safe-area-inset-bottom, 0px)
+    ) !important;
+  }
+
+  @media (max-width:520px){
+    :root{
+      --premium-bottom-nav-height: 88px;
+      --premium-bottom-nav-gap: 8px;
+    }
+
+    .sticky-action{
+      padding-left:30px !important;
+      padding-right:30px !important;
+    }
+  }
+</style>
+
 </head>
 <body>
   <div id="app"></div>
