@@ -116,3 +116,50 @@
   color:#c8808c;
   font-size:8.5px;
 }
+
+/* Hidden-phrase admin access requests */
+.admin-access-page .access-request-count{
+  display:inline-grid;
+  place-items:center;
+  min-width:20px;
+  height:20px;
+  margin-left:5px;
+  padding:0 6px;
+  border-radius:999px;
+  background:rgba(151,118,216,.14);
+  color:#a989e7;
+  font-family:system-ui,-apple-system,sans-serif;
+  font-size:9px;
+  font-weight:800;
+}
+
+.admin-access-page .access-request-card{
+  grid-template-columns:40px minmax(0,1fr);
+}
+
+.admin-access-page .access-request-actions{
+  grid-column:1/-1;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:7px;
+  padding-top:2px;
+}
+
+.admin-access-page .access-request-actions button{
+  min-height:35px;
+  border-radius:10px;
+  font-size:9px;
+  font-weight:800;
+}
+
+.admin-access-page .access-approve{
+  border:1px solid rgba(95,174,122,.25);
+  background:rgba(95,174,122,.07);
+  color:#67b982;
+}
+
+.admin-access-page .access-reject{
+  border:1px solid rgba(201,120,134,.20);
+  background:rgba(201,120,134,.045);
+  color:#c8808c;
+}
