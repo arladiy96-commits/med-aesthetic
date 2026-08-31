@@ -2774,7 +2774,9 @@ button:disabled.is-busy{
   }
 
   function callBookingClient(id){
-    const b=serverBookings.find(x=>String(x.id)===String(id));
+    const b=
+      adminBookings.find(x=>String(x.id)===String(id)) ||
+      serverBookings.find(x=>String(x.id)===String(id));
     if(!b){toast("Запись не найдена");return}
     copyPhoneToClipboard(b.clientPhone||"");
   }
