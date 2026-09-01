@@ -558,6 +558,85 @@ def init_db() -> None:
             """
         )
 
+        # Gift certificates are a separate business module.  A certificate has
+        # exactly one current owner and one live QR token.  The QR token is
+        # rotated whenever ownership changes, so screenshots made by a previous
+        # owner stop working immediately after the gift is accepted.
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS beauty_certificates (
+                id BIGSERIAL PRIMARY KEY,
+                owner_telegram_user_id BIGINT NOT NULL,
+                purchased_by_telegram_user_id BIGINT NOT NULL,
+                title TEXT NOT NULL DEFAULT 'Подарочный сертификат',
+                amount INTEGER,
+                service_name TEXT,
+                status TEXT NOT NULL DEFAULT 'active',
+                qr_token TEXT NOT NULL UNIQUE,
+                issued_by BIGINT,
+                expires_at DATE,
+                used_at TIMESTAMPTZ,
+                used_by BIGINT,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                CONSTRAINT beauty_certificates_status_check
+                    CHECK (status IN ('active', 'used', 'cancelled')),
+                CONSTRAINT beauty_certificates_amount_check
+                    CHECK (amount IS NULL OR amount >= 0)
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_beauty_certificates_owner
+            ON beauty_certificates (owner_telegram_user_id, created_at DESC)
+            """
+        )
+        conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_beauty_certificates_status
+            ON beauty_certificates (status, expires_at, created_at DESC)
+            """
+        )
+
+        # Transfer links contain a random raw token in Telegram, while only its
+        # SHA-256 hash is persisted.  One certificate can have only one pending
+        # transfer at a time; creating a new link cancels the previous one.
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS beauty_certificate_transfers (
+                id BIGSERIAL PRIMARY KEY,
+                certificate_id BIGINT NOT NULL REFERENCES beauty_certificates(id) ON DELETE CASCADE,
+                from_telegram_user_id BIGINT NOT NULL,
+                to_telegram_user_id BIGINT,
+                token_hash TEXT NOT NULL UNIQUE,
+                expires_at TIMESTAMPTZ NOT NULL,
+                accepted_at TIMESTAMPTZ,
+                cancelled_at TIMESTAMPTZ,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS uq_beauty_certificate_pending_transfer
+            ON beauty_certificate_transfers (certificate_id)
+            WHERE accepted_at IS NULL AND cancelled_at IS NULL
+            """
+        )
+        conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_beauty_certificate_transfers_from
+            ON beauty_certificate_transfers (from_telegram_user_id, created_at DESC)
+            """
+        )
+        conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_beauty_certificate_transfers_to
+            ON beauty_certificate_transfers (to_telegram_user_id, accepted_at DESC)
+            """
+        )
+
         # Idempotency ledger for automatic Telegram reminders.  The event key
         # includes the current booking date/time, so a rescheduled booking can
         # legitimately receive a fresh set of reminders.

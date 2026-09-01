@@ -39,6 +39,7 @@
   <link rel="stylesheet" href="./css/booking-availability.css">
   <link rel="stylesheet" href="./css/history.css">
   <link rel="stylesheet" href="./css/profile.css">
+  <link rel="stylesheet" href="./css/certificates.css">
   <!-- Admin is split by screen. Edit only the screen you are working on. -->
   <link rel="stylesheet" href="./css/admin/base.css">
   <link rel="stylesheet" href="./css/admin/dashboard.css">
@@ -50,6 +51,7 @@
   <link rel="stylesheet" href="./css/admin/services.css">
   <link rel="stylesheet" href="./css/admin/finance.css">
   <link rel="stylesheet" href="./css/admin/mobile-light.css">
+  <link rel="stylesheet" href="./css/admin/certificates.css">
   <link rel="stylesheet" href="./css/navigation.css">
 
 <style>
@@ -1053,6 +1055,10 @@ button:disabled.is-busy{
     }catch(e){ return null; }
   })();
 
+  const giftHint = (() => {
+    try{ return String(new URLSearchParams(location.search).get("gift") || "").trim(); }catch(e){ return ""; }
+  })();
+
   const startupRole = entryHint;
   const startupSwitch =
     startupRole === "creator" ? ["creator","client"] :
@@ -1063,7 +1069,7 @@ button:disabled.is-busy{
     view: startupRole === "creator" || startupRole === "admin"
       ? "admin-home"
       : startupRole === "client"
-        ? "home"
+        ? (giftHint ? "certificate-gift" : "home")
         : "role-loading",
     category: "Все",
     service: null,
@@ -1112,7 +1118,16 @@ button:disabled.is-busy{
     adminSlotTime: null,
     adminClientKey: null,
     adminBlocksLoading: false,
-    reminderTestSending: ""
+    reminderTestSending: "",
+    certificateId: null,
+    certificateGiftToken: giftHint,
+    certificateGiftPreview: null,
+    certificateGiftLoading: Boolean(giftHint),
+    adminCertificatesLoading: false,
+    adminCertificateIssueOpen: false,
+    adminCertificateId: null,
+    adminCertificateDetail: null,
+    adminCertificateScanBusy: false
   };
 
   const HERO_EXACT_CARD = "/assets/hero.webp";
@@ -1214,6 +1229,10 @@ button:disabled.is-busy{
   let adminServices = [];
   let adminBlocks = [];
   let adminClientNotes = {};
+  let certificates = [];
+  let sentCertificateTransfers = [];
+  let adminCertificates = [];
+  let adminCertificateClients = [];
   const BOOKING_AVAILABILITY_CLIENT_TTL_MS = 15000;
   let bookingUnavailableTimes = new Set();
   let bookingAvailabilityDate = "";
@@ -1785,7 +1804,7 @@ button:disabled.is-busy{
 
   async function loadIdentity(){
     const keepCreatorClientPreview =
-      S.identityReady && S.actualRole==="creator" && S.roleMode==="client";
+      (S.identityReady && S.actualRole==="creator" && S.roleMode==="client") || entryHint==="client";
     const beforeRole=S.actualRole;
     const beforeMode=S.roleMode;
     const beforeView=S.view;
@@ -1826,7 +1845,7 @@ button:disabled.is-busy{
         if(!String(S.view).startsWith("admin-")) S.view="admin-home";
       }else{
         S.roleMode="client";
-        if(!["home","services","service","masters","datetime","booking-contact","confirm","booking","history","profile","bonus"].includes(S.view))
+        if(!["home","services","service","masters","datetime","booking-contact","confirm","booking","history","profile","bonus","certificates","certificate-detail","certificate-gift"].includes(S.view))
           S.view="home";
       }
 
@@ -1906,6 +1925,7 @@ button:disabled.is-busy{
       S.adminSlotDate ||
       S.adminClientKey ||
       S.adminSearchOpen ||
+      S.adminCertificateIssueOpen ||
       S.view==="admin-access" && formFieldIsActive()
     );
   }
@@ -2063,8 +2083,13 @@ button:disabled.is-busy{
       if(view==="admin-calendar")loadAdminBlocks(true);
       if(view==="admin-clients")loadAdminClientNotes(true);
       if(view==="admin-finance"&&!servicesLoaded)loadServices(true);
+    }else if(view==="admin-certificates"){
+      loadAdminCertificates(true);
+      loadAdminCertificateClients(true);
     }else if(view==="booking" || view==="history"){
       loadBookings(true);
+    }else if(view==="certificates"){
+      loadCertificates(true);
     }
     haptic();
   }
@@ -2160,7 +2185,7 @@ button:disabled.is-busy{
         <div class="hero-slide slide-certificate">
           <section class="certificate-banner">
             <img src="${CERTIFICATE_BANNER}" alt="Подарочный сертификат" loading="lazy" decoding="async" width="1200" height="675">
-            <button class="certificate-action" onclick="Beauty.openService(14)">Оформить сертификат</button>
+            <button class="certificate-action" onclick="Beauty.openCertificates()">Оформить сертификат</button>
           </section>
         </div>
         <div class="hero-slide slide-laser">
@@ -2735,7 +2760,7 @@ button:disabled.is-busy{
         <button class="menu-item" onclick="Beauty.toast('Редактирование профиля подключим позже')"><span class="mi">♙</span><b>Личные данные</b><span>›</span></button>
         <button class="menu-item" onclick="Beauty.go('masters')"><span class="mi">♡</span><b>Мои мастера</b><span>›</span></button>
         <button class="menu-item" onclick="Beauty.go('bonus')"><span class="mi">♢</span><b>Бонусы</b><span>1 250 ₸ ›</span></button>
-        <button class="menu-item" onclick="Beauty.toast('Сертификаты появятся позже')"><span class="mi">▣</span><b>Подарочные сертификаты</b><span>›</span></button>
+        <button class="menu-item" onclick="Beauty.openCertificates()"><span class="mi">▣</span><b>Подарочные сертификаты</b><span>›</span></button>
         <button class="menu-item" onclick="Beauty.toast('Уведомления включены')"><span class="mi">♧</span><b>Уведомления</b><span>›</span></button>
         <button class="menu-item" onclick="Beauty.toast('Раздел поддержки подключим позже')"><span class="mi">?</span><b>Помощь и поддержка</b><span>›</span></button>
       </div>
@@ -2756,6 +2781,379 @@ button:disabled.is-busy{
     </main>${nav("profile")}`;
   }
 
+
+
+  /* ===== GIFT CERTIFICATES MODULE — css/certificates.css + css/admin/certificates.css ===== */
+  function certificateStatusRu(status){
+    return ({active:"Активен",expired:"Срок истёк",used:"Использован",cancelled:"Аннулирован"})[String(status||"")] || "Сертификат";
+  }
+
+  function certificateMainValue(c){
+    if(Number.isFinite(Number(c?.amount)) && Number(c.amount)>0)return fmt(Number(c.amount));
+    if(String(c?.serviceName||"").trim())return String(c.serviceName).trim();
+    return "Подарочный сертификат";
+  }
+
+  function certificatePrettyDate(value){
+    if(!value)return "Без ограничения";
+    const d=new Date(String(value).slice(0,10)+"T12:00:00");
+    return Number.isFinite(d.getTime())?new Intl.DateTimeFormat("ru-RU",{day:"2-digit",month:"long",year:"numeric"}).format(d):String(value);
+  }
+
+  async function certificateApi(path="",options={}){
+    return accessApi("/certificates"+path,{...options,cache:"no-store"});
+  }
+
+  async function adminCertificateApi(path="",options={}){
+    return accessApi("/admin/certificates"+path,{...options,cache:"no-store"});
+  }
+
+  async function loadCertificates(silent=true){
+    try{
+      const data=await certificateApi("/mine");
+      certificates=Array.isArray(data.certificates)?data.certificates:[];
+      sentCertificateTransfers=Array.isArray(data.sentTransfers)?data.sentTransfers:[];
+      if(["certificates","certificate-detail"].includes(S.view))backgroundRender();
+    }catch(e){
+      console.error("Certificates load failed:",e);
+      if(!silent)toast(e.message||"Не удалось загрузить сертификаты");
+    }
+  }
+
+  function openCertificates(){
+    S.certificateId=null;
+    S.view="certificates";
+    render();
+    setAppScrollTop(0,"auto");
+    loadCertificates(true);
+    haptic();
+  }
+
+  function openCertificate(id){
+    S.certificateId=String(id);
+    S.view="certificate-detail";
+    render();
+    setAppScrollTop(0,"auto");
+    haptic();
+  }
+
+  function certificateCard(c){
+    const status=String(c.status||"active");
+    return `<button class="certificate-list-card" onclick="Beauty.openCertificate('${esc(c.id)}')">
+      <span class="certificate-list-mark">▣</span>
+      <span class="certificate-list-copy"><small>${esc(c.number||"")}</small><b>${esc(c.title||"Подарочный сертификат")}</b><strong>${esc(certificateMainValue(c))}</strong><em>до ${esc(certificatePrettyDate(c.expiresAt))}</em></span>
+      <span class="certificate-status status-${esc(status)}">${esc(certificateStatusRu(status))}</span>
+    </button>`;
+  }
+
+  function certificatesView(){
+    return `<main class="page page-profile page-certificates">${topbar({back:"Beauty.go('profile')"})}
+      <section class="certificate-intro">
+        <span class="certificate-intro-icon">✦</span>
+        <div><h1>Подарочные сертификаты</h1><p>После оплаты администратор выдаёт сертификат — он сразу появляется здесь и получает защищённый QR.</p></div>
+      </section>
+      <div class="certificate-section-head"><h2>Мои сертификаты</h2><span>${certificates.length}</span></div>
+      <div class="certificate-list">${certificates.length?certificates.map(certificateCard).join(""):`<div class="certificate-empty"><b>Сертификатов пока нет</b><span>После оформления у администратора сертификат появится здесь автоматически.</span></div>`}</div>
+      ${sentCertificateTransfers.length?`<div class="certificate-section-head transferred"><h2>Переданные</h2><span>${sentCertificateTransfers.length}</span></div><div class="certificate-transfer-list">${sentCertificateTransfers.map(t=>`<div class="certificate-transfer-row"><span>↗</span><div><b>${esc(t.title||"Подарочный сертификат")}</b><small>${esc(t.certificateNumber||"")} · передан ${esc(t.toName||"получателю")}</small></div><em>${esc(new Intl.DateTimeFormat("ru-RU",{day:"2-digit",month:"2-digit",year:"2-digit"}).format(new Date(t.acceptedAt)))}</em></div>`).join("")}</div>`:""}
+    </main>${nav("profile")}`;
+  }
+
+  let qrLibraryPromise=null;
+  function ensureQrLibrary(){
+    if(window.QRCode)return Promise.resolve(window.QRCode);
+    if(qrLibraryPromise)return qrLibraryPromise;
+    qrLibraryPromise=new Promise((resolve,reject)=>{
+      const script=document.createElement("script");
+      script.src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";
+      script.onload=()=>window.QRCode?resolve(window.QRCode):reject(new Error("QR library unavailable"));
+      script.onerror=()=>reject(new Error("QR library unavailable"));
+      document.head.appendChild(script);
+    });
+    return qrLibraryPromise;
+  }
+
+  function certificateQrPayload(c){
+    return `${location.origin}/?certificate=${encodeURIComponent(String(c?.qrToken||""))}`;
+  }
+
+  async function renderCertificateQr(){
+    if(S.view!=="certificate-detail")return;
+    const cert=certificates.find(c=>String(c.id)===String(S.certificateId));
+    const box=document.querySelector("#certificateQrBox");
+    if(!cert||!box||!cert.qrToken||String(cert.status)!=="active")return;
+    try{
+      await ensureQrLibrary();
+      if(S.view!=="certificate-detail"||!document.querySelector("#certificateQrBox"))return;
+      box.innerHTML="";
+      new window.QRCode(box,{text:certificateQrPayload(cert),width:214,height:214,colorDark:"#17131d",colorLight:"#ffffff",correctLevel:window.QRCode.CorrectLevel.M});
+    }catch(e){
+      box.innerHTML=`<div class="certificate-qr-error">Не удалось загрузить QR.<br>Закройте и снова откройте сертификат.</div>`;
+    }
+  }
+
+  function certificateDetailView(){
+    const c=certificates.find(x=>String(x.id)===String(S.certificateId));
+    if(!c)return `<main class="page page-profile page-certificates">${topbar({back:"Beauty.openCertificates()"})}<div class="certificate-empty"><b>Сертификат не найден</b><span>Обновите список сертификатов.</span></div></main>${nav("profile")}`;
+    const active=String(c.status)==="active";
+    return `<main class="page page-profile page-certificates certificate-detail-page">${topbar({back:"Beauty.openCertificates()"})}
+      <section class="certificate-premium-card status-${esc(c.status)}">
+        <div class="certificate-brand">MED <span>AESTHETIC</span></div>
+        <small>${esc(c.number||"")}</small>
+        <h1>${esc(c.title||"Подарочный сертификат")}</h1>
+        <strong>${esc(certificateMainValue(c))}</strong>
+        <div class="certificate-card-bottom"><span>Действителен до<br><b>${esc(certificatePrettyDate(c.expiresAt))}</b></span><em class="certificate-status status-${esc(c.status)}">${esc(certificateStatusRu(c.status))}</em></div>
+      </section>
+      ${active?`<section class="certificate-qr-panel"><div class="certificate-qr-title"><div><h2>QR для проверки</h2><p>Покажите этот код администратору студии.</p></div><span>✓</span></div><div class="certificate-qr-shell"><div id="certificateQrBox" class="certificate-qr-box"><div class="certificate-qr-loading">Создаём QR…</div></div></div><small>QR связан с базой MED AESTHETIC и проверяется онлайн.</small></section>`:`<section class="certificate-state-panel"><b>${esc(certificateStatusRu(c.status))}</b><span>${c.status==="used"?"Этот сертификат уже был погашен.":c.status==="expired"?"Срок действия сертификата закончился.":"Сертификат недействителен."}</span></section>`}
+      ${active?`<button class="certificate-gift-btn" onclick="Beauty.giftCertificate('${esc(c.id)}',this)"><span>↗</span><div><b>Подарить через Telegram</b><small>Получатель примет сертификат в своём Mini App</small></div><i>›</i></button>`:""}
+    </main>${nav("profile")}`;
+  }
+
+  async function giftCertificate(id,button=null){
+    try{
+      setActionButtonBusy(button,"Создаём ссылку…");
+      const data=await certificateApi("/"+encodeURIComponent(String(id))+"/gift",{method:"POST"});
+      const giftLink=String(data.giftLink||"");
+      if(!giftLink)throw new Error("Ссылка подарка не создана");
+      const share="https://t.me/share/url?url="+encodeURIComponent(giftLink)+"&text="+encodeURIComponent("🎁 Для вас подарок от MED AESTHETIC");
+      restoreActionButton(button);
+      try{tg?.openTelegramLink?.(share)}catch(e){window.open(share,"_blank")}
+      haptic("medium");
+    }catch(e){
+      restoreActionButton(button);
+      toast(e.message||"Не удалось создать подарок");
+    }
+  }
+
+  async function loadCertificateGiftPreview(silent=true){
+    const token=String(S.certificateGiftToken||giftHint||"").trim();
+    if(!token)return;
+    S.certificateGiftLoading=true;
+    try{
+      const data=await certificateApi("/gift-preview?token="+encodeURIComponent(token));
+      S.certificateGiftPreview=data.gift||null;
+    }catch(e){
+      S.certificateGiftPreview={error:e.message||"Ссылка подарка недействительна"};
+      if(!silent)toast(S.certificateGiftPreview.error);
+    }finally{
+      S.certificateGiftLoading=false;
+      if(S.view==="certificate-gift")backgroundRender();
+    }
+  }
+
+  function certificateGiftView(){
+    const gift=S.certificateGiftPreview;
+    if(S.certificateGiftLoading&&!gift)return `<main class="page page-profile page-certificates certificate-gift-page">${topbar()}<div class="certificate-gift-loading"><span>✦</span><b>Открываем подарок…</b><small>Проверяем сертификат в MED AESTHETIC</small></div></main>${nav("profile")}`;
+    if(gift?.error)return `<main class="page page-profile page-certificates certificate-gift-page">${topbar()}<section class="certificate-gift-result error"><span>×</span><h1>Подарок недоступен</h1><p>${esc(gift.error)}</p><button onclick="Beauty.openCertificates()">Мои сертификаты</button></section></main>${nav("profile")}`;
+    const c=gift?.certificate;
+    if(!c)return `<main class="page page-profile page-certificates certificate-gift-page">${topbar()}<div class="certificate-empty"><b>Подарок не найден</b><span>Откройте ссылку из сообщения ещё раз.</span></div></main>${nav("profile")}`;
+    return `<main class="page page-profile page-certificates certificate-gift-page">${topbar()}
+      <section class="certificate-gift-hero"><span class="gift-spark">✦</span><small>Вам подарили</small><h1>${esc(c.title||"Подарочный сертификат")}</h1><strong>${esc(certificateMainValue(c))}</strong><p>От: <b>${esc(gift.fromName||"клиента MED AESTHETIC")}</b></p></section>
+      <section class="certificate-gift-note"><b>После принятия сертификат станет вашим</b><span>Система создаст новый QR. Старый QR предыдущего владельца сразу перестанет действовать.</span></section>
+      <button class="certificate-accept-btn" onclick="Beauty.acceptCertificateGift(this)">Принять подарок</button>
+    </main>${nav("profile")}`;
+  }
+
+  async function acceptCertificateGift(button=null){
+    const token=String(S.certificateGiftToken||"").trim();
+    if(!token)return;
+    try{
+      setActionButtonBusy(button,"Передаём сертификат…");
+      const data=await certificateApi("/gift-accept",{method:"POST",body:JSON.stringify({token})});
+      const c=data.certificate;
+      if(!c)throw new Error("Сертификат не получен");
+      certificates=[c,...certificates.filter(x=>String(x.id)!==String(c.id))];
+      S.certificateGiftToken="";
+      S.certificateGiftPreview=null;
+      S.certificateId=String(c.id);
+      S.view="certificate-detail";
+      try{
+        const u=new URL(location.href);u.searchParams.delete("gift");history.replaceState(null,"",u.toString());
+      }catch(e){}
+      render();
+      requestAnimationFrame(renderCertificateQr);
+      haptic("medium");
+    }catch(e){
+      restoreActionButton(button);
+      toast(e.message||"Не удалось принять подарок");
+    }
+  }
+
+  function adminCertificateStatusClass(status){return "status-"+String(status||"active")}
+
+  async function loadAdminCertificates(silent=true){
+    if(!["creator","admin"].includes(S.actualRole))return;
+    S.adminCertificatesLoading=true;
+    try{
+      const data=await adminCertificateApi();
+      adminCertificates=Array.isArray(data.certificates)?data.certificates:[];
+    }catch(e){
+      if(!silent)toast(e.message||"Не удалось загрузить сертификаты");
+    }finally{
+      S.adminCertificatesLoading=false;
+      if(S.view==="admin-certificates")backgroundRender();
+    }
+  }
+
+  async function loadAdminCertificateClients(silent=true){
+    if(!["creator","admin"].includes(S.actualRole))return;
+    try{
+      const data=await accessApi("/admin/certificate-clients",{cache:"no-store"});
+      adminCertificateClients=Array.isArray(data.users)?data.users:[];
+      if(S.view==="admin-certificates"&&S.adminCertificateIssueOpen)backgroundRender();
+    }catch(e){if(!silent)toast(e.message||"Не удалось загрузить клиентов")}
+  }
+
+  async function openAdminCertificates(){
+    S.view="admin-certificates";
+    S.adminCertificateId=null;
+    S.adminCertificateDetail=null;
+    render();
+    await Promise.allSettled([loadAdminCertificates(true),loadAdminCertificateClients(true)]);
+    setAppScrollTop(0,"auto");
+    haptic();
+  }
+
+  function adminCertificateRow(c){
+    return `<button class="admin-certificate-row" onclick="Beauty.openAdminCertificate('${esc(c.id)}')"><span class="admin-cert-icon">▣</span><span class="admin-cert-copy"><small>${esc(c.number||"")} · ${esc(c.ownerName||"")}</small><b>${esc(certificateMainValue(c))}</b><em>до ${esc(certificatePrettyDate(c.expiresAt))}</em></span><span class="admin-cert-status ${adminCertificateStatusClass(c.status)}">${esc(certificateStatusRu(c.status))}</span><i>›</i></button>`;
+  }
+
+  function defaultCertificateExpiry(){
+    const d=new Date();d.setFullYear(d.getFullYear()+1);return localISODate(d);
+  }
+
+  function adminCertificateIssuePanel(){
+    if(!S.adminCertificateIssueOpen)return "";
+    return `<section class="admin-certificate-issue">
+      <div class="admin-cert-panel-head"><div><h2>Выдать сертификат</h2><span>После сохранения клиент получит уведомление в Telegram</span></div><button onclick="Beauty.closeAdminCertificateIssue()">×</button></div>
+      <label><span>Получатель</span><select id="adminCertOwner">${adminCertificateClients.length?adminCertificateClients.map(u=>`<option value="${u.telegramUserId}">${esc(u.name)} · ID ${u.telegramUserId}</option>`).join(""):`<option value="">Нет пользователей</option>`}</select></label>
+      <div class="admin-cert-two"><label><span>Номинал, ₸</span><input id="adminCertAmount" inputmode="numeric" type="number" min="0" step="1000" placeholder="30000"></label><label><span>Действует до</span><input id="adminCertExpires" type="date" value="${defaultCertificateExpiry()}"></label></div>
+      <label><span>Услуга / назначение</span><input id="adminCertService" maxlength="180" placeholder="Можно оставить пустым, если указан номинал"></label>
+      <button class="admin-cert-issue-submit" onclick="Beauty.issueAdminCertificate(this)">Выдать сертификат</button>
+    </section>`;
+  }
+
+  function adminCertificatesView(){
+    const active=adminCertificates.filter(c=>c.status==="active").length;
+    const used=adminCertificates.filter(c=>c.status==="used").length;
+    const expired=adminCertificates.filter(c=>c.status==="expired").length;
+    return `<main class="admin-page admin-certificates-page">${adminHeader()}
+      <div class="admin-date-row"><div><h1>Сертификаты</h1><p>Выдача, QR-проверка и погашение</p></div><button class="admin-link" onclick="Beauty.go('admin-more')">Назад</button></div>
+      <div class="admin-cert-actions"><button class="scan" onclick="Beauty.scanCertificateQr()"><span>⌗</span><div><b>Сканировать QR</b><small>Проверить подлинность</small></div></button><button onclick="Beauty.openAdminCertificateIssue()"><span>＋</span><div><b>Выдать</b><small>Новый сертификат</small></div></button></div>
+      ${adminCertificateIssuePanel()}
+      <div class="admin-cert-kpis"><div><small>Активные</small><strong>${active}</strong></div><div><small>Использованы</small><strong>${used}</strong></div><div><small>Истёк срок</small><strong>${expired}</strong></div></div>
+      <section class="admin-cert-list-panel"><div class="admin-cert-list-head"><h2>Все сертификаты</h2><button onclick="Beauty.loadAdminCertificates()">↻</button></div><div class="admin-certificate-list">${S.adminCertificatesLoading&&!adminCertificates.length?`<div class="admin-empty">Загружаем сертификаты…</div>`:adminCertificates.length?adminCertificates.map(adminCertificateRow).join(""):`<div class="admin-empty">Сертификатов пока нет.</div>`}</div></section>
+    </main>${adminNav("admin-more")}${roleSheet()}`;
+  }
+
+  function openAdminCertificateIssue(){
+    S.adminCertificateIssueOpen=true;
+    render();
+    if(!adminCertificateClients.length)loadAdminCertificateClients(true);
+    haptic();
+  }
+  function closeAdminCertificateIssue(){S.adminCertificateIssueOpen=false;render()}
+
+  async function issueAdminCertificate(button=null){
+    const owner=Number(document.querySelector("#adminCertOwner")?.value||0);
+    const amountRaw=String(document.querySelector("#adminCertAmount")?.value||"").trim();
+    const amount=amountRaw===""?null:Number(amountRaw);
+    const service=String(document.querySelector("#adminCertService")?.value||"").trim();
+    const expires=String(document.querySelector("#adminCertExpires")?.value||"").trim();
+    if(!owner){toast("Выберите получателя");return}
+    if((amount===null||!Number.isFinite(amount)||amount<=0)&&!service){toast("Укажите номинал или услугу");return}
+    try{
+      setActionButtonBusy(button,"Выдаём…");
+      const data=await adminCertificateApi("",{method:"POST",body:JSON.stringify({owner_telegram_user_id:owner,amount:amount&&amount>0?Math.round(amount):null,service_name:service||null,title:"Подарочный сертификат",expires_at:expires||null})});
+      if(data.certificate)adminCertificates=[data.certificate,...adminCertificates];
+      S.adminCertificateIssueOpen=false;
+      render();toast("Сертификат выдан");haptic("medium");
+    }catch(e){restoreActionButton(button);toast(e.message||"Не удалось выдать сертификат")}
+  }
+
+  function tokenFromCertificateQr(raw){
+    const text=String(raw||"").trim();
+    if(!text)return "";
+    try{
+      const url=new URL(text);
+      const token=url.searchParams.get("certificate");
+      if(token)return token;
+    }catch(e){}
+    const m=text.match(/certificate[=:]\s*([A-Za-z0-9_\-]+)/i);
+    return m?m[1]:text;
+  }
+
+  async function verifyAdminCertificateQr(raw){
+    const token=tokenFromCertificateQr(raw);
+    if(!token){toast("QR не распознан");return}
+    S.adminCertificateScanBusy=true;
+    try{
+      const data=await adminCertificateApi("/verify?token="+encodeURIComponent(token));
+      S.adminCertificateDetail={certificate:data.certificate||null,history:Array.isArray(data.history)?data.history:[]};
+    }catch(e){
+      S.adminCertificateDetail={error:e.message||"Сертификат не подтверждён"};
+    }finally{
+      S.adminCertificateScanBusy=false;
+      S.view="admin-certificate-check";
+      render();setAppScrollTop(0,"auto");haptic("medium");
+    }
+  }
+
+  function scanCertificateQr(){
+    if(S.adminCertificateScanBusy)return;
+    if(tg?.showScanQrPopup){
+      try{
+        tg.showScanQrPopup({text:"Наведите камеру на QR сертификата MED AESTHETIC"},text=>{
+          try{tg.closeScanQrPopup?.()}catch(e){}
+          setTimeout(()=>verifyAdminCertificateQr(text),0);
+          return true;
+        });
+        haptic();
+        return;
+      }catch(e){}
+    }
+    const raw=window.prompt("Вставьте содержимое QR-кода сертификата");
+    if(raw)verifyAdminCertificateQr(raw);
+  }
+
+  async function openAdminCertificate(id){
+    try{
+      const data=await adminCertificateApi("/"+encodeURIComponent(String(id)),{cache:"no-store"});
+      S.adminCertificateId=String(id);
+      S.adminCertificateDetail={certificate:data.certificate||null,history:Array.isArray(data.history)?data.history:[]};
+      S.view="admin-certificate-check";render();setAppScrollTop(0,"auto");haptic();
+    }catch(e){toast(e.message||"Не удалось открыть сертификат")}
+  }
+
+  function adminCertificateHistory(history=[]){
+    if(!history.length)return `<div class="admin-cert-history-empty">Передач ещё не было.</div>`;
+    return `<div class="admin-cert-history">${history.map(h=>`<div><span>↗</span><p><b>${esc(h.fromName||"Владелец")} → ${esc(h.toName||"получатель")}</b><small>${h.status==="accepted"?"Передача принята":h.status==="pending"?"Ожидает принятия":h.status==="expired"?"Ссылка истекла":"Отменена"}</small></p><em>${h.acceptedAt?esc(new Intl.DateTimeFormat("ru-RU",{day:"2-digit",month:"2-digit",year:"2-digit"}).format(new Date(h.acceptedAt))):""}</em></div>`).join("")}</div>`;
+  }
+
+  function adminCertificateCheckView(){
+    const d=S.adminCertificateDetail||{};
+    if(d.error)return `<main class="admin-page admin-certificates-page admin-certificate-check-page">${adminHeader()}<div class="admin-date-row"><div><h1>Проверка QR</h1><p>Результат проверки в Neon</p></div><button class="admin-link" onclick="Beauty.openAdminCertificates()">Назад</button></div><section class="admin-cert-check invalid"><span>×</span><h2>Сертификат не подтверждён</h2><p>${esc(d.error)}</p><button onclick="Beauty.scanCertificateQr()">Сканировать другой QR</button></section></main>${adminNav("admin-more")}${roleSheet()}`;
+    const c=d.certificate;
+    if(!c)return adminCertificatesView();
+    const active=c.status==="active";
+    return `<main class="admin-page admin-certificates-page admin-certificate-check-page">${adminHeader()}<div class="admin-date-row"><div><h1>Проверка сертификата</h1><p>${esc(c.number||"")}</p></div><button class="admin-link" onclick="Beauty.openAdminCertificates()">Назад</button></div>
+      <section class="admin-cert-check ${active?"valid":"not-active"}"><span>${active?"✓":c.status==="used"?"✓":"!"}</span><h2>${active?"Подлинный сертификат":certificateStatusRu(c.status)}</h2><p>${active?"QR подтверждён сервером MED AESTHETIC и совпадает с записью в Neon.":"Запись существует, но сертификат нельзя использовать."}</p></section>
+      <section class="admin-cert-detail-card"><div><small>Владелец</small><b>${esc(c.ownerName||"")}</b><em>Telegram ID ${esc(c.ownerTelegramUserId||"")}</em></div><div><small>Сертификат</small><b>${esc(certificateMainValue(c))}</b><em>${esc(c.title||"")}</em></div><div><small>Действует до</small><b>${esc(certificatePrettyDate(c.expiresAt))}</b><em class="admin-cert-status ${adminCertificateStatusClass(c.status)}">${esc(certificateStatusRu(c.status))}</em></div></section>
+      ${active?`<button class="admin-cert-redeem" onclick="Beauty.redeemAdminCertificate('${esc(c.id)}',this)">Погасить сертификат</button>`:""}
+      <section class="admin-cert-history-panel"><div class="admin-cert-list-head"><h2>История передачи</h2><span>${Array.isArray(d.history)?d.history.length:0}</span></div>${adminCertificateHistory(d.history||[])}</section>
+      <button class="admin-cert-scan-again" onclick="Beauty.scanCertificateQr()">⌗ Сканировать другой QR</button>
+    </main>${adminNav("admin-more")}${roleSheet()}`;
+  }
+
+  async function redeemAdminCertificate(id,button=null){
+    if(!confirm("Погасить этот сертификат? После этого использовать его повторно будет нельзя."))return;
+    try{
+      setActionButtonBusy(button,"Погашаем…");
+      const data=await adminCertificateApi("/"+encodeURIComponent(String(id))+"/redeem",{method:"POST"});
+      S.adminCertificateDetail={certificate:data.certificate||null,history:Array.isArray(data.history)?data.history:[]};
+      adminCertificates=adminCertificates.map(c=>String(c.id)===String(id)?(data.certificate||c):c);
+      render();toast("Сертификат погашен");haptic("medium");
+    }catch(e){restoreActionButton(button);toast(e.message||"Не удалось погасить сертификат")}
+  }
 
 
   function ruRole(role){
@@ -3329,6 +3727,7 @@ button:disabled.is-busy{
     const creatorItem=S.actualRole==="creator"?`<button onclick="Beauty.openAdminAccess()"><span class="ico">♛</span><div><b>Администраторы</b><small>Telegram ID и права доступа</small></div><span class="go">›</span></button><button onclick="Beauty.openAdminReminderTests()"><span class="ico">⏰</span><div><b>Тест напоминаний</b><small>Проверка клиентских и админских сообщений</small></div><span class="go">›</span></button><button class="creator-danger-menu" onclick="Beauty.clearTestData()"><span class="ico">×</span><div><b>Очистить тестовые данные</b><small>Удалить все записи и клиентов перед запуском</small></div><span class="go">›</span></button>`:"";
     return `<main class="admin-page admin-more-page">${adminHeader()}<div class="admin-date-row"><div><h1>Ещё</h1><p>Управление студией</p></div></div><div class="admin-menu">
       <button onclick="Beauty.openAdminServices()"><span class="ico">⌘</span><div><b>Услуги</b><small>Описание, цены и доступность</small></div><span class="go">›</span></button>
+      <button onclick="Beauty.openAdminCertificates()"><span class="ico">▣</span><div><b>Сертификаты</b><small>Выдача, QR-проверка и погашение</small></div><span class="go">›</span></button>
       <button onclick="Beauty.go('admin-finance')"><span class="ico">₸</span><div><b>Выручка и аналитика</b><small>Отдельно от рабочей главной</small></div><span class="go">›</span></button>
       <button onclick="Beauty.go('admin-calendar')"><span class="ico">□</span><div><b>Расписание</b><small>Записи и закрытые окна</small></div><span class="go">›</span></button>
       ${creatorItem}
@@ -3897,6 +4296,8 @@ button:disabled.is-busy{
     else if(S.view==="admin-access")html=adminAccessView();
     else if(S.view==="admin-finance")html=adminFinanceView();
     else if(S.view==="admin-reminder-tests")html=adminReminderTestsView();
+    else if(S.view==="admin-certificates")html=adminCertificatesView();
+    else if(S.view==="admin-certificate-check")html=adminCertificateCheckView();
     else if(S.view==="home")html=home();
     else if(S.view==="services")html=servicesView();
     else if(S.view==="service")html=serviceDetail();
@@ -3908,9 +4309,13 @@ button:disabled.is-busy{
     else if(S.view==="history")html=historyView();
     else if(S.view==="profile")html=profileView();
     else if(S.view==="bonus")html=bonusView();
+    else if(S.view==="certificates")html=certificatesView();
+    else if(S.view==="certificate-detail")html=certificateDetailView();
+    else if(S.view==="certificate-gift")html=certificateGiftView();
     else html=isStaffMode()?adminHome():home();
     document.querySelector("#app").innerHTML=html + testModeBar() + (S.roleMode==="client" ? roleSheet() : "") + (isStaffMode() ? adminBookingSheet() : "") + (isStaffMode() ? adminServiceSheet() : "") + (isStaffMode() ? adminCreateBookingSheet() : "") + (isStaffMode() ? adminRescheduleSheet() : "") + (isStaffMode() ? adminSlotSheet() : "") + (isStaffMode() ? adminClientSheet() : "") + (isStaffMode() ? adminSearchSheet() : "");
     if(S.view==="home") requestAnimationFrame(initHeroCarouselLoop);
+    if(S.view==="certificate-detail") requestAnimationFrame(renderCertificateQr);
     if(S.view==="datetime") requestAnimationFrame(()=>{
       keepSelectedBookingDateVisible();
       ensureBookingAvailabilityFresh(true);
@@ -4257,6 +4662,18 @@ button:disabled.is-busy{
   window.Beauty = {
     go,
     toast,
+    openCertificates,
+    openCertificate,
+    giftCertificate,
+    acceptCertificateGift,
+    openAdminCertificates,
+    loadAdminCertificates(){return loadAdminCertificates(false)},
+    openAdminCertificateIssue,
+    closeAdminCertificateIssue,
+    issueAdminCertificate,
+    scanCertificateQr,
+    openAdminCertificate,
+    redeemAdminCertificate,
     openRoleSheet(){S.roleSheet=true;render();haptic()},
     closeRoleSheet(){S.roleSheet=false;render()},
     async openAdminAccess(){
@@ -4332,6 +4749,9 @@ button:disabled.is-busy{
       S.adminSlotDate=null;
       S.adminSlotTime=null;
       S.adminClientKey=null;
+      S.adminCertificateId=null;
+      S.adminCertificateDetail=null;
+      S.adminCertificateIssueOpen=false;
       S.view=role==="client"?"home":"admin-home";
       render();
       if(role==="client"){
@@ -4360,6 +4780,7 @@ button:disabled.is-busy{
     },
     backToServices(){backToServices()},
     openService(id){
+      if(Number(id)===14){openCertificates();return;}
       const found=services.find(x=>Number(x.id)===Number(id));
 
       if(S.view==="services"){
@@ -4512,7 +4933,7 @@ button:disabled.is-busy{
     startupRole==="creator" || startupRole==="admin"
       ? Promise.allSettled([loadAdminBookings(true),loadServices(true),loadAdminBlocks(true),loadAdminClientNotes(true)])
       : startupRole==="client"
-        ? Promise.allSettled([loadServices(true),loadBookings(true)])
+        ? Promise.allSettled([loadServices(true),loadBookings(true),giftHint?loadCertificateGiftPreview(true):Promise.resolve()])
         : loadServices(true);
 
   Promise.allSettled([
@@ -4526,6 +4947,7 @@ button:disabled.is-busy{
       // after /api/me. Warm both client datasets immediately at that point.
       if(!lastServicesSignature)loadServices(true);
       if(!lastBookingsSignature)loadBookings(true);
+      if(giftHint && !S.certificateGiftPreview){S.certificateGiftToken=giftHint;S.view="certificate-gift";render();loadCertificateGiftPreview(true);}
     }
   });
 
@@ -4544,12 +4966,15 @@ button:disabled.is-busy{
         if(S.view==="admin-clients")loadAdminClientNotes(true);
       }else if(S.view==="admin-services" && !S.adminServiceId){
         loadAdminServices(true);
+      }else if(S.view==="admin-certificates"){
+        loadAdminCertificates(true);
       }
       return;
     }
 
     if(["home","services","service"].includes(S.view))loadServices(true);
     if(["booking","history"].includes(S.view))loadBookings(true);
+    if(["certificates","certificate-detail"].includes(S.view))loadCertificates(true);
     if(S.view==="datetime")ensureBookingAvailabilityFresh(true);
   });
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import secrets
 from datetime import date, time, timedelta
 from functools import lru_cache
 from threading import RLock
@@ -14,7 +15,7 @@ from pydantic import BaseModel, Field
 from psycopg.errors import UniqueViolation
 
 from auth import validate_telegram_init_data
-from bot import make_admin_invite_link, safe_set_role_menu_button, send_notification, send_notifications, send_test_reminder
+from bot import make_admin_invite_link, make_certificate_gift_link, safe_set_role_menu_button, send_notification, send_notifications, send_test_reminder
 from database import (
     create_admin_invite,
     db,
@@ -97,6 +98,18 @@ class ServiceUpdate(BaseModel):
     description: Optional[str] = Field(default=None, max_length=5000)
     includes: Optional[list[str]] = Field(default=None, max_length=30)
     is_active: Optional[bool] = None
+
+
+class CertificateIssue(BaseModel):
+    owner_telegram_user_id: int = Field(gt=0)
+    amount: Optional[int] = Field(default=None, ge=0)
+    service_name: Optional[str] = Field(default=None, max_length=180)
+    title: str = Field(default="Подарочный сертификат", min_length=2, max_length=180)
+    expires_at: Optional[date] = None
+
+
+class CertificateGiftAccept(BaseModel):
+    token: str = Field(min_length=16, max_length=220)
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -210,6 +223,103 @@ def _require_staff(app_user: dict) -> None:
     if app_user.get("role") not in {"creator", "admin"}:
         raise HTTPException(status_code=403, detail="Требуются права администратора")
 
+
+def _certificate_effective_status(row: dict) -> str:
+    status = str(row.get("status") or "active")
+    expires_at = row.get("expires_at")
+    if status == "active" and expires_at and expires_at < date.today():
+        return "expired"
+    return status
+
+
+def _certificate_owner_name(row: dict) -> str:
+    return (
+        row.get("owner_client_name")
+        or " ".join(x for x in [row.get("owner_first_name"), row.get("owner_last_name")] if x)
+        or (f"@{row.get('owner_username')}" if row.get("owner_username") else "")
+        or f"Telegram {row.get('owner_telegram_user_id')}"
+    )
+
+
+def _certificate_payload(row: dict, *, include_qr: bool = False) -> dict:
+    payload = {
+        "id": str(row["id"]),
+        "number": f"MA-{int(row['id']):06d}",
+        "title": row.get("title") or "Подарочный сертификат",
+        "amount": row.get("amount"),
+        "serviceName": row.get("service_name") or "",
+        "status": _certificate_effective_status(row),
+        "ownerTelegramUserId": int(row["owner_telegram_user_id"]),
+        "ownerName": _certificate_owner_name(row),
+        "purchasedByTelegramUserId": int(row["purchased_by_telegram_user_id"]),
+        "expiresAt": row["expires_at"].isoformat() if row.get("expires_at") else None,
+        "usedAt": row["used_at"].isoformat() if row.get("used_at") else None,
+        "usedBy": int(row["used_by"]) if row.get("used_by") is not None else None,
+        "createdAt": row["created_at"].isoformat() if row.get("created_at") else None,
+    }
+    if include_qr:
+        payload["qrToken"] = row.get("qr_token") or ""
+    return payload
+
+
+def _certificate_select(where_sql: str = "", params: tuple = ()) -> list[dict]:
+    with db() as conn:
+        rows = conn.execute(
+            f"""
+            SELECT c.*,
+                   u.client_name AS owner_client_name,
+                   u.first_name AS owner_first_name,
+                   u.last_name AS owner_last_name,
+                   u.username AS owner_username
+            FROM beauty_certificates c
+            LEFT JOIN app_users u ON u.telegram_user_id=c.owner_telegram_user_id
+            {where_sql}
+            ORDER BY c.created_at DESC, c.id DESC
+            """,
+            params,
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def _certificate_transfer_history(certificate_id: int) -> list[dict]:
+    with db() as conn:
+        rows = conn.execute(
+            """
+            SELECT t.*,
+                   f.client_name AS from_client_name, f.first_name AS from_first_name, f.last_name AS from_last_name, f.username AS from_username,
+                   x.client_name AS to_client_name, x.first_name AS to_first_name, x.last_name AS to_last_name, x.username AS to_username
+            FROM beauty_certificate_transfers t
+            LEFT JOIN app_users f ON f.telegram_user_id=t.from_telegram_user_id
+            LEFT JOIN app_users x ON x.telegram_user_id=t.to_telegram_user_id
+            WHERE t.certificate_id=%s
+            ORDER BY t.created_at DESC, t.id DESC
+            """,
+            (int(certificate_id),),
+        ).fetchall()
+
+    def label(prefix: str, row: dict, uid_key: str) -> str:
+        return (
+            row.get(prefix + "client_name")
+            or " ".join(x for x in [row.get(prefix + "first_name"), row.get(prefix + "last_name")] if x)
+            or (f"@{row.get(prefix + 'username')}" if row.get(prefix + "username") else "")
+            or (f"Telegram {row.get(uid_key)}" if row.get(uid_key) else "")
+        )
+
+    result = []
+    for raw in rows:
+        row = dict(raw)
+        state = "accepted" if row.get("accepted_at") else "cancelled" if row.get("cancelled_at") else "expired" if row.get("expires_at") and row["expires_at"] < __import__("datetime").datetime.now(row["expires_at"].tzinfo) else "pending"
+        result.append({
+            "id": str(row["id"]),
+            "fromTelegramUserId": int(row["from_telegram_user_id"]),
+            "fromName": label("from_", row, "from_telegram_user_id"),
+            "toTelegramUserId": int(row["to_telegram_user_id"]) if row.get("to_telegram_user_id") else None,
+            "toName": label("to_", row, "to_telegram_user_id"),
+            "status": state,
+            "createdAt": row["created_at"].isoformat(),
+            "acceptedAt": row["accepted_at"].isoformat() if row.get("accepted_at") else None,
+        })
+    return result
 
 
 def _staff_chat_ids() -> list[int]:
@@ -347,6 +457,399 @@ def me(
             "admin": ["admin"],
             "client": ["client"],
         }[actual_role],
+    }
+
+
+# ---------------------------------------------------------------------------
+# Gift certificates
+# ---------------------------------------------------------------------------
+@router.get("/certificates/mine")
+def my_certificates(
+    x_telegram_init_data: str | None = Header(default=None, alias="X-Telegram-Init-Data"),
+):
+    user, _ = _identity(x_telegram_init_data)
+    uid = int(user["id"])
+    rows = _certificate_select("WHERE c.owner_telegram_user_id=%s", (uid,))
+
+    with db() as conn:
+        sent = conn.execute(
+            """
+            SELECT t.id, t.certificate_id, t.to_telegram_user_id, t.accepted_at,
+                   c.title, c.amount, c.service_name,
+                   u.client_name AS to_client_name, u.first_name AS to_first_name,
+                   u.last_name AS to_last_name, u.username AS to_username
+            FROM beauty_certificate_transfers t
+            JOIN beauty_certificates c ON c.id=t.certificate_id
+            LEFT JOIN app_users u ON u.telegram_user_id=t.to_telegram_user_id
+            WHERE t.from_telegram_user_id=%s AND t.accepted_at IS NOT NULL
+            ORDER BY t.accepted_at DESC, t.id DESC
+            LIMIT 30
+            """,
+            (uid,),
+        ).fetchall()
+
+    sent_payload = []
+    for raw in sent:
+        row = dict(raw)
+        to_name = (
+            row.get("to_client_name")
+            or " ".join(x for x in [row.get("to_first_name"), row.get("to_last_name")] if x)
+            or (f"@{row.get('to_username')}" if row.get("to_username") else "")
+            or f"Telegram {row.get('to_telegram_user_id')}"
+        )
+        sent_payload.append({
+            "id": str(row["id"]),
+            "certificateNumber": f"MA-{int(row['certificate_id']):06d}",
+            "title": row.get("title") or "Подарочный сертификат",
+            "amount": row.get("amount"),
+            "serviceName": row.get("service_name") or "",
+            "toName": to_name,
+            "acceptedAt": row["accepted_at"].isoformat(),
+        })
+
+    return {
+        "ok": True,
+        "certificates": [_certificate_payload(r, include_qr=True) for r in rows],
+        "sentTransfers": sent_payload,
+    }
+
+
+@router.post("/certificates/{certificate_id}/gift")
+def create_certificate_gift(
+    certificate_id: int,
+    x_telegram_init_data: str | None = Header(default=None, alias="X-Telegram-Init-Data"),
+):
+    user, _ = _identity(x_telegram_init_data)
+    uid = int(user["id"])
+    raw_token = secrets.token_urlsafe(28)
+    token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+
+    with db() as conn:
+        row = conn.execute(
+            """
+            SELECT * FROM beauty_certificates
+            WHERE id=%s AND owner_telegram_user_id=%s
+            FOR UPDATE
+            """,
+            (certificate_id, uid),
+        ).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Сертификат не найден")
+        row = dict(row)
+        if _certificate_effective_status(row) != "active":
+            raise HTTPException(status_code=409, detail="Этот сертификат уже нельзя подарить")
+
+        conn.execute(
+            """
+            UPDATE beauty_certificate_transfers
+            SET cancelled_at=NOW()
+            WHERE certificate_id=%s AND accepted_at IS NULL AND cancelled_at IS NULL
+            """,
+            (certificate_id,),
+        )
+        conn.execute(
+            """
+            INSERT INTO beauty_certificate_transfers(
+                certificate_id, from_telegram_user_id, token_hash, expires_at
+            )
+            VALUES (%s,%s,%s,NOW()+INTERVAL '7 days')
+            """,
+            (certificate_id, uid, token_hash),
+        )
+
+    try:
+        gift_link = make_certificate_gift_link(raw_token)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Не удалось создать Telegram-ссылку подарка") from exc
+
+    return {"ok": True, "giftLink": gift_link, "expiresInDays": 7}
+
+
+@router.get("/certificates/gift-preview")
+def certificate_gift_preview(
+    token: str,
+    x_telegram_init_data: str | None = Header(default=None, alias="X-Telegram-Init-Data"),
+):
+    _identity(x_telegram_init_data)
+    token_hash = hashlib.sha256(str(token).encode("utf-8")).hexdigest()
+    with db() as conn:
+        row = conn.execute(
+            """
+            SELECT t.id AS transfer_id, t.from_telegram_user_id, t.expires_at AS transfer_expires_at,
+                   c.*,
+                   u.client_name AS owner_client_name, u.first_name AS owner_first_name,
+                   u.last_name AS owner_last_name, u.username AS owner_username
+            FROM beauty_certificate_transfers t
+            JOIN beauty_certificates c ON c.id=t.certificate_id
+            LEFT JOIN app_users u ON u.telegram_user_id=t.from_telegram_user_id
+            WHERE t.token_hash=%s
+              AND t.accepted_at IS NULL
+              AND t.cancelled_at IS NULL
+              AND t.expires_at>NOW()
+            """,
+            (token_hash,),
+        ).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Ссылка подарка недействительна или уже использована")
+    row = dict(row)
+    if _certificate_effective_status(row) != "active":
+        raise HTTPException(status_code=409, detail="Этот сертификат уже недействителен")
+
+    sender = _certificate_owner_name(row)
+    return {
+        "ok": True,
+        "gift": {
+            "certificate": _certificate_payload(row, include_qr=False),
+            "fromName": sender,
+            "expiresAt": row["transfer_expires_at"].isoformat(),
+        },
+    }
+
+
+@router.post("/certificates/gift-accept")
+def accept_certificate_gift(
+    payload: CertificateGiftAccept,
+    background_tasks: BackgroundTasks,
+    x_telegram_init_data: str | None = Header(default=None, alias="X-Telegram-Init-Data"),
+):
+    user, _ = _identity(x_telegram_init_data)
+    uid = int(user["id"])
+    token_hash = hashlib.sha256(payload.token.encode("utf-8")).hexdigest()
+    new_qr_token = secrets.token_urlsafe(32)
+
+    with db() as conn:
+        row = conn.execute(
+            """
+            SELECT t.id AS transfer_id, t.from_telegram_user_id, t.expires_at AS transfer_expires_at,
+                   t.accepted_at, t.cancelled_at, c.*
+            FROM beauty_certificate_transfers t
+            JOIN beauty_certificates c ON c.id=t.certificate_id
+            WHERE t.token_hash=%s
+            FOR UPDATE OF t, c
+            """,
+            (token_hash,),
+        ).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Ссылка подарка не найдена")
+        row = dict(row)
+        if row.get("accepted_at") or row.get("cancelled_at") or row["transfer_expires_at"] <= __import__("datetime").datetime.now(row["transfer_expires_at"].tzinfo):
+            raise HTTPException(status_code=409, detail="Ссылка подарка недействительна или уже использована")
+        if _certificate_effective_status(row) != "active":
+            raise HTTPException(status_code=409, detail="Сертификат уже недействителен")
+        if int(row["from_telegram_user_id"]) == uid:
+            raise HTTPException(status_code=409, detail="Этот сертификат уже принадлежит вам")
+        # The sender must still own the certificate at the exact acceptance moment.
+        if int(row["owner_telegram_user_id"]) != int(row["from_telegram_user_id"]):
+            raise HTTPException(status_code=409, detail="Сертификат уже был передан другому человеку")
+
+        conn.execute(
+            """
+            UPDATE beauty_certificates
+            SET owner_telegram_user_id=%s, qr_token=%s, updated_at=NOW()
+            WHERE id=%s
+            """,
+            (uid, new_qr_token, row["id"]),
+        )
+        conn.execute(
+            """
+            UPDATE beauty_certificate_transfers
+            SET to_telegram_user_id=%s, accepted_at=NOW()
+            WHERE id=%s
+            """,
+            (uid, row["transfer_id"]),
+        )
+
+    fresh = _certificate_select("WHERE c.id=%s", (row["id"],))[0]
+    background_tasks.add_task(
+        send_notification,
+        int(row["from_telegram_user_id"]),
+        f"🎁 Сертификат {fresh['title']} принят получателем и передан новому владельцу.",
+    )
+    background_tasks.add_task(
+        send_notification,
+        uid,
+        f"🎁 Сертификат {fresh['title']} теперь у вас. Откройте «Подарочные сертификаты» в MED AESTHETIC.",
+    )
+    return {"ok": True, "certificate": _certificate_payload(fresh, include_qr=True)}
+
+
+@router.get("/admin/certificate-clients")
+def admin_certificate_clients(
+    x_telegram_init_data: str | None = Header(default=None, alias="X-Telegram-Init-Data"),
+):
+    _, app_user = _identity(x_telegram_init_data)
+    _require_staff(app_user)
+    with db() as conn:
+        rows = conn.execute(
+            """
+            SELECT telegram_user_id, first_name, last_name, username, client_name, phone, role
+            FROM app_users
+            ORDER BY COALESCE(NULLIF(client_name,''), NULLIF(first_name,''), username, telegram_user_id::text)
+            """
+        ).fetchall()
+    users = []
+    for raw in rows:
+        row = dict(raw)
+        name = row.get("client_name") or " ".join(x for x in [row.get("first_name"), row.get("last_name")] if x) or (f"@{row.get('username')}" if row.get("username") else f"Telegram {row['telegram_user_id']}")
+        users.append({
+            "telegramUserId": int(row["telegram_user_id"]),
+            "name": name,
+            "username": row.get("username") or "",
+            "phone": row.get("phone") or "",
+            "role": row.get("role") or "client",
+        })
+    return {"ok": True, "users": users}
+
+
+@router.get("/admin/certificates")
+def admin_certificates(
+    x_telegram_init_data: str | None = Header(default=None, alias="X-Telegram-Init-Data"),
+):
+    _, app_user = _identity(x_telegram_init_data)
+    _require_staff(app_user)
+    rows = _certificate_select()
+    return {"ok": True, "certificates": [_certificate_payload(r) for r in rows]}
+
+
+@router.post("/admin/certificates")
+def issue_certificate(
+    payload: CertificateIssue,
+    background_tasks: BackgroundTasks,
+    x_telegram_init_data: str | None = Header(default=None, alias="X-Telegram-Init-Data"),
+):
+    _, app_user = _identity(x_telegram_init_data)
+    _require_staff(app_user)
+    service_name = str(payload.service_name or "").strip() or None
+    if not service_name and not (payload.amount is not None and int(payload.amount) > 0):
+        raise HTTPException(status_code=400, detail="Укажите номинал или услугу сертификата")
+    expires_at = payload.expires_at or (date.today() + timedelta(days=365))
+    if expires_at < date.today():
+        raise HTTPException(status_code=400, detail="Срок действия не может быть в прошлом")
+
+    with db() as conn:
+        owner = conn.execute(
+            "SELECT telegram_user_id FROM app_users WHERE telegram_user_id=%s",
+            (payload.owner_telegram_user_id,),
+        ).fetchone()
+        if not owner:
+            raise HTTPException(status_code=404, detail="Пользователь ещё не открывал MED AESTHETIC в Telegram")
+        row = conn.execute(
+            """
+            INSERT INTO beauty_certificates(
+                owner_telegram_user_id, purchased_by_telegram_user_id,
+                title, amount, service_name, status, qr_token, issued_by, expires_at
+            )
+            VALUES (%s,%s,%s,%s,%s,'active',%s,%s,%s)
+            RETURNING id
+            """,
+            (
+                payload.owner_telegram_user_id,
+                payload.owner_telegram_user_id,
+                payload.title.strip(),
+                payload.amount,
+                service_name,
+                secrets.token_urlsafe(32),
+                int(app_user["telegram_user_id"]),
+                expires_at,
+            ),
+        ).fetchone()
+
+    cert = _certificate_select("WHERE c.id=%s", (row["id"],))[0]
+    background_tasks.add_task(
+        send_notification,
+        int(payload.owner_telegram_user_id),
+        f"🎁 Вам выдан {cert['title']}. Сертификат уже доступен в MED AESTHETIC.",
+    )
+    return {"ok": True, "certificate": _certificate_payload(cert)}
+
+
+@router.get("/admin/certificates/verify")
+def verify_certificate(
+    token: str,
+    x_telegram_init_data: str | None = Header(default=None, alias="X-Telegram-Init-Data"),
+):
+    _, app_user = _identity(x_telegram_init_data)
+    _require_staff(app_user)
+    rows = _certificate_select("WHERE c.qr_token=%s", (str(token).strip(),))
+    if not rows:
+        raise HTTPException(status_code=404, detail="QR не относится к действующему сертификату MED AESTHETIC")
+    cert = rows[0]
+    return {
+        "ok": True,
+        "certificate": _certificate_payload(cert),
+        "history": _certificate_transfer_history(int(cert["id"])),
+    }
+
+
+@router.get("/admin/certificates/{certificate_id}")
+def admin_certificate_detail(
+    certificate_id: int,
+    x_telegram_init_data: str | None = Header(default=None, alias="X-Telegram-Init-Data"),
+):
+    _, app_user = _identity(x_telegram_init_data)
+    _require_staff(app_user)
+    rows = _certificate_select("WHERE c.id=%s", (certificate_id,))
+    if not rows:
+        raise HTTPException(status_code=404, detail="Сертификат не найден")
+    cert = rows[0]
+    return {
+        "ok": True,
+        "certificate": _certificate_payload(cert),
+        "history": _certificate_transfer_history(certificate_id),
+    }
+
+
+@router.post("/admin/certificates/{certificate_id}/redeem")
+def redeem_certificate(
+    certificate_id: int,
+    background_tasks: BackgroundTasks,
+    x_telegram_init_data: str | None = Header(default=None, alias="X-Telegram-Init-Data"),
+):
+    _, app_user = _identity(x_telegram_init_data)
+    _require_staff(app_user)
+    with db() as conn:
+        row = conn.execute(
+            "SELECT * FROM beauty_certificates WHERE id=%s FOR UPDATE",
+            (certificate_id,),
+        ).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Сертификат не найден")
+        row = dict(row)
+        status = _certificate_effective_status(row)
+        if status == "expired":
+            raise HTTPException(status_code=409, detail="Срок действия сертификата истёк")
+        if status == "used":
+            raise HTTPException(status_code=409, detail="Сертификат уже был использован")
+        if status != "active":
+            raise HTTPException(status_code=409, detail="Сертификат недействителен")
+
+        conn.execute(
+            """
+            UPDATE beauty_certificates
+            SET status='used', used_at=NOW(), used_by=%s, updated_at=NOW()
+            WHERE id=%s
+            """,
+            (int(app_user["telegram_user_id"]), certificate_id),
+        )
+        conn.execute(
+            """
+            UPDATE beauty_certificate_transfers
+            SET cancelled_at=NOW()
+            WHERE certificate_id=%s AND accepted_at IS NULL AND cancelled_at IS NULL
+            """,
+            (certificate_id,),
+        )
+
+    fresh = _certificate_select("WHERE c.id=%s", (certificate_id,))[0]
+    background_tasks.add_task(
+        send_notification,
+        int(fresh["owner_telegram_user_id"]),
+        f"✅ Сертификат {fresh['title']} отмечен как использованный в MED AESTHETIC.",
+    )
+    return {
+        "ok": True,
+        "certificate": _certificate_payload(fresh),
+        "history": _certificate_transfer_history(certificate_id),
     }
 
 
@@ -1657,9 +2160,14 @@ def creator_clear_test_data(
         note_count = conn.execute(
             "SELECT COUNT(*) AS n FROM beauty_client_notes"
         ).fetchone()["n"]
+        certificate_count = conn.execute(
+            "SELECT COUNT(*) AS n FROM beauty_certificates"
+        ).fetchone()["n"]
 
         # Deliberately preserve:
         # services, blocked schedule slots, creator/admin roles, access settings.
+        conn.execute("DELETE FROM beauty_certificate_transfers")
+        conn.execute("DELETE FROM beauty_certificates")
         conn.execute("DELETE FROM beauty_reminder_log")
         conn.execute("DELETE FROM beauty_client_notes")
         conn.execute("DELETE FROM beauty_bookings")
@@ -1690,6 +2198,7 @@ def creator_clear_test_data(
         "ok": True,
         "deletedBookings": int(booking_count or 0),
         "deletedClientNotes": int(note_count or 0),
+        "deletedCertificates": int(certificate_count or 0),
     }
 
 
