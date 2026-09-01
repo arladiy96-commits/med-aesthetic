@@ -1499,6 +1499,200 @@ def update_admin_client_note(
     return {"ok":True,"clientKey":key,"note":note}
 
 
+
+@router.delete("/admin/bookings/{booking_id}")
+def creator_delete_booking(
+    booking_id: int,
+    x_telegram_init_data: str | None = Header(default=None, alias="X-Telegram-Init-Data"),
+):
+    _, app_user = _identity(x_telegram_init_data)
+    _require_creator(app_user)
+
+    with db() as conn:
+        row = conn.execute(
+            "SELECT id FROM beauty_bookings WHERE id=%s",
+            (booking_id,),
+        ).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Запись не найдена")
+
+        conn.execute(
+            "DELETE FROM beauty_reminder_log WHERE booking_id=%s",
+            (booking_id,),
+        )
+        conn.execute(
+            "DELETE FROM beauty_bookings WHERE id=%s",
+            (booking_id,),
+        )
+
+    _clear_availability_cache()
+    return {"ok": True, "deletedBookingId": str(booking_id)}
+
+
+@router.delete("/admin/clients/{client_key:path}")
+def creator_delete_client(
+    client_key: str,
+    x_telegram_init_data: str | None = Header(default=None, alias="X-Telegram-Init-Data"),
+):
+    _, app_user = _identity(x_telegram_init_data)
+    _require_creator(app_user)
+
+    key = str(client_key or "").strip()[:220]
+    if not key:
+        raise HTTPException(status_code=400, detail="Не удалось определить клиента")
+
+    with db() as conn:
+        booking_rows = []
+        telegram_user_id: int | None = None
+
+        if key.startswith("tg:"):
+            try:
+                telegram_user_id = int(key[3:])
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail="Некорректный Telegram ID") from exc
+
+            booking_rows = conn.execute(
+                """
+                SELECT id, phone
+                FROM beauty_bookings
+                WHERE telegram_user_id=%s
+                """,
+                (telegram_user_id,),
+            ).fetchall()
+
+        elif key.startswith("phone:"):
+            digits = "".join(ch for ch in key[6:] if ch.isdigit())
+            if not digits:
+                raise HTTPException(status_code=400, detail="Некорректный номер клиента")
+
+            booking_rows = conn.execute(
+                """
+                SELECT id, phone
+                FROM beauty_bookings
+                WHERE regexp_replace(COALESCE(phone,''), '[^0-9]', '', 'g')=%s
+                  AND telegram_user_id IS NULL
+                """,
+                (digits,),
+            ).fetchall()
+
+        elif key.startswith("name:"):
+            name = key[5:].strip().lower()
+            if not name:
+                raise HTTPException(status_code=400, detail="Некорректное имя клиента")
+
+            booking_rows = conn.execute(
+                """
+                SELECT id, phone
+                FROM beauty_bookings
+                WHERE telegram_user_id IS NULL
+                  AND NULLIF(regexp_replace(COALESCE(phone,''), '[^0-9]', '', 'g'),'') IS NULL
+                  AND lower(trim(COALESCE(client_name,'')))=%s
+                """,
+                (name,),
+            ).fetchall()
+        else:
+            raise HTTPException(status_code=400, detail="Некорректный ключ клиента")
+
+        booking_ids = [int(r["id"]) for r in booking_rows]
+        legacy_phone_keys = {
+            "phone:" + "".join(ch for ch in str(r.get("phone") or "") if ch.isdigit())
+            for r in booking_rows
+            if "".join(ch for ch in str(r.get("phone") or "") if ch.isdigit())
+        }
+
+        if booking_ids:
+            conn.execute(
+                "DELETE FROM beauty_reminder_log WHERE booking_id = ANY(%s)",
+                (booking_ids,),
+            )
+            conn.execute(
+                "DELETE FROM beauty_bookings WHERE id = ANY(%s)",
+                (booking_ids,),
+            )
+
+        note_keys = {key, *legacy_phone_keys}
+        if telegram_user_id is not None:
+            note_keys.add(f"tg:{telegram_user_id}")
+
+        if note_keys:
+            conn.execute(
+                "DELETE FROM beauty_client_notes WHERE client_key = ANY(%s)",
+                (list(note_keys),),
+            )
+
+        # Keep the identity/role row itself. Only remove business contact data.
+        # If this Telegram user returns later, the account is recreated as the
+        # same identity rather than becoming a different client.
+        if telegram_user_id is not None:
+            conn.execute(
+                """
+                UPDATE app_users
+                SET client_name=NULL,
+                    phone=NULL,
+                    updated_at=NOW()
+                WHERE telegram_user_id=%s
+                """,
+                (telegram_user_id,),
+            )
+
+    _clear_availability_cache()
+    return {
+        "ok": True,
+        "clientKey": key,
+        "deletedBookings": len(booking_ids),
+    }
+
+
+@router.delete("/admin/test-data")
+def creator_clear_test_data(
+    x_telegram_init_data: str | None = Header(default=None, alias="X-Telegram-Init-Data"),
+):
+    _, app_user = _identity(x_telegram_init_data)
+    _require_creator(app_user)
+
+    with db() as conn:
+        booking_count = conn.execute(
+            "SELECT COUNT(*) AS n FROM beauty_bookings"
+        ).fetchone()["n"]
+        note_count = conn.execute(
+            "SELECT COUNT(*) AS n FROM beauty_client_notes"
+        ).fetchone()["n"]
+
+        # Deliberately preserve:
+        # services, blocked schedule slots, creator/admin roles, access settings.
+        conn.execute("DELETE FROM beauty_reminder_log")
+        conn.execute("DELETE FROM beauty_client_notes")
+        conn.execute("DELETE FROM beauty_bookings")
+        conn.execute(
+            """
+            UPDATE app_users
+            SET client_name=NULL,
+                phone=NULL,
+                updated_at=NOW()
+            WHERE client_name IS NOT NULL OR phone IS NOT NULL
+            """
+        )
+
+        # Clean launch: after a complete pre-launch wipe, booking numbering
+        # starts from 1 again when PostgreSQL sequence is available.
+        conn.execute(
+            """
+            SELECT setval(
+                pg_get_serial_sequence('beauty_bookings','id'),
+                1,
+                false
+            )
+            """
+        )
+
+    _clear_availability_cache()
+    return {
+        "ok": True,
+        "deletedBookings": int(booking_count or 0),
+        "deletedClientNotes": int(note_count or 0),
+    }
+
+
 @router.post("/bookings")
 def create_booking(
     payload: BookingCreate,

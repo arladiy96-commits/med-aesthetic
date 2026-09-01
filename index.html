@@ -1451,6 +1451,18 @@ button:disabled.is-busy{
     });
   }
 
+  async function creatorDeleteBookingApi(bookingId){
+    return adminBookingApi("/"+encodeURIComponent(String(bookingId)),{method:"DELETE"});
+  }
+
+  async function creatorDeleteClientApi(clientKey){
+    return accessApi("/admin/clients/"+encodeURIComponent(String(clientKey)),{method:"DELETE"});
+  }
+
+  async function creatorClearTestDataApi(){
+    return accessApi("/admin/test-data",{method:"DELETE"});
+  }
+
   async function serviceCatalogApi(){
     const res=await fetch("/api/services",{cache:"no-store"});
     const data=await res.json().catch(()=>({}));
@@ -3314,7 +3326,7 @@ button:disabled.is-busy{
   }
 
   function adminMoreView(){
-    const creatorItem=S.actualRole==="creator"?`<button onclick="Beauty.openAdminAccess()"><span class="ico">♛</span><div><b>Администраторы</b><small>Telegram ID и права доступа</small></div><span class="go">›</span></button><button onclick="Beauty.openAdminReminderTests()"><span class="ico">⏰</span><div><b>Тест напоминаний</b><small>Проверка клиентских и админских сообщений</small></div><span class="go">›</span></button>`:"";
+    const creatorItem=S.actualRole==="creator"?`<button onclick="Beauty.openAdminAccess()"><span class="ico">♛</span><div><b>Администраторы</b><small>Telegram ID и права доступа</small></div><span class="go">›</span></button><button onclick="Beauty.openAdminReminderTests()"><span class="ico">⏰</span><div><b>Тест напоминаний</b><small>Проверка клиентских и админских сообщений</small></div><span class="go">›</span></button><button class="creator-danger-menu" onclick="Beauty.clearTestData()"><span class="ico">×</span><div><b>Очистить тестовые данные</b><small>Удалить все записи и клиентов перед запуском</small></div><span class="go">›</span></button>`:"";
     return `<main class="admin-page admin-more-page">${adminHeader()}<div class="admin-date-row"><div><h1>Ещё</h1><p>Управление студией</p></div></div><div class="admin-menu">
       <button onclick="Beauty.openAdminServices()"><span class="ico">⌘</span><div><b>Услуги</b><small>Описание, цены и доступность</small></div><span class="go">›</span></button>
       <button onclick="Beauty.go('admin-finance')"><span class="ico">₸</span><div><b>Выручка и аналитика</b><small>Отдельно от рабочей главной</small></div><span class="go">›</span></button>
@@ -3363,6 +3375,7 @@ button:disabled.is-busy{
         ${isActiveAdminBooking(b)?`<button class="booking-action neutral" onclick="Beauty.openAdminReschedule('${b.id}')">Перенести запись</button>`:""}
         ${status==="pending"?`<button class="booking-action confirm" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','confirmed',this)">Подтвердить запись</button><button class="booking-action danger" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','cancelled',this)">Отклонить заявку</button>`:""}
         ${status==="confirmed"?`<button class="booking-action done" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','completed',this)">Отметить как завершённую</button><button class="booking-action neutral" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','no_show',this)">Клиент не пришёл</button><button class="booking-action danger" data-admin-status-action onclick="Beauty.updateAdminBookingStatus('${b.id}','cancelled',this)">Отменить запись</button>`:""}
+        ${S.actualRole==="creator"?`<button class="booking-action danger creator-permanent-delete" onclick="Beauty.deleteAdminBooking('${b.id}')">Удалить запись навсегда</button>`:""}
       </div>
     </section></div>`;
   }
@@ -3400,7 +3413,7 @@ button:disabled.is-busy{
     if(!S.adminClientKey)return "";
     const c=adminClientByKey(S.adminClientKey);if(!c)return "";
     const history=c.bookings;
-    return `<div class="admin-client-backdrop" onclick="if(event.target===this)Beauty.closeAdminClient()"><section class="admin-client-sheet"><div class="admin-form-head"><div><small>Карточка клиента</small><h3>${esc(c.name)}</h3></div><button onclick="Beauty.closeAdminClient()">×</button></div><div class="admin-client-contact">${c.phone?`<button onclick="Beauty.callClientByKey('${adminClientToken(c.key)}')">☎ ${esc(c.phone)}</button>`:""}${c.username?`<button onclick="Beauty.messageClientByKey('${adminClientToken(c.key)}')">Telegram · @${esc(c.username)}</button>`:""}</div><div class="admin-client-stats"><div><strong>${c.completed}</strong><span>визитов</span></div><div><strong>${c.noShows}</strong><span>неявок</span></div><div><strong>${c.cancelled}</strong><span>отмен</span></div></div><label class="admin-client-note"><span>Постоянная заметка о клиенте</span><textarea id="adminClientNote" maxlength="3000" rows="3" placeholder="Аллергия, особенности, просьбы клиента...">${esc(c.note||"")}</textarea><button onclick="Beauty.saveAdminClientNote('${adminClientToken(c.key)}',this)">Сохранить</button></label><button class="admin-form-primary" onclick="Beauty.createBookingForClient('${adminClientToken(c.key)}')">＋ Новая запись этому клиенту</button><div class="admin-client-history-title"><h4>История</h4><span>${history.length} записей</span></div><div class="admin-client-history">${history.map(b=>`<button onclick="Beauty.openBookingFromClient('${b.id}')"><span><b>${esc(b.serviceName||"Запись")}</b><small>${esc(adminHomeDateLabel(b.date))} · ${esc(b.time)}</small></span><em class="status-${esc(b.status||"")}">${esc(bookingStatusRu(b.status))}</em></button>`).join("")}</div></section></div>`;
+    return `<div class="admin-client-backdrop" onclick="if(event.target===this)Beauty.closeAdminClient()"><section class="admin-client-sheet"><div class="admin-form-head"><div><small>Карточка клиента</small><h3>${esc(c.name)}</h3></div><button onclick="Beauty.closeAdminClient()">×</button></div><div class="admin-client-contact">${c.phone?`<button onclick="Beauty.callClientByKey('${adminClientToken(c.key)}')">☎ ${esc(c.phone)}</button>`:""}${c.username?`<button onclick="Beauty.messageClientByKey('${adminClientToken(c.key)}')">Telegram · @${esc(c.username)}</button>`:""}</div><div class="admin-client-stats"><div><strong>${c.completed}</strong><span>визитов</span></div><div><strong>${c.noShows}</strong><span>неявок</span></div><div><strong>${c.cancelled}</strong><span>отмен</span></div></div><label class="admin-client-note"><span>Постоянная заметка о клиенте</span><textarea id="adminClientNote" maxlength="3000" rows="3" placeholder="Аллергия, особенности, просьбы клиента...">${esc(c.note||"")}</textarea><button onclick="Beauty.saveAdminClientNote('${adminClientToken(c.key)}',this)">Сохранить</button></label><button class="admin-form-primary" onclick="Beauty.createBookingForClient('${adminClientToken(c.key)}')">＋ Новая запись этому клиенту</button>${S.actualRole==="creator"?`<button class="booking-action danger creator-client-delete" onclick="Beauty.deleteAdminClient('${adminClientToken(c.key)}')">Удалить клиента и всю историю</button>`:""}<div class="admin-client-history-title"><h4>История</h4><span>${history.length} записей</span></div><div class="admin-client-history">${history.map(b=>`<button onclick="Beauty.openBookingFromClient('${b.id}')"><span><b>${esc(b.serviceName||"Запись")}</b><small>${esc(adminHomeDateLabel(b.date))} · ${esc(b.time)}</small></span><em class="status-${esc(b.status||"")}">${esc(bookingStatusRu(b.status))}</em></button>`).join("")}</div></section></div>`;
   }
 
   function adminSearchSheet(){
@@ -3427,6 +3440,85 @@ button:disabled.is-busy{
   function callClientByKey(token){const key=adminClientKeyFromToken(token);const c=adminClientByKey(key);if(!c?.phone){toast("Номер телефона не указан");return}copyPhoneToClipboard(c.phone)}
   function messageClientByKey(token){const key=adminClientKeyFromToken(token);const c=adminClientByKey(key);if(!openClientTelegram(c?.username,c?.telegramUserId)){toast("Telegram клиента не привязан");return}haptic()}
   async function saveAdminClientNote(token,button=null){const key=adminClientKeyFromToken(token);const note=String(document.querySelector("#adminClientNote")?.value||"").trim();setActionButtonBusy(button,"Сохраняем…");try{const data=await adminClientNotesApi("/"+encodeURIComponent(key),{method:"PUT",body:JSON.stringify({note})});adminClientNotes[key]=data.note||"";restoreActionButton(button);toast("Заметка клиента сохранена");haptic()}catch(e){restoreActionButton(button);toast(e.message||"Не удалось сохранить заметку")}}
+
+  async function deleteAdminBooking(id){
+    if(S.actualRole!=="creator")return;
+    const b=adminBookings.find(x=>String(x.id)===String(id));
+    if(!b)return;
+    if(!window.confirm(`Удалить запись #${b.id} навсегда?\n\n${b.clientName||"Клиент"} · ${b.serviceName||"Запись"}\n${adminHomeDateLabel(b.date)} · ${b.time||""}`))return;
+    if(!window.confirm("Это физически удалит запись из базы. Отменить действие потом нельзя.\n\nПродолжить?"))return;
+    try{
+      await creatorDeleteBookingApi(id);
+      adminBookings=adminBookings.filter(x=>String(x.id)!==String(id));
+      lastAdminBookingsSignature="";
+      saveAdminBookingsCache();
+      S.adminBookingId=null;
+      invalidateLocalBookingAvailability();
+      render();
+      toast("Запись удалена");
+      haptic("medium");
+      loadAdminBookings(true);
+    }catch(e){
+      toast(e.message||"Не удалось удалить запись");
+    }
+  }
+
+  async function deleteAdminClient(token){
+    if(S.actualRole!=="creator")return;
+    const key=adminClientKeyFromToken(token);
+    const c=adminClientByKey(key);
+    if(!c)return;
+    if(!window.confirm(`Удалить клиента «${c.name}» вместе со всей историей?\n\nЗаписей: ${c.bookings.length}`))return;
+    if(!window.confirm("Будут удалены все записи, заметка и сохранённые контактные данные этого клиента.\n\nЭто действие нельзя отменить. Продолжить?"))return;
+    try{
+      await creatorDeleteClientApi(key);
+      const ids=new Set(c.bookings.map(b=>String(b.id)));
+      adminBookings=adminBookings.filter(b=>!ids.has(String(b.id)));
+      delete adminClientNotes[key];
+      c.bookings.forEach(b=>{
+        const digits=String(b.clientPhone||"").replace(/\D/g,"");
+        if(digits)delete adminClientNotes[`phone:${digits}`];
+      });
+      lastAdminBookingsSignature="";
+      saveAdminBookingsCache();
+      S.adminClientKey=null;
+      invalidateLocalBookingAvailability();
+      render();
+      toast("Клиент и история удалены");
+      haptic("medium");
+      Promise.allSettled([loadAdminBookings(true),loadAdminClientNotes(true)]);
+    }catch(e){
+      toast(e.message||"Не удалось удалить клиента");
+    }
+  }
+
+  async function clearTestData(){
+    if(S.actualRole!=="creator")return;
+    if(!window.confirm("Очистить ВСЕ тестовые записи и клиентов?\n\nУслуги, расписание, администраторы и настройки останутся."))return;
+    const phrase=window.prompt("Для подтверждения напишите слово:\n\nОЧИСТИТЬ");
+    if(String(phrase||"").trim().toUpperCase()!=="ОЧИСТИТЬ"){
+      toast("Очистка отменена");
+      return;
+    }
+    if(!window.confirm("Последнее подтверждение.\n\nВсе записи, история клиентов, заметки и журналы напоминаний будут удалены без восстановления."))return;
+    try{
+      const data=await creatorClearTestDataApi();
+      adminBookings=[];
+      serverBookings=[];
+      adminClientNotes={};
+      lastAdminBookingsSignature="";
+      lastBookingsSignature="";
+      saveAdminBookingsCache();
+      S.adminBookingId=null;
+      S.adminClientKey=null;
+      invalidateLocalBookingAvailability();
+      render();
+      toast(`Очищено записей: ${Number(data.deletedBookings||0)}`);
+      haptic("medium");
+    }catch(e){
+      toast(e.message||"Не удалось очистить тестовые данные");
+    }
+  }
 
   function openAdminCreateBooking(dateValue="",timeValue="",clientKey=null){S.adminBookingId=null;S.adminSlotDate=null;S.adminSlotTime=null;S.adminCreateOpen=true;S.adminCreatePreset={date:dateValue||todayISO(),time:timeValue||"",clientKey:clientKey||null};render();haptic()}
   function closeAdminCreateBooking(){S.adminCreateOpen=false;S.adminCreatePreset=null;render()}
@@ -4183,6 +4275,9 @@ button:disabled.is-busy{
     callClientByKey,
     messageClientByKey,
     saveAdminClientNote,
+    deleteAdminBooking,
+    deleteAdminClient,
+    clearTestData,
     openAdminCreateBooking,
     closeAdminCreateBooking,
     adminManualDateChanged,
