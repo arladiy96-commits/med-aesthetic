@@ -329,3 +329,122 @@
 .admin-next-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding-top:8px;border-top:1px solid rgba(255,255,255,.05)}
 .admin-next-actions button{min-height:34px;padding:0 7px;border:1px solid var(--admin-border);border-radius:10px;background:#0d0e13;color:#a7a1ab;font-size:8.5px;font-weight:650}
 .admin-next-empty{padding:11px 0 5px}.admin-next-empty b,.admin-next-empty span{display:block}.admin-next-empty b{font-size:12px}.admin-next-empty span{margin-top:4px;color:#817c86;font-size:9px}
+
+
+/* ===== MOBILE DASHBOARD — QUICK SCAN ===== */
+@media (max-width:899px){
+  .v3-admin-title{
+    margin:3px 0 10px;
+    align-items:center;
+  }
+  .v3-admin-title h1{font-size:26px}
+  .v3-admin-title p{margin-top:5px;font-size:9.5px}
+  .v3-admin-title>button{font-size:9.3px}
+
+  .admin-next-card{
+    margin-bottom:8px;
+    padding:10px 11px;
+    border-radius:16px;
+  }
+  .admin-next-top{margin-bottom:5px}
+  .admin-next-top span{font-size:7.7px;letter-spacing:.55px}
+  .admin-next-top b{padding:4px 7px;font-size:7.7px}
+  .admin-next-main{
+    grid-template-columns:51px minmax(0,1fr) 9px;
+    gap:8px;
+    padding:4px 0 7px;
+  }
+  .admin-next-main>strong{font-size:21px}
+  .admin-next-main h2{font-size:12.5px}
+  .admin-next-main p{margin-top:3px;font-size:8.7px}
+  .admin-next-actions{
+    gap:5px;
+    padding-top:7px;
+  }
+  .admin-next-actions button{
+    min-height:31px;
+    border-radius:9px;
+    font-size:7.8px;
+  }
+
+  .v3-admin-stats{
+    gap:6px;
+    margin-bottom:8px;
+  }
+  .v3-stat-card{
+    min-height:76px;
+    padding:8px 9px;
+    border-radius:14px;
+  }
+  .v3-stat-icon{
+    width:23px;
+    height:23px;
+    margin-bottom:6px;
+    border-radius:8px;
+    font-size:11px;
+  }
+  .v3-stat-card small{
+    min-height:20px;
+    font-size:8.4px;
+    line-height:1.15;
+  }
+  .v3-stat-card strong{
+    margin-top:4px;
+    font-size:19px;
+  }
+
+  .v3-admin-section{
+    margin-top:8px;
+    padding:10px;
+    border-radius:16px;
+  }
+  .v3-section-head{margin-bottom:7px}
+  .v3-section-head h2{font-size:16.5px}
+  .v3-section-head span{margin-top:3px;font-size:8.2px}
+  .v3-section-head>button{font-size:8.5px}
+
+  .v3-today-list,
+  .v3-upcoming-list,
+  .v3-pending-list{
+    border-radius:12px;
+  }
+
+  .v3-admin-row{
+    min-height:53px;
+    grid-template-columns:44px minmax(0,1fr) auto 8px;
+    gap:7px;
+    padding:7px 8px;
+  }
+  .v3-admin-row-time strong{font-size:12px}
+  .v3-admin-row-time small{font-size:7px}
+  .v3-admin-row-main b{font-size:10.5px}
+  .v3-admin-row-main span{font-size:8.4px}
+  .v3-admin-status{
+    max-width:86px;
+    padding:4px 6px;
+    font-size:7px;
+  }
+
+  .v3-pending-row{
+    min-height:55px;
+    gap:6px;
+    padding:7px 8px;
+  }
+  .v3-pending-avatar{
+    width:30px;
+    height:30px;
+    flex-basis:30px;
+    border-radius:9px;
+    font-size:9px;
+  }
+  .v3-pending-copy b{font-size:10px}
+  .v3-pending-copy small{margin-top:3px;font-size:7.6px}
+  .v3-pending-actions{gap:4px}
+  .v3-confirm-btn,
+  .v3-reject-btn{
+    min-height:30px;
+    border-radius:9px;
+  }
+  .v3-confirm-btn{padding:0 8px;font-size:7.8px}
+  .v3-reject-btn{width:30px;font-size:15px}
+}

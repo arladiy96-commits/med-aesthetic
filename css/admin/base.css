@@ -387,3 +387,103 @@
 .admin-search-group>button b{font-size:10.5px}.admin-search-group>button small{margin-top:3px;color:#817c86;font-size:8.5px}.admin-search-group>button i{grid-column:2;grid-row:1/3;color:#5f5b64;font-style:normal}
 .admin-search-group>p,.admin-search-empty{padding:18px 12px;border:1px solid var(--admin-border);border-radius:13px;background:#0d0e13;color:#77727d;text-align:center;font-size:9.5px}
 .admin-search-empty b,.admin-search-empty span{display:block}.admin-search-empty b{color:#c8c3cc;font-size:11px}.admin-search-empty span{margin-top:5px;line-height:1.45}
+
+
+/* ===== MOBILE WORKSPACE COMPACTNESS ===== */
+@media (max-width:899px){
+  .admin-page{
+    padding-left:12px;
+    padding-right:12px;
+    padding-bottom:112px;
+  }
+
+  .admin-header{
+    gap:10px;
+    margin-bottom:9px;
+  }
+
+  .admin-brand-title{
+    font-size:21px;
+    letter-spacing:.15px;
+  }
+
+  .admin-role{
+    margin-top:4px;
+    font-size:7.6px;
+    letter-spacing:.95px;
+  }
+
+  .admin-head-actions{gap:6px}
+
+  .admin-round,
+  .admin-avatar,
+  .creator-crown{
+    width:36px;
+    height:36px;
+    border-radius:12px;
+  }
+
+  .admin-date-row{
+    margin:2px 0 10px;
+    align-items:center;
+  }
+
+  .admin-date-row h1{
+    font-size:25px;
+    line-height:1.02;
+  }
+
+  .admin-date-row p{
+    margin-top:5px;
+    font-size:9.4px;
+  }
+
+  .admin-link,
+  .admin-section-title button{
+    font-size:9.2px;
+    padding:5px 0;
+  }
+
+  .admin-bottom .nav-inner{
+    padding:7px 5px 6px;
+    border-radius:22px;
+  }
+
+  .admin-bottom .nav-btn{
+    min-height:49px;
+    padding:2px 1px;
+  }
+
+  .admin-bottom .nav-btn>span{
+    margin-top:2px;
+    font-size:8.1px;
+  }
+
+  .admin-nav-icon{
+    width:29px;
+    height:27px;
+    display:grid;
+    place-items:center;
+    margin:0 auto;
+    border-radius:10px;
+    transition:background .14s ease,color .14s ease,transform .10s ease;
+  }
+
+  .admin-nav-icon svg{
+    width:23px;
+    height:23px;
+    fill:none;
+    stroke:currentColor;
+    stroke-width:1.65;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+  }
+
+  .admin-bottom .nav-btn:active .admin-nav-icon{
+    transform:scale(.94);
+  }
+
+  .admin-bottom .nav-btn.active .admin-nav-icon{
+    background:var(--admin-purple-soft);
+  }
+}

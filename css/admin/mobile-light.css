@@ -510,3 +510,210 @@
   }
 
 }
+
+
+/* ===== PREMIUM WORKSPACE 2.0 — LIGHT, QUIET, FAST ===== */
+@media (max-width:899px){
+  body.admin-mobile-light{
+    --admin-bg:#f3f1ed;
+    --admin-panel:#ffffff;
+    --admin-panel-2:#fbfaf8;
+    --admin-panel-3:#f5f3f0;
+    --admin-border:#e7e2dd;
+    --admin-border-strong:#dcd5cf;
+    --admin-text:#211e24;
+    --admin-muted:#777179;
+    --admin-muted-2:#a19aa1;
+    --admin-purple:#7152ad;
+    --admin-purple-soft:#f0eafa;
+    --admin-gold:#a8782d;
+    --admin-gold-soft:#fff5df;
+    --admin-green:#32865a;
+    --admin-red:#bd4e5b;
+    background:#f3f1ed!important;
+  }
+
+  body.admin-mobile-light #app{
+    background:
+      radial-gradient(460px 230px at 100% -20px,rgba(113,82,173,.045),transparent 72%),
+      linear-gradient(180deg,#faf8f5 0%,#f3f1ed 100%)!important;
+  }
+
+  /* Cleaner hierarchy: less card-on-card depth */
+  body.admin-mobile-light .admin-next-card,
+  body.admin-mobile-light .v3-stat-card,
+  body.admin-mobile-light .v3-admin-section,
+  body.admin-mobile-light .admin-bookings-page .admin-book-row,
+  body.admin-mobile-light .admin-calendar-page .admin-calendar,
+  body.admin-mobile-light .admin-clients-page .admin-kpi,
+  body.admin-mobile-light .admin-client-row{
+    box-shadow:
+      0 5px 15px rgba(48,39,53,.045),
+      inset 0 1px 0 rgba(255,255,255,.92)!important;
+  }
+
+  /* Dashboard */
+  body.admin-mobile-light .admin-next-card{
+    border-color:#d9cfe5!important;
+    background:linear-gradient(145deg,#fff 0%,#fbf8fd 100%)!important;
+  }
+  body.admin-mobile-light .admin-next-actions button{
+    background:#fff!important;
+  }
+
+  body.admin-mobile-light .v3-stat-card{
+    border-top-width:2px!important;
+  }
+
+  body.admin-mobile-light .v3-admin-section{
+    border-color:#e6e1dd!important;
+    background:#fff!important;
+  }
+
+  body.admin-mobile-light .v3-pending-section{
+    border-color:#ead7b4!important;
+    background:#fffdfa!important;
+    box-shadow:
+      0 6px 16px rgba(91,66,27,.045),
+      inset 0 1px 0 rgba(255,255,255,.96)!important;
+  }
+
+  body.admin-mobile-light .v3-today-list,
+  body.admin-mobile-light .v3-upcoming-list,
+  body.admin-mobile-light .v3-pending-list{
+    border-color:#ece7e3!important;
+    background:#fbfaf8!important;
+  }
+
+  body.admin-mobile-light .v3-admin-row,
+  body.admin-mobile-light .v3-pending-row{
+    background:#fbfaf8!important;
+    border-color:#ece7e3!important;
+  }
+
+  /* Bookings list */
+  body.admin-mobile-light .admin-bookings-page .admin-book-row{
+    border-color:#e7e2dd!important;
+    background:#fff!important;
+  }
+
+  body.admin-mobile-light .admin-bookings-page .admin-book-row:active{
+    background:#faf8f6!important;
+    border-color:#d9d2cc!important;
+  }
+
+  body.admin-mobile-light .admin-bookings-page .admin-filter button{
+    box-shadow:none!important;
+  }
+
+  body.admin-mobile-light .admin-bookings-page .admin-filter button.active{
+    border-color:#cfc2e4!important;
+    background:#f0eafa!important;
+    color:#67479d!important;
+  }
+
+  /* Calendar: color means state, not decoration */
+  body.admin-mobile-light .admin-calendar-page .admin-calendar{
+    border-color:#e4dfda!important;
+    background:#fff!important;
+  }
+
+  body.admin-mobile-light .admin-calendar-page .admin-slot-free{
+    border:1px solid #e2e8e4!important;
+    border-left:4px solid #49a16e!important;
+    background:#fff!important;
+    color:#347c55!important;
+    box-shadow:none!important;
+  }
+
+  body.admin-mobile-light .admin-calendar-page .admin-slot-card{
+    border:1px solid #e2d9ee!important;
+    border-left:4px solid #7651b2!important;
+    background:#faf7fd!important;
+    box-shadow:none!important;
+  }
+
+  body.admin-mobile-light .admin-calendar-page .admin-slot-card b{
+    color:#2a252d!important;
+  }
+
+  body.admin-mobile-light .admin-calendar-page .admin-slot-card span{
+    color:#796f80!important;
+  }
+
+  body.admin-mobile-light .admin-calendar-page .admin-slot-blocked{
+    border:1px solid #eadcc0!important;
+    border-left:4px solid #c68a32!important;
+    background:#fffaf0!important;
+    color:#8d641f!important;
+    box-shadow:none!important;
+  }
+
+  body.admin-mobile-light .admin-calendar-page .admin-slot-time{
+    color:#6f6971!important;
+  }
+
+  body.admin-mobile-light .admin-calendar-page .admin-day{
+    border-color:#ebe6e2!important;
+    background:#faf9f7!important;
+  }
+
+  body.admin-mobile-light .admin-calendar-page .admin-day.active{
+    border-color:#c9b8e2!important;
+    background:#eee7f8!important;
+    box-shadow:inset 0 0 0 1px rgba(113,82,173,.04)!important;
+  }
+
+  body.admin-mobile-light .admin-calendar-page .admin-day.active span,
+  body.admin-mobile-light .admin-calendar-page .admin-day.active b{
+    color:#6948a0!important;
+  }
+
+  /* Clients */
+  body.admin-mobile-light .admin-clients-page .search-box{
+    border-color:#e1dcd7!important;
+    background:#fff!important;
+    box-shadow:0 3px 10px rgba(48,39,53,.035)!important;
+  }
+
+  body.admin-mobile-light .admin-clients-page .admin-kpi{
+    border-color:#e7e2dd!important;
+    background:#fff!important;
+  }
+
+  body.admin-mobile-light .admin-client-row{
+    border-color:#e7e2dd!important;
+    background:#fff!important;
+  }
+
+  body.admin-mobile-light .admin-client-row:active{
+    background:#faf8f6!important;
+  }
+
+  /* Bottom navigation — calm and unmistakable */
+  body.admin-mobile-light .admin-bottom .nav-inner{
+    border-color:#ded8d3!important;
+    background:rgba(255,255,255,.975)!important;
+    box-shadow:
+      0 -8px 24px rgba(50,39,55,.055),
+      0 5px 14px rgba(50,39,55,.04),
+      inset 0 1px 0 rgba(255,255,255,.95)!important;
+  }
+
+  body.admin-mobile-light .admin-bottom .nav-btn{
+    color:#8e8790!important;
+  }
+
+  body.admin-mobile-light .admin-bottom .nav-btn.active{
+    color:#6949a2!important;
+  }
+
+  body.admin-mobile-light .admin-bottom .nav-btn.active .admin-nav-icon{
+    background:#f0eafa!important;
+    box-shadow:none!important;
+  }
+
+  body.admin-mobile-light .admin-bottom .admin-nav-icon svg{
+    filter:none!important;
+  }
+}
