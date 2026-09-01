@@ -1078,8 +1078,15 @@ button:disabled.is-busy{
       const u=tg?.initDataUnsafe?.user;
       return [u?.first_name,u?.last_name].filter(Boolean).join(" ");
     })(),
-    // Phone intentionally starts empty for every new booking flow.
-    bookingPhone: "",
+    // Use the latest locally known contact immediately; /api/me then
+    // replaces it with the server profile tied to this Telegram ID.
+    bookingPhone: (() => {
+      try{
+        const saved=localStorage.getItem("medAestheticBookingPhone");
+        if(saved)return saved;
+      }catch(e){}
+      return "";
+    })(),
     bookingConfirmed: false,
     identityReady: Boolean(startupRole),
     actualRole: startupRole,
@@ -1785,6 +1792,15 @@ button:disabled.is-busy{
       const actualRole = data?.user?.actualRole || "client";
       S.actualRole = actualRole;
       S.roleSwitch = Array.isArray(data?.roleSwitch) ? data.roleSwitch : [actualRole];
+
+      const profileName=String(data?.user?.clientName||"").trim();
+      const profilePhone=String(data?.user?.phone||"").trim();
+      if(profileName)S.bookingName=profileName;
+      if(profilePhone)S.bookingPhone=profilePhone;
+      try{
+        if(profileName)localStorage.setItem("medAestheticBookingName",profileName);
+        if(profilePhone)localStorage.setItem("medAestheticBookingPhone",profilePhone);
+      }catch(e){}
 
       if(actualRole==="creator" && keepCreatorClientPreview){
         S.roleMode="client";
@@ -2842,9 +2858,9 @@ button:disabled.is-busy{
     return `<button class="admin-book-row" onclick="Beauty.openAdminBooking('${b.id}')"><div class="t">${esc(b.time||"—")}</div><div><h3>${esc(b.serviceName||"Запись")}</h3><p>${esc(client)} · ${esc(adminHomeDateLabel(b.date))}</p></div><span class="admin-row-status status-${esc(status)}">${esc(bookingStatusRu(status))}</span></button>`;
   }
   function adminClientKeyFromBooking(b){
+    if(b?.telegramUserId)return `tg:${b.telegramUserId}`;
     const phone=String(b?.clientPhone||"").replace(/\D/g,"");
     if(phone)return `phone:${phone}`;
-    if(b?.telegramUserId)return `tg:${b.telegramUserId}`;
     return `name:${String(b?.clientName||b?.clientTelegramName||"клиент").trim().toLowerCase()}`;
   }
   function adminClientToken(key){return encodeURIComponent(String(key||""))}
@@ -2861,12 +2877,23 @@ button:disabled.is-busy{
     });
     return [...map.values()].map(c=>{
       c.bookings.sort((a,b)=>String((b.date||"")+(b.time||"")).localeCompare(String((a.date||"")+(a.time||""))));
+      const latest=c.bookings[0]||null;
+      if(latest){
+        c.name=latest.clientName||latest.clientTelegramName||(latest.clientUsername?`@${latest.clientUsername}`:c.name);
+        c.phone=latest.clientPhone||c.phone||"";
+        c.username=latest.clientUsername||c.username||"";
+        c.telegramUserId=latest.telegramUserId||c.telegramUserId||null;
+      }
       c.completed=c.bookings.filter(b=>String(b.status)==="completed").length;
       c.noShows=c.bookings.filter(b=>String(b.status)==="no_show").length;
       c.cancelled=c.bookings.filter(b=>String(b.status)==="cancelled").length;
       c.upcoming=c.bookings.filter(isActiveAdminBooking).sort((a,b)=>String((a.date||"")+(a.time||"")).localeCompare(String((b.date||"")+(b.time||""))))[0]||null;
       c.lastVisit=c.bookings.find(b=>String(b.status)==="completed")||null;
-      c.note=adminClientNotes[c.key]||"";
+      const legacyNote=c.bookings.map(b=>{
+        const digits=String(b?.clientPhone||"").replace(/\D/g,"");
+        return digits?adminClientNotes[`phone:${digits}`]:"";
+      }).find(Boolean)||"";
+      c.note=adminClientNotes[c.key]||legacyNote;
       return c;
     }).sort((a,b)=>String(b.bookings[0]?.date||"").localeCompare(String(a.bookings[0]?.date||"")));
   }
@@ -4320,7 +4347,7 @@ button:disabled.is-busy{
       S.bookingPhone=phone;
       try{
         localStorage.setItem("medAestheticBookingName",name);
-        localStorage.removeItem("medAestheticBookingPhone");
+        localStorage.setItem("medAestheticBookingPhone",phone);
       }catch(e){}
 
       bookingSubmitPending=true;

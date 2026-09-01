@@ -56,6 +56,8 @@ def init_db() -> None:
                 first_name TEXT,
                 last_name TEXT,
                 username TEXT,
+                client_name TEXT,
+                phone TEXT,
                 role TEXT NOT NULL DEFAULT 'client',
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -64,6 +66,13 @@ def init_db() -> None:
                     CHECK (role IN ('creator', 'admin', 'client'))
             )
             """
+        )
+
+        conn.execute(
+            "ALTER TABLE app_users ADD COLUMN IF NOT EXISTS client_name TEXT"
+        )
+        conn.execute(
+            "ALTER TABLE app_users ADD COLUMN IF NOT EXISTS phone TEXT"
         )
 
         conn.execute(
@@ -486,6 +495,27 @@ def init_db() -> None:
 
         conn.execute(
             """
+            UPDATE app_users AS u
+            SET client_name = COALESCE(u.client_name, latest.client_name),
+                phone = COALESCE(u.phone, latest.phone),
+                updated_at = CASE
+                    WHEN u.client_name IS NULL OR u.phone IS NULL THEN NOW()
+                    ELSE u.updated_at
+                END
+            FROM (
+                SELECT DISTINCT ON (telegram_user_id)
+                       telegram_user_id, client_name, phone
+                FROM beauty_bookings
+                WHERE telegram_user_id IS NOT NULL
+                ORDER BY telegram_user_id, created_at DESC, id DESC
+            ) AS latest
+            WHERE u.telegram_user_id = latest.telegram_user_id
+              AND (u.client_name IS NULL OR u.phone IS NULL)
+            """
+        )
+
+        conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS beauty_blocked_slots (
                 id BIGSERIAL PRIMARY KEY,
                 master_id INTEGER NOT NULL DEFAULT 1,
@@ -581,7 +611,7 @@ def upsert_app_user(telegram_user: dict) -> dict:
     with db() as conn:
         current = conn.execute(
             """
-            SELECT telegram_user_id, first_name, last_name, username, role,
+            SELECT telegram_user_id, first_name, last_name, username, client_name, phone, role,
                    created_at, updated_at, last_seen_at
             FROM app_users
             WHERE telegram_user_id = %s
@@ -606,7 +636,7 @@ def upsert_app_user(telegram_user: dict) -> dict:
                     updated_at=NOW(),
                     last_seen_at=NOW()
                 WHERE telegram_user_id=%s
-                RETURNING telegram_user_id, first_name, last_name, username,
+                RETURNING telegram_user_id, first_name, last_name, username, client_name, phone,
                           role, created_at, updated_at, last_seen_at
                 """,
                 (
@@ -625,7 +655,7 @@ def upsert_app_user(telegram_user: dict) -> dict:
                 telegram_user_id, first_name, last_name, username, role
             )
             VALUES (%s,%s,%s,%s,%s)
-            RETURNING telegram_user_id, first_name, last_name, username,
+            RETURNING telegram_user_id, first_name, last_name, username, client_name, phone,
                       role, created_at, updated_at, last_seen_at
             """,
             (
@@ -643,7 +673,7 @@ def get_app_user(telegram_user_id: int) -> dict | None:
     with db() as conn:
         row = conn.execute(
             """
-            SELECT telegram_user_id, first_name, last_name, username, role,
+            SELECT telegram_user_id, first_name, last_name, username, client_name, phone, role,
                    created_at, updated_at, last_seen_at
             FROM app_users
             WHERE telegram_user_id=%s

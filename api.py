@@ -337,6 +337,8 @@ def me(
             "firstName": app_user.get("first_name"),
             "lastName": app_user.get("last_name"),
             "username": app_user.get("username"),
+            "clientName": app_user.get("client_name"),
+            "phone": app_user.get("phone"),
             "actualRole": actual_role,
             "effectiveRole": effective_role,
         },
@@ -1509,6 +1511,8 @@ def create_booking(
     uid = int(user["id"])
     first_name = str(user.get("first_name") or "")[:120] or None
     username = str(user.get("username") or "")[:120] or None
+    client_name = payload.client_name.strip()
+    phone = payload.phone.strip()
 
     try:
         with db() as conn:
@@ -1546,6 +1550,20 @@ def create_booking(
                     detail=conflict + ". Выберите другое время.",
                 )
 
+            # Telegram ID is the client's permanent identity.
+            # Name/phone are editable profile data and always keep the latest
+            # values submitted by this same Telegram user.
+            conn.execute(
+                """
+                UPDATE app_users
+                SET client_name=%s,
+                    phone=%s,
+                    updated_at=NOW()
+                WHERE telegram_user_id=%s
+                """,
+                (client_name, phone, uid),
+            )
+
             row = conn.execute(
                 """
                 INSERT INTO beauty_bookings (
@@ -1562,8 +1580,8 @@ def create_booking(
                     uid,
                     first_name,
                     username,
-                    payload.client_name.strip(),
-                    payload.phone.strip(),
+                    client_name,
+                    phone,
                     payload.service_id,
                     service_name,
                     payload.booking_date,
@@ -1590,8 +1608,8 @@ def create_booking(
                 telegram_user_id=uid,
                 first_name=first_name,
                 username=username,
-                client_name=payload.client_name.strip(),
-                phone=payload.phone.strip(),
+                client_name=client_name,
+                phone=phone,
                 service_name=service_name,
                 master_name="Людмила",
                 booking_date=payload.booking_date,
