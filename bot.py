@@ -131,8 +131,25 @@ def sync_role_menu_buttons() -> None:
 
 @lru_cache(maxsize=1)
 def get_bot_username() -> str:
-    data = telegram_api("getMe")
-    return str(data["result"]["username"])
+    # Deep links must not depend on a live Telegram getMe request.
+    # Prefer an explicit environment value, then try Telegram, and finally
+    # fall back to the current MED AESTHETIC bot username.
+    configured = (
+        os.getenv("BOT_USERNAME", "").strip()
+        or os.getenv("TELEGRAM_BOT_USERNAME", "").strip()
+    ).lstrip("@")
+    if configured:
+        return configured
+
+    try:
+        data = telegram_api("getMe")
+        username = str((data.get("result") or {}).get("username") or "").strip().lstrip("@")
+        if username:
+            return username
+    except Exception as exc:
+        print(f"[telegram] getMe for deep link failed, using configured fallback: {exc}")
+
+    return "med_cosmetolog_piercing"
 
 
 def make_admin_invite_link(raw_token: str) -> str:
