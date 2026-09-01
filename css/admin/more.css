@@ -13,3 +13,25 @@
 .admin-reminder-tests-page .reminder-test-actions,.admin-reminder-test-page .reminder-test-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}.admin-reminder-tests-page .reminder-test-actions button,.admin-reminder-test-page .reminder-test-actions button{min-height:40px;padding:8px;border:1px solid #59496b;border-radius:11px;background:#352e3d;color:#d2b6ef;font-size:8.8px;font-weight:700}.admin-reminder-tests-page .reminder-test-actions button:active,.admin-reminder-test-page .reminder-test-actions button:active{transform:translateY(1px);background:#3c3346}.admin-reminder-tests-page .reminder-test-actions button:disabled,.admin-reminder-test-page .reminder-test-actions button:disabled{opacity:.48}
 .admin-reminder-tests-page .reminder-test-note,.admin-reminder-test-page .reminder-test-note{margin-top:9px;padding:9px 10px;border:1px solid #50432f;border-radius:11px;background:#302b23;color:#a9a2aa;font-size:8.4px;line-height:1.4}
 @media(max-width:360px){.admin-reminder-tests-page .reminder-test-actions,.admin-reminder-test-page .reminder-test-actions{grid-template-columns:1fr}}
+
+
+/* Creator-only destructive actions */
+.admin-more-page .admin-menu>button.creator-danger-menu .ico{
+  border-color:rgba(239,123,136,.22);
+  background:linear-gradient(145deg,#3a2d31,#32272b);
+  color:#ef8995;
+}
+
+.admin-more-page .admin-menu>button.creator-danger-menu b{
+  color:#e9b0b7;
+}
+
+.creator-client-delete{
+  width:100%;
+  min-height:40px;
+  margin-top:8px;
+}
+
+.creator-permanent-delete{
+  margin-top:3px;
+}
