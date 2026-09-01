@@ -1,0 +1,66 @@
+/* ADMIN CERTIFICATES — DARK GRAPHITE ONLY
+   Intentionally remains graphite even while the legacy body class is named admin-mobile-light. */
+.admin-certificates-page{
+  --cert-graphite:#29292d;
+  --cert-graphite-2:#242428;
+  --cert-graphite-3:#303034;
+  --cert-line:#3f3f45;
+  --cert-text:#f4f3f5;
+  --cert-muted:#9d98a1;
+  --cert-purple:#c4a2e8;
+  --cert-gold:#d5b06a;
+  color:var(--cert-text);
+}
+.admin-cert-actions{display:grid;grid-template-columns:1.25fr 1fr;gap:8px;margin-bottom:9px}
+.admin-cert-actions>button{min-height:72px;display:grid;grid-template-columns:36px minmax(0,1fr);align-items:center;gap:10px;padding:11px;border:1px solid #3d3d43;border-radius:16px;background:#29292d;color:#f4f3f5;text-align:left;box-shadow:0 7px 18px rgba(0,0,0,.12)}
+.admin-cert-actions>button:active{transform:scale(.988);background:#303034}.admin-cert-actions>button>span{width:34px;height:34px;display:grid;place-items:center;border:1px solid #4e4359;border-radius:11px;background:linear-gradient(145deg,#393240,#302c35);color:#c9a6ef;font-size:15px}.admin-cert-actions>button.scan>span{border-color:#514831;background:linear-gradient(145deg,#39342b,#302d27);color:#d4b36e}.admin-cert-actions b,.admin-cert-actions small{display:block}.admin-cert-actions b{font-size:10.5px}.admin-cert-actions small{margin-top:4px;color:#9c97a0;font-size:8px;line-height:1.25}
+.admin-cert-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:9px 0}
+.admin-cert-kpis>div{min-height:66px;padding:10px;border:1px solid #3c3c42;border-radius:14px;background:#29292d;box-shadow:0 5px 15px rgba(0,0,0,.09)}.admin-cert-kpis small{display:block;color:#99949d;font-size:7.8px}.admin-cert-kpis strong{display:block;margin-top:8px;color:#f6f4f7;font-size:20px;font-weight:650}
+.admin-cert-list-panel,.admin-cert-history-panel{margin-top:9px;padding:11px;border:1px solid #3d3d43;border-radius:17px;background:#29292d;box-shadow:0 7px 19px rgba(0,0,0,.11)}
+.admin-cert-list-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.admin-cert-list-head h2{margin:0;color:#f4f3f5;font-family:Georgia,"Times New Roman",serif;font-size:16px;font-weight:600}.admin-cert-list-head button{border:0;background:none;color:#b797da;padding:3px;font-size:13px}.admin-cert-list-head>span{color:#858089;font-size:8px}
+.admin-certificate-list{overflow:hidden;border:1px solid #39393f;border-radius:13px;background:#242428}
+.admin-certificate-row{width:100%;min-height:70px;display:grid;grid-template-columns:35px minmax(0,1fr) auto 8px;align-items:center;gap:8px;padding:9px 10px;border:0;border-bottom:1px solid #38383e;background:transparent;color:#f4f3f5;text-align:left}.admin-certificate-row:last-child{border-bottom:0}.admin-certificate-row:active{background:#2d2d31}.admin-cert-icon{width:34px;height:34px;display:grid;place-items:center;border:1px solid #4b4057;border-radius:10px;background:#332e39;color:#c4a2e8;font-size:13px}.admin-cert-copy{min-width:0}.admin-cert-copy small,.admin-cert-copy b,.admin-cert-copy em{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.admin-cert-copy small{color:#89848d;font-size:7.5px}.admin-cert-copy b{margin-top:4px;color:#f2eff4;font-size:10.5px}.admin-cert-copy em{margin-top:4px;color:#77727b;font-size:7.5px;font-style:normal}.admin-certificate-row>i{color:#757079;font-size:14px;font-style:normal}
+.admin-cert-status{display:inline-flex;align-items:center;justify-content:center;max-width:90px;padding:5px 7px;border:1px solid #46464c;border-radius:999px;background:#303034;color:#aaa5ae;font-size:7.2px;font-style:normal;white-space:nowrap}.admin-cert-status.status-active{border-color:#3e5a49;background:#293b31;color:#8dc39d}.admin-cert-status.status-used{border-color:#554765;background:#362f3e;color:#c2a7de}.admin-cert-status.status-expired,.admin-cert-status.status-cancelled{border-color:#5d3d44;background:#3b2c30;color:#d28693}
+
+.admin-certificate-issue{margin:9px 0;padding:12px;border:1px solid #47404f;border-radius:17px;background:#2b292f;box-shadow:0 8px 22px rgba(0,0,0,.13)}
+.admin-cert-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}.admin-cert-panel-head h2{margin:0;color:#f4f3f5;font-size:12px}.admin-cert-panel-head span{display:block;margin-top:4px;color:#9d98a1;font-size:8px;line-height:1.35}.admin-cert-panel-head>button{width:30px;height:30px;border:1px solid #47474d;border-radius:9px;background:#303034;color:#a8a3ac;font-size:17px}
+.admin-certificate-issue label{display:block;margin-top:8px}.admin-certificate-issue label>span{display:block;margin-bottom:5px;color:#aaa5ae;font-size:8px}.admin-certificate-issue input,.admin-certificate-issue select{width:100%;height:40px;padding:0 10px;border:1px solid #48484e;border-radius:11px;outline:0;background:#303034;color:#f4f3f5;font:inherit;font-size:9.5px}.admin-certificate-issue input::placeholder{color:#77727b}.admin-certificate-issue input:focus,.admin-certificate-issue select:focus{border-color:#6a5682;box-shadow:0 0 0 2px rgba(170,130,230,.07)}.admin-cert-two{display:grid;grid-template-columns:1fr 1fr;gap:7px}.admin-cert-issue-submit{width:100%;min-height:40px;margin-top:10px;border:1px solid #66507e;border-radius:11px;background:linear-gradient(180deg,#40334d,#362c41);color:#dfc3f8;font-size:9px;font-weight:750;box-shadow:inset 0 1px 0 rgba(255,255,255,.035),0 5px 12px rgba(0,0,0,.14)}
+
+.admin-cert-check{padding:22px 16px;border:1px solid #3f3f45;border-radius:20px;background:#29292d;text-align:center;box-shadow:0 9px 25px rgba(0,0,0,.14)}.admin-cert-check>span{width:54px;height:54px;display:grid;place-items:center;margin:0 auto;border:1px solid #3f5b49;border-radius:50%;background:#293b31;color:#89c19a;font-size:23px}.admin-cert-check h2{margin:13px 0 0;color:#f5f3f6;font-size:16px}.admin-cert-check p{margin:6px auto 0;max-width:330px;color:#9d98a1;font-size:8.8px;line-height:1.45}.admin-cert-check.invalid>span,.admin-cert-check.not-active>span{border-color:#5d3e45;background:#3a2d31;color:#dc8794}.admin-cert-check.invalid h2{color:#e6bbc1}.admin-cert-check.invalid>button{min-height:37px;margin-top:12px;padding:0 13px;border:1px solid #5a496a;border-radius:10px;background:#352e3d;color:#d0b3ec;font-size:8.5px;font-weight:700}
+.admin-cert-detail-card{display:grid;gap:1px;margin-top:9px;overflow:hidden;border:1px solid #3d3d43;border-radius:17px;background:#3a3a40}.admin-cert-detail-card>div{padding:11px 12px;background:#29292d}.admin-cert-detail-card small,.admin-cert-detail-card b,.admin-cert-detail-card em{display:block}.admin-cert-detail-card small{color:#8f8a93;font-size:7.5px}.admin-cert-detail-card b{margin-top:4px;color:#f4f3f5;font-size:11px}.admin-cert-detail-card em{margin-top:4px;color:#9f9aa3;font-size:8px;font-style:normal}.admin-cert-detail-card .admin-cert-status{display:inline-flex;width:max-content}
+.admin-cert-redeem{width:100%;min-height:44px;margin-top:9px;border:1px solid #5b4b35;border-radius:12px;background:linear-gradient(180deg,#393228,#302c26);color:#dfbf7c;font-size:9.5px;font-weight:750;box-shadow:inset 0 1px 0 rgba(255,255,255,.03),0 5px 13px rgba(0,0,0,.12)}
+.admin-cert-history{overflow:hidden;border:1px solid #3a3a40;border-radius:12px;background:#242428}.admin-cert-history>div{min-height:56px;display:grid;grid-template-columns:27px minmax(0,1fr) auto;align-items:center;gap:8px;padding:8px 9px;border-bottom:1px solid #39393f}.admin-cert-history>div:last-child{border-bottom:0}.admin-cert-history>div>span{width:27px;height:27px;display:grid;place-items:center;border-radius:8px;background:#332e39;color:#b99bd5;font-size:12px}.admin-cert-history p{min-width:0;margin:0}.admin-cert-history b,.admin-cert-history small{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.admin-cert-history b{color:#ece9ee;font-size:8.8px}.admin-cert-history small{margin-top:3px;color:#858089;font-size:7.4px}.admin-cert-history em{color:#77727b;font-size:7px;font-style:normal}.admin-cert-history-empty{padding:15px;border:1px dashed #404046;border-radius:12px;background:#242428;color:#858089;text-align:center;font-size:8.5px}.admin-cert-scan-again{width:100%;min-height:39px;margin-top:9px;border:1px solid #49494f;border-radius:11px;background:#303034;color:#c9c4cc;font-size:8.8px;font-weight:700}
+
+/* Force the certificates module to stay graphite on mobile. */
+@media(max-width:899px){
+  body.admin-mobile-light .admin-certificates-page{color:#f4f3f5!important}
+  body.admin-mobile-light .admin-certificates-page .admin-date-row h1{color:#f4f3f5!important}
+  body.admin-mobile-light .admin-certificates-page .admin-date-row p{color:#9d98a1!important}
+  body.admin-mobile-light .admin-certificates-page .admin-link{color:#c0a0df!important}
+  body.admin-mobile-light .admin-cert-actions>button,
+  body.admin-mobile-light .admin-cert-kpis>div,
+  body.admin-mobile-light .admin-cert-list-panel,
+  body.admin-mobile-light .admin-cert-history-panel,
+  body.admin-mobile-light .admin-certificate-issue,
+  body.admin-mobile-light .admin-cert-check{background:#29292d!important;color:#f4f3f5!important;border-color:#3f3f45!important}
+  body.admin-mobile-light .admin-certificate-list,
+  body.admin-mobile-light .admin-cert-history,
+  body.admin-mobile-light .admin-cert-history-empty{background:#242428!important;border-color:#3a3a40!important}
+  body.admin-mobile-light .admin-certificate-row{background:transparent!important;color:#f4f3f5!important;border-bottom-color:#38383e!important}
+  body.admin-mobile-light .admin-certificate-row:active{background:#303034!important}
+  body.admin-mobile-light .admin-cert-copy b,
+  body.admin-mobile-light .admin-cert-list-head h2,
+  body.admin-mobile-light .admin-cert-detail-card b,
+  body.admin-mobile-light .admin-cert-panel-head h2{color:#f4f3f5!important}
+  body.admin-mobile-light .admin-cert-copy small,
+  body.admin-mobile-light .admin-cert-copy em,
+  body.admin-mobile-light .admin-cert-panel-head span,
+  body.admin-mobile-light .admin-certificate-issue label>span{color:#9d98a1!important}
+  body.admin-mobile-light .admin-certificate-issue input,
+  body.admin-mobile-light .admin-certificate-issue select{background:#303034!important;color:#f4f3f5!important;border-color:#48484e!important}
+  body.admin-mobile-light .admin-cert-detail-card{background:#3a3a40!important;border-color:#3d3d43!important}
+  body.admin-mobile-light .admin-cert-detail-card>div{background:#29292d!important}
+  body.admin-mobile-light .admin-cert-check h2{color:#f5f3f6!important}
+  body.admin-mobile-light .admin-cert-check p{color:#9d98a1!important}
+}
+@media(max-width:370px){.admin-cert-actions{grid-template-columns:1fr 1fr}.admin-cert-two{grid-template-columns:1fr}.admin-certificate-row{grid-template-columns:32px minmax(0,1fr) auto 7px}.admin-cert-icon{width:31px;height:31px}.admin-cert-status{max-width:76px;font-size:6.7px}}
