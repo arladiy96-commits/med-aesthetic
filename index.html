@@ -3818,13 +3818,34 @@ button:disabled.is-busy{
       }
     };
 
-    // Never expose scrollLeft=0 to the user. Build and position the
-    // endless track in the same JS task, before the browser paints it.
+    // Always open on the real first banner.
+    // Telegram WebView on some iPhones changes its width immediately after
+    // the first paint. If we position only once, the second banner can become
+    // centered by accident. Keep the carousel hidden until the width is stable
+    // across two animation frames, then center real slide #0 explicitly.
     carousel.style.visibility="hidden";
-    measureCycle();
-    const first=firstOfCycle(middleCycle);
-    if(first)jumpInstant(centeredLeft(first));
-    carousel.style.visibility="";
+
+    const positionFirstBanner=()=>{
+      measureCycle();
+      const first=firstOfCycle(middleCycle);
+      if(first)jumpInstant(centeredLeft(first));
+    };
+
+    positionFirstBanner();
+
+    requestAnimationFrame(()=>{
+      const width1=carousel.clientWidth;
+      requestAnimationFrame(()=>{
+        const width2=carousel.clientWidth;
+        if(Math.abs(width2-width1)>=1){
+          positionFirstBanner();
+          requestAnimationFrame(positionFirstBanner);
+        }else{
+          positionFirstBanner();
+        }
+        carousel.style.visibility="";
+      });
+    });
 
     let raf=0;
     carousel.addEventListener('scroll',()=>{
