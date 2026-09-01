@@ -848,71 +848,64 @@ button:disabled.is-busy{
 </style>
 
 
-<style id="sticky-action-above-nav-css">
-  .sticky-action{
-    position:fixed !important;
-    z-index:2147483000 !important;
-    left:50% !important;
-    right:auto !important;
-    top:auto !important;
 
-    width:min(calc(100vw - 60px),560px) !important;
-    margin:0 !important;
-    padding:0 !important;
-    transform:translateX(-50%) !important;
 
-    /* ВАЖНО: кнопка теперь не касается верхней области bottom-nav.
-       Оставляем отдельный видимый зазор под всем скруглением. */
+<style id="booking-floating-action-css">
+  .booking-floating-action{
+    position:fixed;
+    z-index:1500;
+    left:50%;
+    right:auto;
     bottom:calc(
-      142px
+      104px
       + max(env(safe-area-inset-bottom,0px),var(--tg-safe-bottom,0px))
-    ) !important;
-
-    background:none !important;
-    box-shadow:none !important;
-    backdrop-filter:none !important;
-    -webkit-backdrop-filter:none !important;
-    pointer-events:none !important;
-    overflow:visible !important;
-    contain:none !important;
+    );
+    width:min(calc(100vw - 60px),560px);
+    margin:0;
+    padding:0;
+    transform:translateX(-50%);
+    background:transparent;
+    pointer-events:none;
+    overflow:visible;
   }
 
-  .sticky-action > *{
-    pointer-events:auto !important;
-  }
-
-  .sticky-action .btn-primary{
-    box-sizing:border-box !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
+  .booking-floating-action .btn-primary{
+    box-sizing:border-box;
+    display:flex;
+    align-items:center;
+    justify-content:center;
     width:100% !important;
-    height:58px !important;
-    min-height:58px !important;
-    max-height:none !important;
+    height:58px;
+    min-height:58px;
     margin:0 !important;
-    padding:0 18px !important;
-    border-radius:22px !important;
-    overflow:hidden !important;
-    clip-path:none !important;
-    -webkit-mask-image:none !important;
-    mask-image:none !important;
+    padding:0 18px;
+    border-radius:22px;
+    overflow:hidden;
+    pointer-events:auto;
+    -webkit-appearance:none;
+    appearance:none;
+    clip-path:none;
+    -webkit-mask-image:none;
+    mask-image:none;
+    box-shadow:
+      0 12px 28px rgba(220,166,55,.22),
+      inset 0 1px 0 rgba(255,255,255,.30);
   }
 
-  .page{
+  .page.page-booking{
     padding-bottom:calc(
-      228px
+      205px
       + max(env(safe-area-inset-bottom,0px),var(--tg-safe-bottom,0px))
     ) !important;
   }
 
   @media (max-width:520px){
-    .sticky-action{
-      width:calc(100vw - 60px) !important;
+    .booking-floating-action{
+      width:calc(100vw - 60px);
       bottom:calc(
-        136px
+        100px
         + max(env(safe-area-inset-bottom,0px),var(--tg-safe-bottom,0px))
-      ) !important;
+      );
     }
   }
 </style>
@@ -2312,8 +2305,9 @@ button:disabled.is-busy{
         <img src="${m.img}" alt=""><div><h3>${m.name}</h3><p>${m.role}</p>${m.exp?`<p>Опыт ${m.exp}</p>`:""}${m.rating?`<div class="rating">★ ${m.rating}</div>`:""}</div>
         <button class="select-btn" onclick="Beauty.selectMaster(${m.id})">${S.master?.id===m.id?"Выбран":"Выбрать"}</button>
       </div>`).join("")}</div>
-      ${S.service&&S.master?`<div class="sticky-action"><button class="btn-primary" onclick="Beauty.go('datetime')">Выбрать дату и время</button></div>`:""}
-    </main>${nav("services")}`;
+    </main>
+    ${S.service&&S.master?`<div class="booking-floating-action"><button class="btn-primary" onclick="Beauty.go('datetime')">Выбрать дату и время</button></div>`:""}
+    ${nav("services")}`;
   }
 
   function dates(){
@@ -2351,10 +2345,11 @@ button:disabled.is-busy{
         <div class="summary-line"><span>Стоимость</span><b>${S.service?priceLabel(S.service):"—"}</b></div>
       </div>
 
-      <div class="sticky-action">
-        <button id="bookingDateOkBtn" class="btn-primary" ${!S.time?"disabled style='opacity:.45'":""} onclick="Beauty.openBookingContact()">ОК</button>
-      </div>
-    </main>${nav("booking")}`;
+    </main>
+    <div class="booking-floating-action">
+      <button id="bookingDateOkBtn" class="btn-primary" ${!S.time?"disabled style='opacity:.45'":""} onclick="Beauty.openBookingContact()">ОК</button>
+    </div>
+    ${nav("booking")}`;
   }
 
   function bookingContactView(){
@@ -2407,10 +2402,11 @@ button:disabled.is-busy{
         <div class="booking-contact-note">Telegram также останется привязан к заявке — администратор сможет написать вам напрямую.</div>
       </section>
 
-      <div class="sticky-action">
-        <button id="bookingSubmitBtn" class="btn-primary" onclick="Beauty.confirmBooking(this)">Записаться</button>
-      </div>
-    </main>${nav("booking")}`;
+    </main>
+    <div class="booking-floating-action">
+      <button id="bookingSubmitBtn" class="btn-primary" onclick="Beauty.confirmBooking(this)">Записаться</button>
+    </div>
+    ${nav("booking")}`;
   }
 
   function confirmView(){
@@ -2484,8 +2480,11 @@ button:disabled.is-busy{
         <div class="summary-line"><span>Стоимость</span><b>${priceLabel(S.service)}</b></div>
       </div>
 
-      <div class="sticky-action"><button class="btn-primary" onclick="Beauty.go('booking')">Мои записи</button></div>
-    </main>${nav("booking")}`;
+    </main>
+    <div class="booking-floating-action">
+      <button class="btn-primary" onclick="Beauty.go('booking')">Мои записи</button>
+    </div>
+    ${nav("booking")}`;
   }
   function bookingMetaIcon(type){
     if(type==="calendar"){
