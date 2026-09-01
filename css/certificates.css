@@ -1,0 +1,94 @@
+/* GIFT CERTIFICATES — CLIENT ONLY
+   Isolated from the rest of the Mini App. */
+.page-certificates{
+  padding-left:15px;
+  padding-right:15px;
+  padding-bottom:150px;
+}
+.page-certificates .certificate-intro{
+  position:relative;
+  display:grid;
+  grid-template-columns:52px minmax(0,1fr);
+  gap:14px;
+  align-items:center;
+  margin:18px 0 22px;
+  padding:17px;
+  border:1px solid rgba(220,184,103,.18);
+  border-radius:24px;
+  background:
+    radial-gradient(circle at 8% 12%,rgba(117,68,154,.17),transparent 33%),
+    linear-gradient(145deg,#17121e,#0d0b12 72%);
+  box-shadow:0 15px 38px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.035);
+}
+.page-certificates .certificate-intro-icon{
+  width:52px;height:52px;display:grid;place-items:center;border-radius:17px;
+  border:1px solid rgba(224,188,109,.28);background:rgba(213,176,97,.075);
+  color:#e2be72;font-size:22px;box-shadow:inset 0 1px 0 rgba(255,255,255,.035);
+}
+.page-certificates .certificate-intro h1{margin:0;color:#f5f0f7;font:700 25px/1.02 "Cormorant Garamond",Georgia,serif}
+.page-certificates .certificate-intro p{margin:7px 0 0;color:#9a93a1;font-size:9.5px;line-height:1.52}
+.page-certificates .certificate-section-head{display:flex;align-items:center;justify-content:space-between;margin:0 1px 10px}
+.page-certificates .certificate-section-head.transferred{margin-top:23px}
+.page-certificates .certificate-section-head h2{margin:0;color:#eee9f2;font-size:14px;font-weight:750}
+.page-certificates .certificate-section-head span{min-width:24px;height:24px;display:grid;place-items:center;padding:0 7px;border:1px solid rgba(215,181,106,.16);border-radius:8px;background:rgba(215,181,106,.055);color:#d7b46a;font-size:9px;font-weight:750}
+.page-certificates .certificate-list{display:grid;gap:9px}
+.page-certificates .certificate-list-card{
+  width:100%;min-height:94px;display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:11px;
+  padding:12px;border:1px solid rgba(184,166,200,.13);border-radius:20px;
+  background:radial-gradient(circle at 6% 16%,rgba(114,65,148,.08),transparent 28%),linear-gradient(145deg,#15121b,#0d0b12);
+  color:#f0ebf4;text-align:left;box-shadow:0 9px 24px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.025);
+}
+.page-certificates .certificate-list-card:active{transform:translateY(1px) scale(.995)}
+.page-certificates .certificate-list-mark{width:42px;height:42px;display:grid;place-items:center;border:1px solid rgba(215,181,106,.18);border-radius:14px;background:linear-gradient(145deg,rgba(73,54,91,.34),rgba(29,23,36,.88));color:#d8b568;font-size:17px}
+.page-certificates .certificate-list-copy{min-width:0}
+.page-certificates .certificate-list-copy small,.page-certificates .certificate-list-copy b,.page-certificates .certificate-list-copy strong,.page-certificates .certificate-list-copy em{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.page-certificates .certificate-list-copy small{color:#746e79;font-size:7.5px;letter-spacing:.06em}
+.page-certificates .certificate-list-copy b{margin-top:3px;color:#eee9f2;font-size:10.5px;font-weight:700}
+.page-certificates .certificate-list-copy strong{margin-top:5px;color:#e0bd73;font-size:13px;font-weight:800}
+.page-certificates .certificate-list-copy em{margin-top:4px;color:#88818d;font-size:8px;font-style:normal}
+.page-certificates .certificate-status{display:inline-flex;align-items:center;justify-content:center;max-width:92px;padding:6px 8px;border:1px solid rgba(255,255,255,.08);border-radius:999px;background:#17151b;color:#9b95a0;font-size:7.6px;font-weight:750;white-space:nowrap}
+.page-certificates .certificate-status.status-active{border-color:rgba(111,190,141,.20);background:rgba(93,166,121,.065);color:#7fc79a}
+.page-certificates .certificate-status.status-used{border-color:rgba(164,145,194,.17);background:rgba(124,96,164,.065);color:#b9a5d4}
+.page-certificates .certificate-status.status-expired,.page-certificates .certificate-status.status-cancelled{border-color:rgba(205,111,128,.18);background:rgba(184,86,106,.055);color:#d18190}
+.page-certificates .certificate-empty{padding:30px 18px;border:1px dashed rgba(255,255,255,.11);border-radius:20px;background:rgba(255,255,255,.012);text-align:center}
+.page-certificates .certificate-empty b,.page-certificates .certificate-empty span{display:block}.page-certificates .certificate-empty b{color:#d8d2dc;font-size:12px}.page-certificates .certificate-empty span{margin-top:6px;color:#817b86;font-size:9px;line-height:1.45}
+.page-certificates .certificate-transfer-list{overflow:hidden;border:1px solid rgba(255,255,255,.075);border-radius:17px;background:#0f0d13}
+.page-certificates .certificate-transfer-row{min-height:60px;display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:9px;padding:10px 11px;border-bottom:1px solid rgba(255,255,255,.05)}
+.page-certificates .certificate-transfer-row:last-child{border-bottom:0}.page-certificates .certificate-transfer-row>span{width:28px;height:28px;display:grid;place-items:center;border-radius:9px;background:rgba(126,91,157,.09);color:#b49acb;font-size:13px}.page-certificates .certificate-transfer-row b,.page-certificates .certificate-transfer-row small{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.page-certificates .certificate-transfer-row b{color:#dcd7df;font-size:9.5px}.page-certificates .certificate-transfer-row small{margin-top:3px;color:#77717c;font-size:7.8px}.page-certificates .certificate-transfer-row em{color:#77717c;font-size:7.5px;font-style:normal}
+
+/* Individual certificate */
+.page-certificates .certificate-premium-card{
+  position:relative;overflow:hidden;margin:18px 0 14px;padding:20px 19px 17px;min-height:226px;border:1px solid rgba(224,188,109,.32);border-radius:26px;
+  background:radial-gradient(240px 180px at 95% 5%,rgba(122,68,163,.25),transparent 64%),radial-gradient(210px 150px at 5% 95%,rgba(215,163,67,.10),transparent 68%),linear-gradient(145deg,#17111e,#0d0a12 70%);
+  box-shadow:0 20px 48px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.045);
+}
+.page-certificates .certificate-premium-card::before{content:"";position:absolute;right:-42px;top:-42px;width:145px;height:145px;border:1px solid rgba(225,189,112,.12);border-radius:50%;box-shadow:0 0 0 17px rgba(225,189,112,.018),0 0 0 34px rgba(225,189,112,.012)}
+.page-certificates .certificate-brand{position:relative;color:#eee8f2;font:700 17px/1 "Cormorant Garamond",Georgia,serif;letter-spacing:.06em}.page-certificates .certificate-brand span{color:#d7b46a}
+.page-certificates .certificate-premium-card>small{position:relative;display:block;margin-top:16px;color:#766f7c;font-size:8px;letter-spacing:.11em}
+.page-certificates .certificate-premium-card h1{position:relative;margin:7px 0 0;color:#f4eff6;font:700 27px/1.02 "Cormorant Garamond",Georgia,serif;max-width:78%}
+.page-certificates .certificate-premium-card>strong{position:relative;display:block;margin-top:13px;color:#e8c67c;font-size:22px;line-height:1.1;font-weight:800;max-width:82%}
+.page-certificates .certificate-card-bottom{position:absolute;left:19px;right:19px;bottom:16px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding-top:11px;border-top:1px solid rgba(255,255,255,.07)}
+.page-certificates .certificate-card-bottom>span{color:#7f7884;font-size:7.8px;line-height:1.45}.page-certificates .certificate-card-bottom>span b{color:#bcb5c1;font-weight:650}
+.page-certificates .certificate-qr-panel{padding:15px;border:1px solid rgba(255,255,255,.08);border-radius:22px;background:linear-gradient(145deg,#15121b,#0d0c12);box-shadow:0 11px 30px rgba(0,0,0,.18)}
+.page-certificates .certificate-qr-title{display:flex;align-items:center;justify-content:space-between;gap:12px}.page-certificates .certificate-qr-title h2{margin:0;color:#ece8ef;font-size:13px}.page-certificates .certificate-qr-title p{margin:4px 0 0;color:#837d88;font-size:8.5px}.page-certificates .certificate-qr-title>span{width:29px;height:29px;display:grid;place-items:center;border:1px solid rgba(103,187,136,.18);border-radius:10px;background:rgba(103,187,136,.06);color:#7dc795;font-size:12px}
+.page-certificates .certificate-qr-shell{width:max-content;max-width:100%;margin:15px auto 10px;padding:10px;border-radius:18px;background:#fff;box-shadow:0 8px 25px rgba(0,0,0,.30)}
+.page-certificates .certificate-qr-box{width:214px;height:214px;display:grid;place-items:center;overflow:hidden}.page-certificates .certificate-qr-box img,.page-certificates .certificate-qr-box canvas{width:214px!important;height:214px!important}.page-certificates .certificate-qr-loading,.page-certificates .certificate-qr-error{padding:18px;color:#3c3540;text-align:center;font-size:9px;line-height:1.45}
+.page-certificates .certificate-qr-panel>small{display:block;color:#77717d;text-align:center;font-size:7.8px;line-height:1.4}
+.page-certificates .certificate-gift-btn{width:100%;min-height:68px;display:grid;grid-template-columns:39px minmax(0,1fr) auto;align-items:center;gap:10px;margin-top:10px;padding:11px 13px;border:1px solid rgba(214,180,106,.20);border-radius:19px;background:linear-gradient(145deg,#18131e,#0e0c13);color:#eee9f2;text-align:left}.page-certificates .certificate-gift-btn>span{width:39px;height:39px;display:grid;place-items:center;border:1px solid rgba(213,178,104,.20);border-radius:13px;background:rgba(213,178,104,.065);color:#dab86d;font-size:17px}.page-certificates .certificate-gift-btn b,.page-certificates .certificate-gift-btn small{display:block}.page-certificates .certificate-gift-btn b{font-size:11px}.page-certificates .certificate-gift-btn small{margin-top:4px;color:#817b86;font-size:7.8px;line-height:1.35}.page-certificates .certificate-gift-btn>i{color:#6f6974;font-size:16px;font-style:normal}
+.page-certificates .certificate-state-panel{margin-top:12px;padding:18px;border:1px solid rgba(255,255,255,.08);border-radius:20px;background:#111016;text-align:center}.page-certificates .certificate-state-panel b,.page-certificates .certificate-state-panel span{display:block}.page-certificates .certificate-state-panel b{color:#d7d1da;font-size:13px}.page-certificates .certificate-state-panel span{margin-top:6px;color:#817b85;font-size:9px}
+
+/* Gift acceptance */
+.page-certificates .certificate-gift-loading{min-height:58vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}.page-certificates .certificate-gift-loading>span{width:72px;height:72px;display:grid;place-items:center;border:1px solid rgba(221,183,102,.27);border-radius:50%;background:radial-gradient(circle,rgba(215,170,83,.13),transparent 68%);color:#dfbb6c;font-size:28px;box-shadow:0 0 45px rgba(211,163,74,.10)}.page-certificates .certificate-gift-loading b{margin-top:17px;color:#eee9f2;font-size:14px}.page-certificates .certificate-gift-loading small{margin-top:5px;color:#807a85;font-size:9px}
+.page-certificates .certificate-gift-hero{position:relative;overflow:hidden;margin:25px 0 12px;padding:28px 20px 24px;border:1px solid rgba(219,181,101,.27);border-radius:27px;background:radial-gradient(circle at 50% 0,rgba(222,171,73,.13),transparent 34%),radial-gradient(circle at 100% 20%,rgba(122,67,162,.20),transparent 45%),linear-gradient(145deg,#18121f,#0c0a10);text-align:center;box-shadow:0 20px 48px rgba(0,0,0,.28)}
+.page-certificates .gift-spark{width:58px;height:58px;display:grid;place-items:center;margin:0 auto 14px;border:1px solid rgba(225,190,112,.25);border-radius:50%;background:rgba(220,181,102,.055);color:#e1bd70;font-size:22px;box-shadow:0 0 35px rgba(220,169,76,.11)}
+.page-certificates .certificate-gift-hero>small{color:#8c8491;font-size:8.5px;text-transform:uppercase;letter-spacing:.12em}.page-certificates .certificate-gift-hero h1{margin:7px 0 0;color:#f4eff6;font:700 29px/1.02 "Cormorant Garamond",Georgia,serif}.page-certificates .certificate-gift-hero>strong{display:block;margin-top:13px;color:#e7c579;font-size:22px}.page-certificates .certificate-gift-hero p{margin:18px 0 0;color:#817a86;font-size:9px}.page-certificates .certificate-gift-hero p b{color:#c8c1cc}
+.page-certificates .certificate-gift-note{padding:14px 15px;border:1px solid rgba(255,255,255,.075);border-radius:18px;background:#111016}.page-certificates .certificate-gift-note b,.page-certificates .certificate-gift-note span{display:block}.page-certificates .certificate-gift-note b{color:#d7d2da;font-size:10.5px}.page-certificates .certificate-gift-note span{margin-top:6px;color:#7f7984;font-size:8.5px;line-height:1.48}
+.page-certificates .certificate-accept-btn,.page-certificates .certificate-gift-result button{width:100%;min-height:50px;margin-top:12px;border:1px solid rgba(225,191,113,.60);border-radius:16px;background:linear-gradient(135deg,#c9953c,#e0bb68);color:#241706;font-size:12px;font-weight:850;box-shadow:0 10px 26px rgba(208,157,63,.15)}
+.page-certificates .certificate-gift-result{margin-top:32px;padding:27px 18px;border:1px solid rgba(202,103,122,.17);border-radius:24px;background:#121016;text-align:center}.page-certificates .certificate-gift-result>span{width:52px;height:52px;display:grid;place-items:center;margin:0 auto;border:1px solid rgba(202,103,122,.20);border-radius:50%;background:rgba(191,83,104,.055);color:#d07989;font-size:24px}.page-certificates .certificate-gift-result h1{margin:14px 0 0;color:#eee9f2;font-size:19px}.page-certificates .certificate-gift-result p{margin:7px 0 0;color:#8a838e;font-size:9px;line-height:1.48}
+
+@media(max-width:390px){
+  .page-certificates{padding-left:13px;padding-right:13px}
+  .page-certificates .certificate-intro{grid-template-columns:46px minmax(0,1fr);padding:15px}.page-certificates .certificate-intro-icon{width:46px;height:46px;border-radius:15px}.page-certificates .certificate-intro h1{font-size:23px}
+  .page-certificates .certificate-premium-card{min-height:220px;padding-left:17px;padding-right:17px}.page-certificates .certificate-card-bottom{left:17px;right:17px}
+  .page-certificates .certificate-qr-box,.page-certificates .certificate-qr-box img,.page-certificates .certificate-qr-box canvas{width:198px!important;height:198px!important}
+}
