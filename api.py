@@ -832,8 +832,8 @@ def issue_certificate(
             )
             VALUES (
                 %s,%s,%s,%s,%s,'active',%s,%s,%s,
-                CASE WHEN %s IS NULL THEN NULL ELSE NOW()+INTERVAL '7 days' END,
-                CASE WHEN %s IS NULL THEN NULL ELSE NOW() END,
+                CASE WHEN %s::text IS NULL THEN NULL ELSE NOW()+INTERVAL '7 days' END,
+                CASE WHEN %s::bigint IS NULL THEN NULL ELSE NOW() END,
                 %s
             )
             RETURNING id
