@@ -3043,6 +3043,14 @@ button:disabled.is-busy{
 
   function adminCertificateStatusClass(status){return "status-"+String(status||"active")}
 
+  let adminCertificateAutoRefreshTimer=null;
+  function ensureAdminCertificateAutoRefresh(){
+    if(adminCertificateAutoRefreshTimer)return;
+    adminCertificateAutoRefreshTimer=setInterval(()=>{
+      if(S.view==="admin-certificates"&&!S.adminCertificatesLoading&&!S.adminCertificateIssueOpen)loadAdminCertificates(true);
+    },4000);
+  }
+
   async function loadAdminCertificates(silent=true){
     if(!["creator","admin"].includes(S.actualRole))return;
     S.adminCertificatesLoading=true;
@@ -3067,6 +3075,7 @@ button:disabled.is-busy{
   }
 
   async function openAdminCertificates(){
+    ensureAdminCertificateAutoRefresh();
     S.view="admin-certificates";
     S.adminCertificateId=null;
     S.adminCertificateDetail=null;
@@ -3244,15 +3253,35 @@ button:disabled.is-busy{
   function scanCertificateQr(){
     if(S.adminCertificateScanBusy)return;
     if(tg?.showScanQrPopup){
+      let finished=false;
+      const cleanup=()=>{
+        try{tg?.offEvent?.("qrTextReceived",onQrEvent)}catch(e){}
+        try{tg?.offEvent?.("scanQrPopupClosed",onClosed)}catch(e){}
+      };
+      const acceptRaw=raw=>{
+        const text=typeof raw==="string"?raw:String(raw?.data||"").trim();
+        if(!text||finished)return false;
+        finished=true;
+        cleanup();
+        try{tg?.closeScanQrPopup?.()}catch(e){}
+        toast("QR считан — проверяем…");
+        setTimeout(()=>verifyAdminCertificateQr(text),40);
+        return true;
+      };
+      const onQrEvent=event=>acceptRaw(event);
+      const onClosed=()=>{
+        cleanup();
+        if(!finished)toast("QR не считан");
+      };
       try{
-        tg.showScanQrPopup({text:"Наведите камеру на QR сертификата MED AESTHETIC"},text=>{
-          try{tg.closeScanQrPopup?.()}catch(e){}
-          setTimeout(()=>verifyAdminCertificateQr(text),0);
-          return true;
-        });
+        tg?.onEvent?.("qrTextReceived",onQrEvent);
+        tg?.onEvent?.("scanQrPopupClosed",onClosed);
+        tg.showScanQrPopup({text:"Наведите камеру на QR сертификата MED AESTHETIC"},text=>acceptRaw(text));
         haptic();
         return;
-      }catch(e){}
+      }catch(e){
+        cleanup();
+      }
     }
     const raw=window.prompt("Вставьте содержимое QR-кода сертификата");
     if(raw)verifyAdminCertificateQr(raw);

@@ -146,6 +146,12 @@ def make_certificate_gift_link(raw_token: str) -> str:
     return f"https://t.me/{username}?start=gift_{raw_token}"
 
 
+def make_certificate_claim_link(raw_token: str) -> str:
+    """Create a Telegram deep link for a certificate issued to a brand-new client."""
+    username = get_bot_username()
+    return f"https://t.me/{username}?start=claim_{raw_token}"
+
+
 def _send_certificate_gift_message(chat_id: int, raw_token: str) -> None:
     token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
     with db() as conn:
@@ -201,6 +207,52 @@ def _send_certificate_gift_message(chat_id: int, raw_token: str) -> None:
             "reply_markup": {
                 "inline_keyboard": [[{
                     "text": "Открыть подарок",
+                    "web_app": {"url": app_url},
+                }]]
+            },
+        },
+    )
+
+
+def _send_certificate_claim_message(chat_id: int, raw_token: str) -> None:
+    token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+    with db() as conn:
+        row = conn.execute(
+            """
+            SELECT id, title, amount, service_name, status, expires_at
+            FROM beauty_certificates
+            WHERE claim_token_hash=%s
+              AND owner_telegram_user_id IS NULL
+              AND claim_expires_at>NOW()
+            """,
+            (token_hash,),
+        ).fetchone()
+
+    if not row:
+        _send_message(
+            chat_id,
+            "Эта ссылка на получение сертификата недействительна или уже использована.",
+            with_app_button=False,
+        )
+        return
+    if str(row.get("status") or "active") != "active" or (row.get("expires_at") and row["expires_at"] < date.today()):
+        _send_message(chat_id, "Этот сертификат уже недействителен.", with_app_button=False)
+        return
+
+    app_url = _app_url_for_role("client")
+    if not app_url:
+        _send_message(chat_id, "Сертификат найден, но Mini App временно недоступен.", with_app_button=False)
+        return
+    app_url += f"&claim={raw_token}"
+    detail = row.get("service_name") or (f"{int(row['amount']):,} ₸".replace(",", " ") if row.get("amount") is not None else "Подарочный сертификат")
+    telegram_api(
+        "sendMessage",
+        {
+            "chat_id": int(chat_id),
+            "text": f"🎁 Для вас оформлен сертификат MED AESTHETIC\n\n{row.get('title') or 'Подарочный сертификат'}\n{detail}\n\nОткройте приложение и нажмите «Получить сертификат».",
+            "reply_markup": {
+                "inline_keyboard": [[{
+                    "text": "Получить сертификат",
                     "web_app": {"url": app_url},
                 }]]
             },
@@ -526,6 +578,14 @@ def process_update(update: dict) -> None:
         if text.startswith("/start"):
             parts = text.split(maxsplit=1)
             payload = parts[1].strip() if len(parts) > 1 else ""
+
+            if payload.startswith("claim_"):
+                raw_token = payload[len("claim_"):].strip()
+                if not raw_token:
+                    _send_message(chat_id, "Некорректная ссылка на сертификат.", with_app_button=False)
+                    return
+                _send_certificate_claim_message(chat_id, raw_token)
+                return
 
             if payload.startswith("gift_"):
                 raw_token = payload[len("gift_"):].strip()

@@ -566,14 +566,17 @@ def init_db() -> None:
             """
             CREATE TABLE IF NOT EXISTS beauty_certificates (
                 id BIGSERIAL PRIMARY KEY,
-                owner_telegram_user_id BIGINT NOT NULL,
-                purchased_by_telegram_user_id BIGINT NOT NULL,
+                owner_telegram_user_id BIGINT,
+                purchased_by_telegram_user_id BIGINT,
                 title TEXT NOT NULL DEFAULT 'Подарочный сертификат',
                 amount INTEGER,
                 service_name TEXT,
                 status TEXT NOT NULL DEFAULT 'active',
                 qr_token TEXT NOT NULL UNIQUE,
                 issued_by BIGINT,
+                claim_token_hash TEXT,
+                claim_expires_at TIMESTAMPTZ,
+                claimed_at TIMESTAMPTZ,
                 expires_at DATE,
                 used_at TIMESTAMPTZ,
                 used_by BIGINT,
@@ -586,6 +589,22 @@ def init_db() -> None:
             )
             """
         )
+        # Existing databases may have been created by the first certificate MVP.
+        # Keep this migration idempotent and allow certificates that wait for a
+        # completely new Telegram user to claim them via a one-time link.
+        conn.execute("ALTER TABLE beauty_certificates ALTER COLUMN owner_telegram_user_id DROP NOT NULL")
+        conn.execute("ALTER TABLE beauty_certificates ALTER COLUMN purchased_by_telegram_user_id DROP NOT NULL")
+        conn.execute("ALTER TABLE beauty_certificates ADD COLUMN IF NOT EXISTS claim_token_hash TEXT")
+        conn.execute("ALTER TABLE beauty_certificates ADD COLUMN IF NOT EXISTS claim_expires_at TIMESTAMPTZ")
+        conn.execute("ALTER TABLE beauty_certificates ADD COLUMN IF NOT EXISTS claimed_at TIMESTAMPTZ")
+        conn.execute(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS uq_beauty_certificates_claim_token
+            ON beauty_certificates (claim_token_hash)
+            WHERE claim_token_hash IS NOT NULL
+            """
+        )
+
         conn.execute(
             """
             CREATE INDEX IF NOT EXISTS idx_beauty_certificates_owner

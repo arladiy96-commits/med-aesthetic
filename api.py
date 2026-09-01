@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field
 from psycopg.errors import UniqueViolation
 
 from auth import validate_telegram_init_data
-from bot import make_admin_invite_link, make_certificate_gift_link, safe_set_role_menu_button, send_notification, send_notifications, send_test_reminder
+from bot import make_admin_invite_link, make_certificate_claim_link, make_certificate_gift_link, safe_set_role_menu_button, send_notification, send_notifications, send_test_reminder
 from database import (
     create_admin_invite,
     db,
@@ -101,7 +101,7 @@ class ServiceUpdate(BaseModel):
 
 
 class CertificateIssue(BaseModel):
-    owner_telegram_user_id: int = Field(gt=0)
+    owner_telegram_user_id: Optional[int] = Field(default=None, gt=0)
     amount: Optional[int] = Field(default=None, ge=0)
     service_name: Optional[str] = Field(default=None, max_length=180)
     title: str = Field(default="Подарочный сертификат", min_length=2, max_length=180)
@@ -233,15 +233,21 @@ def _certificate_effective_status(row: dict) -> str:
 
 
 def _certificate_owner_name(row: dict) -> str:
+    owner_id = row.get("owner_telegram_user_id")
+    if owner_id is None:
+        return ""
     return (
         row.get("owner_client_name")
         or " ".join(x for x in [row.get("owner_first_name"), row.get("owner_last_name")] if x)
         or (f"@{row.get('owner_username')}" if row.get("owner_username") else "")
-        or f"Telegram {row.get('owner_telegram_user_id')}"
+        or f"Telegram {owner_id}"
     )
 
 
 def _certificate_payload(row: dict, *, include_qr: bool = False) -> dict:
+    owner_id = row.get("owner_telegram_user_id")
+    buyer_id = row.get("purchased_by_telegram_user_id")
+    claimed = owner_id is not None
     payload = {
         "id": str(row["id"]),
         "number": f"MA-{int(row['id']):06d}",
@@ -249,16 +255,17 @@ def _certificate_payload(row: dict, *, include_qr: bool = False) -> dict:
         "amount": row.get("amount"),
         "serviceName": row.get("service_name") or "",
         "status": _certificate_effective_status(row),
-        "ownerTelegramUserId": int(row["owner_telegram_user_id"]),
+        "claimed": claimed,
+        "ownerTelegramUserId": int(owner_id) if owner_id is not None else None,
         "ownerName": _certificate_owner_name(row),
-        "purchasedByTelegramUserId": int(row["purchased_by_telegram_user_id"]),
+        "purchasedByTelegramUserId": int(buyer_id) if buyer_id is not None else None,
         "expiresAt": row["expires_at"].isoformat() if row.get("expires_at") else None,
         "usedAt": row["used_at"].isoformat() if row.get("used_at") else None,
         "usedBy": int(row["used_by"]) if row.get("used_by") is not None else None,
         "createdAt": row["created_at"].isoformat() if row.get("created_at") else None,
     }
     if include_qr:
-        payload["qrToken"] = row.get("qr_token") or ""
+        payload["qrToken"] = (row.get("qr_token") or "") if claimed else ""
     return payload
 
 
@@ -514,6 +521,83 @@ def my_certificates(
     }
 
 
+@router.get("/certificates/claim-preview")
+def certificate_claim_preview(
+    token: str,
+    x_telegram_init_data: str | None = Header(default=None, alias="X-Telegram-Init-Data"),
+):
+    _identity(x_telegram_init_data)
+    raw_token = str(token or "").strip()
+    token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+    rows = _certificate_select(
+        "WHERE c.claim_token_hash=%s AND c.owner_telegram_user_id IS NULL AND c.claim_expires_at>NOW()",
+        (token_hash,),
+    )
+    if not rows:
+        raise HTTPException(status_code=404, detail="Ссылка получения недействительна или уже использована")
+    cert = rows[0]
+    if _certificate_effective_status(cert) != "active":
+        raise HTTPException(status_code=409, detail="Сертификат уже недействителен")
+    return {"ok": True, "claim": {"certificate": _certificate_payload(cert)}}
+
+
+@router.post("/certificates/claim-accept")
+def certificate_claim_accept(
+    payload: CertificateGiftAccept,
+    background_tasks: BackgroundTasks,
+    x_telegram_init_data: str | None = Header(default=None, alias="X-Telegram-Init-Data"),
+):
+    user, _ = _identity(x_telegram_init_data)
+    uid = int(user["id"])
+    raw_token = str(payload.token or "").strip()
+    token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+    new_qr_token = secrets.token_urlsafe(32)
+
+    with db() as conn:
+        row = conn.execute(
+            """
+            SELECT * FROM beauty_certificates
+            WHERE claim_token_hash=%s
+              AND owner_telegram_user_id IS NULL
+              AND claim_expires_at>NOW()
+            FOR UPDATE
+            """,
+            (token_hash,),
+        ).fetchone()
+        if not row:
+            raise HTTPException(status_code=409, detail="Ссылка получения недействительна или уже использована")
+        row = dict(row)
+        if _certificate_effective_status(row) != "active":
+            raise HTTPException(status_code=409, detail="Сертификат уже недействителен")
+        conn.execute(
+            """
+            UPDATE beauty_certificates
+            SET owner_telegram_user_id=%s,
+                purchased_by_telegram_user_id=COALESCE(purchased_by_telegram_user_id,%s),
+                claimed_at=NOW(),
+                claim_token_hash=NULL,
+                claim_expires_at=NULL,
+                qr_token=%s,
+                updated_at=NOW()
+            WHERE id=%s
+            """,
+            (uid, uid, new_qr_token, row["id"]),
+        )
+
+    fresh = _certificate_select("WHERE c.id=%s", (row["id"],))[0]
+    background_tasks.add_task(
+        send_notifications,
+        _staff_chat_ids(),
+        f"✅ Сертификат {fresh['title']} получен клиентом {_certificate_owner_name(fresh)}.",
+    )
+    background_tasks.add_task(
+        send_notification,
+        uid,
+        f"🎁 Сертификат {fresh['title']} активирован и уже доступен в MED AESTHETIC.",
+    )
+    return {"ok": True, "certificate": _certificate_payload(fresh, include_qr=True)}
+
+
 @router.post("/certificates/{certificate_id}/gift")
 def create_certificate_gift(
     certificate_id: int,
@@ -726,41 +810,99 @@ def issue_certificate(
     if expires_at < date.today():
         raise HTTPException(status_code=400, detail="Срок действия не может быть в прошлом")
 
+    owner_id = int(payload.owner_telegram_user_id) if payload.owner_telegram_user_id is not None else None
+    raw_claim_token = secrets.token_urlsafe(28) if owner_id is None else None
+    claim_token_hash = hashlib.sha256(raw_claim_token.encode("utf-8")).hexdigest() if raw_claim_token else None
+
     with db() as conn:
-        owner = conn.execute(
-            "SELECT telegram_user_id FROM app_users WHERE telegram_user_id=%s",
-            (payload.owner_telegram_user_id,),
-        ).fetchone()
-        if not owner:
-            raise HTTPException(status_code=404, detail="Пользователь ещё не открывал MED AESTHETIC в Telegram")
+        if owner_id is not None:
+            owner = conn.execute(
+                "SELECT telegram_user_id FROM app_users WHERE telegram_user_id=%s",
+                (owner_id,),
+            ).fetchone()
+            if not owner:
+                raise HTTPException(status_code=404, detail="Пользователь ещё не открывал MED AESTHETIC в Telegram")
+
         row = conn.execute(
             """
             INSERT INTO beauty_certificates(
                 owner_telegram_user_id, purchased_by_telegram_user_id,
-                title, amount, service_name, status, qr_token, issued_by, expires_at
+                title, amount, service_name, status, qr_token, issued_by,
+                claim_token_hash, claim_expires_at, claimed_at, expires_at
             )
-            VALUES (%s,%s,%s,%s,%s,'active',%s,%s,%s)
+            VALUES (
+                %s,%s,%s,%s,%s,'active',%s,%s,%s,
+                CASE WHEN %s IS NULL THEN NULL ELSE NOW()+INTERVAL '7 days' END,
+                CASE WHEN %s IS NULL THEN NULL ELSE NOW() END,
+                %s
+            )
             RETURNING id
             """,
             (
-                payload.owner_telegram_user_id,
-                payload.owner_telegram_user_id,
+                owner_id,
+                owner_id,
                 payload.title.strip(),
                 payload.amount,
                 service_name,
                 secrets.token_urlsafe(32),
                 int(app_user["telegram_user_id"]),
+                claim_token_hash,
+                claim_token_hash,
+                owner_id,
                 expires_at,
             ),
         ).fetchone()
 
     cert = _certificate_select("WHERE c.id=%s", (row["id"],))[0]
-    background_tasks.add_task(
-        send_notification,
-        int(payload.owner_telegram_user_id),
-        f"🎁 Вам выдан {cert['title']}. Сертификат уже доступен в MED AESTHETIC.",
-    )
-    return {"ok": True, "certificate": _certificate_payload(cert)}
+    result = {"ok": True, "certificate": _certificate_payload(cert)}
+    if owner_id is not None:
+        background_tasks.add_task(
+            send_notification,
+            owner_id,
+            f"🎁 Вам выдан {cert['title']}. Сертификат уже доступен в MED AESTHETIC.",
+        )
+    else:
+        try:
+            result["claimLink"] = make_certificate_claim_link(raw_claim_token)
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="Сертификат создан, но Telegram-ссылку создать не удалось") from exc
+    return result
+
+
+@router.post("/admin/certificates/{certificate_id}/claim-link")
+def recreate_certificate_claim_link(
+    certificate_id: int,
+    x_telegram_init_data: str | None = Header(default=None, alias="X-Telegram-Init-Data"),
+):
+    _, app_user = _identity(x_telegram_init_data)
+    _require_staff(app_user)
+    raw_token = secrets.token_urlsafe(28)
+    token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+    with db() as conn:
+        row = conn.execute(
+            "SELECT * FROM beauty_certificates WHERE id=%s FOR UPDATE",
+            (certificate_id,),
+        ).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Сертификат не найден")
+        row = dict(row)
+        if row.get("owner_telegram_user_id") is not None:
+            raise HTTPException(status_code=409, detail="Сертификат уже привязан к клиенту")
+        if _certificate_effective_status(row) != "active":
+            raise HTTPException(status_code=409, detail="Сертификат уже недействителен")
+        conn.execute(
+            """
+            UPDATE beauty_certificates
+            SET claim_token_hash=%s, claim_expires_at=NOW()+INTERVAL '7 days', updated_at=NOW()
+            WHERE id=%s
+            """,
+            (token_hash, certificate_id),
+        )
+    try:
+        link = make_certificate_claim_link(raw_token)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Не удалось создать Telegram-ссылку") from exc
+    return {"ok": True, "claimLink": link, "expiresInDays": 7}
 
 
 @router.get("/admin/certificates/verify")
