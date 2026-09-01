@@ -960,3 +960,493 @@
     }
   }
 }
+
+
+/* ===== GRAPHITE WORKSPACE — DARK PREMIUM ADMIN ===== */
+@media (max-width:899px){
+  body.admin-mobile-light{
+    --admin-bg:#1c1c1f;
+    --admin-panel:#29292d;
+    --admin-panel-2:#252529;
+    --admin-panel-3:#222226;
+    --admin-border:#38383e;
+    --admin-border-strong:#48484f;
+    --admin-text:#f4f3f5;
+    --admin-muted:#a6a2aa;
+    --admin-muted-2:#77737c;
+    --admin-purple:#aa82e6;
+    --admin-purple-soft:rgba(170,130,230,.13);
+    --admin-gold:#d8b76a;
+    --admin-gold-soft:rgba(216,183,106,.12);
+    --admin-green:#72cf8c;
+    --admin-red:#ef7b88;
+    background:#1c1c1f!important;
+    color:#f4f3f5!important;
+  }
+
+  body.admin-mobile-light #app{
+    background:
+      radial-gradient(480px 250px at 100% -30px,rgba(151,101,207,.08),transparent 72%),
+      linear-gradient(180deg,#1f1f22 0%,#1b1b1e 100%)!important;
+    color:#f4f3f5!important;
+  }
+
+  /* Header */
+  body.admin-mobile-light .admin-page{color:#f4f3f5!important}
+  body.admin-mobile-light .admin-brand-title{color:#f7f5f8!important}
+  body.admin-mobile-light .admin-brand-title span{color:#b58be9!important}
+  body.admin-mobile-light .admin-role{color:#8f8a94!important}
+  body.admin-mobile-light .admin-date-row h1,
+  body.admin-mobile-light .admin-section-title h2,
+  body.admin-mobile-light .v3-admin-title h1,
+  body.admin-mobile-light .v3-section-head h2,
+  body.admin-mobile-light .finance-head h2,
+  body.admin-mobile-light .admin-access-page .admins-head h2{
+    color:#f5f3f6!important;
+  }
+  body.admin-mobile-light .admin-date-row p,
+  body.admin-mobile-light .admin-section-title span,
+  body.admin-mobile-light .v3-admin-title p{
+    color:#aaa5ae!important;
+  }
+  body.admin-mobile-light .admin-link,
+  body.admin-mobile-light .admin-section-title button,
+  body.admin-mobile-light .v3-admin-title>button,
+  body.admin-mobile-light .v3-section-head>button{
+    color:#b58be9!important;
+  }
+
+  body.admin-mobile-light .admin-round,
+  body.admin-mobile-light .creator-crown{
+    border-color:#414147!important;
+    background:linear-gradient(180deg,#303034,#29292d)!important;
+    color:#c5a6ec!important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.045),
+      0 5px 14px rgba(0,0,0,.17)!important;
+  }
+  body.admin-mobile-light .admin-avatar{
+    border-color:#47474d!important;
+    background:#2b2b30!important;
+  }
+
+  /* Dashboard: main appointment card */
+  body.admin-mobile-light .admin-next-card{
+    border-color:#433b4d!important;
+    background:linear-gradient(145deg,#2d2b31 0%,#27262b 100%)!important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.035),
+      0 8px 22px rgba(0,0,0,.18)!important;
+  }
+  body.admin-mobile-light .admin-next-card::before{
+    background:linear-gradient(90deg,transparent,#a879d5,transparent)!important;
+    opacity:.65!important;
+  }
+  body.admin-mobile-light .admin-next-card::after{display:none!important}
+  body.admin-mobile-light .admin-next-card.late{
+    border-color:#654149!important;
+    background:linear-gradient(145deg,#30272a,#292326)!important;
+  }
+  body.admin-mobile-light .admin-next-top span{color:#a19ca6!important}
+  body.admin-mobile-light .admin-next-top b{
+    border-color:#65424a!important;
+    background:#39272c!important;
+    color:#f0909d!important;
+  }
+  body.admin-mobile-light .admin-next-main strong,
+  body.admin-mobile-light .admin-next-main h2,
+  body.admin-mobile-light .admin-next-main h3{color:#f7f5f8!important}
+  body.admin-mobile-light .admin-next-main p{color:#a7a2aa!important}
+  body.admin-mobile-light .admin-next-actions{border-top-color:#3b3a40!important}
+  body.admin-mobile-light .admin-next-actions button{
+    border-color:#444349!important;
+    background:#303034!important;
+    color:#ece9ee!important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.035)!important;
+  }
+
+  /* KPI: keep slight depth for visual hierarchy */
+  body.admin-mobile-light .v3-stat-card{
+    border:0!important;
+    border-top:2px solid #7353a6!important;
+    background:linear-gradient(180deg,#2d2d31,#29292d)!important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.03),
+      0 7px 18px rgba(0,0,0,.15)!important;
+  }
+  body.admin-mobile-light .v3-stat-card:nth-child(1){border-top-color:#9b70d1!important}
+  body.admin-mobile-light .v3-stat-card:nth-child(2){border-top-color:#61a8c9!important}
+  body.admin-mobile-light .v3-stat-card:nth-child(3){border-top-color:#d49b47!important}
+  body.admin-mobile-light .v3-stat-card::after{display:none!important}
+  body.admin-mobile-light .v3-stat-card small,
+  body.admin-mobile-light .v3-stat-card span{color:#a9a5ad!important}
+  body.admin-mobile-light .v3-stat-card strong{color:#faf9fb!important}
+  body.admin-mobile-light .v3-stat-icon{
+    border-color:#4a4055!important;
+    background:linear-gradient(145deg,#37313e,#302c36)!important;
+    color:#c39aee!important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.045),
+      0 4px 9px rgba(0,0,0,.15)!important;
+  }
+  body.admin-mobile-light .v3-stat-card.attention .v3-stat-icon{
+    border-color:#65543a!important;
+    background:linear-gradient(145deg,#3a3226,#332c23)!important;
+    color:#e0ba70!important;
+  }
+
+  /* Dashboard lists: one panel, rows separated by lines */
+  body.admin-mobile-light .v3-admin-section{
+    border:1px solid #38383e!important;
+    background:#29292d!important;
+    box-shadow:0 8px 22px rgba(0,0,0,.14)!important;
+  }
+  body.admin-mobile-light .v3-admin-section::after{display:none!important}
+  body.admin-mobile-light .v3-pending-section{
+    border-color:#514431!important;
+    background:#2b2927!important;
+    box-shadow:0 8px 22px rgba(0,0,0,.14)!important;
+  }
+  body.admin-mobile-light .v3-today-list,
+  body.admin-mobile-light .v3-upcoming-list,
+  body.admin-mobile-light .v3-pending-list{
+    border:0!important;
+    background:#252529!important;
+  }
+  body.admin-mobile-light .v3-admin-row,
+  body.admin-mobile-light .v3-pending-row{
+    border:0!important;
+    border-bottom:1px solid #39393f!important;
+    background:transparent!important;
+    box-shadow:none!important;
+  }
+  body.admin-mobile-light .v3-admin-row:last-child,
+  body.admin-mobile-light .v3-pending-row:last-child{border-bottom:0!important}
+  body.admin-mobile-light .v3-admin-row::after,
+  body.admin-mobile-light .v3-pending-row::after{display:none!important}
+  body.admin-mobile-light .v3-admin-row-time strong{color:#f5f3f6!important}
+  body.admin-mobile-light .v3-admin-row-time small{color:#d0ac64!important}
+  body.admin-mobile-light .v3-admin-row-main b,
+  body.admin-mobile-light .v3-pending-copy b{color:#f5f3f6!important}
+  body.admin-mobile-light .v3-admin-row-main span,
+  body.admin-mobile-light .v3-pending-copy span,
+  body.admin-mobile-light .v3-pending-copy small{color:#99949e!important}
+  body.admin-mobile-light .v3-pending-avatar{
+    border-color:#4e435a!important;
+    background:linear-gradient(145deg,#3a3341,#302c36)!important;
+    color:#c8a3ee!important;
+  }
+  body.admin-mobile-light .v3-count-badge{
+    border-color:#65543a!important;
+    background:#383023!important;
+    color:#e1bb70!important;
+  }
+  body.admin-mobile-light .v3-confirm-btn{
+    border-color:#66563b!important;
+    background:#3a3226!important;
+    color:#e2bd73!important;
+  }
+  body.admin-mobile-light .v3-reject-btn{
+    border-color:#614148!important;
+    background:#38272b!important;
+    color:#ef8995!important;
+  }
+
+  /* Bookings: continuous directory/list */
+  body.admin-mobile-light .admin-bookings-page .admin-filter button{
+    border-color:#3c3c42!important;
+    background:#29292d!important;
+    color:#aaa5ae!important;
+    box-shadow:none!important;
+  }
+  body.admin-mobile-light .admin-bookings-page .admin-filter button.active{
+    border-color:#665184!important;
+    background:#393043!important;
+    color:#c9a7ef!important;
+  }
+  body.admin-mobile-light .admin-bookings-page .admin-list{
+    gap:0!important;
+    overflow:hidden;
+    border:1px solid #39393f!important;
+    border-radius:18px!important;
+    background:#29292d!important;
+    box-shadow:0 8px 22px rgba(0,0,0,.14)!important;
+  }
+  body.admin-mobile-light .admin-bookings-page .admin-book-row{
+    border:0!important;
+    border-bottom:1px solid #3a3a40!important;
+    border-radius:0!important;
+    background:transparent!important;
+    color:#f5f3f6!important;
+    box-shadow:none!important;
+  }
+  body.admin-mobile-light .admin-bookings-page .admin-book-row:last-child{
+    border-bottom:0!important;
+  }
+  body.admin-mobile-light .admin-bookings-page .admin-book-row::after{display:none!important}
+  body.admin-mobile-light .admin-bookings-page .admin-book-row::before{
+    top:12px!important;
+    bottom:12px!important;
+    background:#8b65bd!important;
+    opacity:.85!important;
+  }
+  body.admin-mobile-light .admin-bookings-page .admin-book-row .t{color:#c59eea!important}
+  body.admin-mobile-light .admin-bookings-page .admin-book-row h3{color:#f5f3f6!important}
+  body.admin-mobile-light .admin-bookings-page .admin-book-row p{color:#9f9aa3!important}
+  body.admin-mobile-light .admin-row-status{
+    border-color:#45454b!important;
+    background:#333338!important;
+    color:#b2adb6!important;
+  }
+  body.admin-mobile-light .admin-row-status.status-confirmed{
+    color:#86d99d!important;border-color:#3e624b!important;background:#293a30!important;
+  }
+  body.admin-mobile-light .admin-row-status.status-pending{
+    color:#e1bb70!important;border-color:#66543a!important;background:#383024!important;
+  }
+  body.admin-mobile-light .admin-row-status.status-cancelled,
+  body.admin-mobile-light .admin-row-status.status-no_show{
+    color:#ef8995!important;border-color:#624149!important;background:#38272b!important;
+  }
+  body.admin-mobile-light .admin-create-main{
+    border-color:#55436c!important;
+    background:linear-gradient(180deg,#38303f,#302b36)!important;
+    color:#d2b4ef!important;
+  }
+
+  /* Calendar */
+  body.admin-mobile-light .admin-calendar-page .admin-calendar{
+    border-color:#39393f!important;
+    background:#29292d!important;
+    box-shadow:0 8px 22px rgba(0,0,0,.14)!important;
+  }
+  body.admin-mobile-light .admin-calendar-page .admin-day{
+    border-color:#3c3c42!important;
+    background:#252529!important;
+    color:#99949e!important;
+  }
+  body.admin-mobile-light .admin-calendar-page .admin-day b{color:#b8b3bc!important}
+  body.admin-mobile-light .admin-calendar-page .admin-day.active{
+    border-color:#705692!important;
+    background:#393043!important;
+  }
+  body.admin-mobile-light .admin-calendar-page .admin-day.active span,
+  body.admin-mobile-light .admin-calendar-page .admin-day.active b{
+    color:#c8a4ed!important;
+  }
+  body.admin-mobile-light .admin-calendar-date-label{color:#c8c4cb!important}
+  body.admin-mobile-light .admin-calendar-page .admin-slot-time{color:#9d98a1!important}
+
+  body.admin-mobile-light .admin-calendar-page .admin-slot-free{
+    border:1px solid #34383a!important;
+    border-left:4px solid #62b77c!important;
+    background:#252a27!important;
+    color:#79cd90!important;
+    box-shadow:none!important;
+  }
+  body.admin-mobile-light .admin-calendar-page .admin-slot-free b{color:#79cd90!important}
+
+  body.admin-mobile-light .admin-calendar-page .admin-slot-card{
+    border:1px solid #443b4d!important;
+    border-left:4px solid #9a70cc!important;
+    background:#2d2931!important;
+    box-shadow:0 4px 10px rgba(0,0,0,.12)!important;
+  }
+  body.admin-mobile-light .admin-calendar-page .admin-slot-card b{color:#f5f3f6!important}
+  body.admin-mobile-light .admin-calendar-page .admin-slot-card span{color:#aaa4ae!important}
+
+  body.admin-mobile-light .admin-calendar-page .admin-slot-blocked{
+    border:1px solid #514633!important;
+    border-left:4px solid #c89548!important;
+    background:#302b23!important;
+    color:#ddb367!important;
+    box-shadow:none!important;
+  }
+
+  /* Clients: one continuous panel */
+  body.admin-mobile-light .admin-clients-page .search-box{
+    border-color:#3d3d43!important;
+    background:#29292d!important;
+    color:#9c97a0!important;
+    box-shadow:0 4px 12px rgba(0,0,0,.12)!important;
+  }
+  body.admin-mobile-light .admin-clients-page .search-box input{color:#f5f3f6!important}
+  body.admin-mobile-light .admin-clients-page .search-box input::placeholder{color:#77727b!important}
+
+  body.admin-mobile-light .admin-clients-page .admin-kpi{
+    border:0!important;
+    background:linear-gradient(180deg,#2d2d31,#29292d)!important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.03),
+      0 7px 18px rgba(0,0,0,.14)!important;
+  }
+  body.admin-mobile-light .admin-clients-page .admin-kpi::after{display:none!important}
+  body.admin-mobile-light .admin-clients-page .admin-kpi small{color:#a39ea7!important}
+  body.admin-mobile-light .admin-clients-page .admin-kpi strong{color:#f7f5f8!important}
+
+  body.admin-mobile-light .admin-client-list{
+    gap:0!important;
+    overflow:hidden;
+    border:1px solid #39393f!important;
+    border-radius:18px!important;
+    background:#29292d!important;
+    box-shadow:0 8px 22px rgba(0,0,0,.14)!important;
+  }
+  body.admin-mobile-light .admin-client-row{
+    border:0!important;
+    border-bottom:1px solid #3a3a40!important;
+    border-radius:0!important;
+    background:transparent!important;
+    color:#f5f3f6!important;
+    box-shadow:none!important;
+  }
+  body.admin-mobile-light .admin-client-row:last-child{border-bottom:0!important}
+  body.admin-mobile-light .admin-client-row::after{display:none!important}
+  body.admin-mobile-light .admin-client-avatar{
+    border-color:#4d4357!important;
+    background:linear-gradient(145deg,#393240,#302c35)!important;
+    color:#c7a2eb!important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.04)!important;
+  }
+  body.admin-mobile-light .admin-client-copy b{color:#f5f3f6!important}
+  body.admin-mobile-light .admin-client-copy small{color:#aaa5ae!important}
+  body.admin-mobile-light .admin-client-copy em{color:#77727b!important}
+  body.admin-mobile-light .admin-client-row>i{color:#79747d!important}
+
+  /* Shared sheets and forms */
+  body.admin-mobile-light .admin-booking-backdrop,
+  body.admin-mobile-light .admin-form-backdrop,
+  body.admin-mobile-light .admin-client-backdrop,
+  body.admin-mobile-light .role-sheet-backdrop{
+    background:rgba(0,0,0,.54)!important;
+  }
+  body.admin-mobile-light .admin-booking-sheet,
+  body.admin-mobile-light .admin-form-sheet,
+  body.admin-mobile-light .admin-client-sheet,
+  body.admin-mobile-light .role-sheet{
+    border-color:#46464c!important;
+    background:#29292d!important;
+    color:#f4f3f5!important;
+    box-shadow:0 -22px 55px rgba(0,0,0,.36)!important;
+  }
+  body.admin-mobile-light .admin-booking-sheet-head{
+    background:linear-gradient(180deg,#29292d 78%,rgba(41,41,45,0))!important;
+  }
+  body.admin-mobile-light .admin-booking-sheet-head small,
+  body.admin-mobile-light .admin-form-sheet small{color:#9c97a0!important}
+  body.admin-mobile-light .admin-booking-sheet-head h3,
+  body.admin-mobile-light .admin-form-sheet h3{color:#f5f3f6!important}
+  body.admin-mobile-light .admin-booking-sheet-head>button{
+    border-color:#44444a!important;background:#232327!important;color:#bbb6bf!important;
+  }
+  body.admin-mobile-light .admin-booking-client,
+  body.admin-mobile-light .admin-booking-details>div,
+  body.admin-mobile-light .admin-booking-note,
+  body.admin-mobile-light .admin-client-contact button,
+  body.admin-mobile-light .admin-client-stats>div,
+  body.admin-mobile-light .admin-client-note,
+  body.admin-mobile-light .admin-client-history{
+    border-color:#3d3d43!important;
+    background:#242428!important;
+    color:#f4f3f5!important;
+  }
+  body.admin-mobile-light .admin-booking-client span,
+  body.admin-mobile-light .admin-booking-details span,
+  body.admin-mobile-light .admin-client-note>span{color:#9d98a1!important}
+
+  body.admin-mobile-light .booking-action.contact,
+  body.admin-mobile-light .booking-action.neutral{
+    border-color:#44444a!important;background:#303034!important;color:#d3cfd5!important;
+  }
+  body.admin-mobile-light .booking-action.confirm,
+  body.admin-mobile-light .booking-action.done{
+    border-color:#3e654b!important;background:#293a30!important;color:#86d99d!important;
+  }
+  body.admin-mobile-light .booking-action.danger{
+    border-color:#624149!important;background:#38272b!important;color:#ef8995!important;
+  }
+
+  /* Shared action tiles */
+  body.admin-mobile-light .admin-action{
+    border-color:#3c3c42!important;
+    background:#29292d!important;
+    color:#f4f3f5!important;
+    box-shadow:0 6px 16px rgba(0,0,0,.13)!important;
+  }
+  body.admin-mobile-light .admin-action i{
+    border-color:#4e4359!important;
+    background:linear-gradient(145deg,#38313f,#302c36)!important;
+    color:#c7a3ec!important;
+  }
+  body.admin-mobile-light .admin-empty,
+  body.admin-mobile-light .admin-empty-mini,
+  body.admin-mobile-light .v3-admin-empty{
+    border-color:#424248!important;
+    background:#252529!important;
+    color:#928d96!important;
+  }
+
+  /* Bottom navigation */
+  body.admin-mobile-light .admin-bottom{
+    background:
+      linear-gradient(180deg,
+        rgba(28,28,31,0) 0%,
+        rgba(28,28,31,.88) 30%,
+        rgba(28,28,31,.98) 100%)!important;
+  }
+  body.admin-mobile-light .admin-bottom .nav-inner{
+    border:1px solid #3d3d43!important;
+    border-radius:24px!important;
+    background:linear-gradient(180deg,#2d2d31 0%,#27272b 100%)!important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.035),
+      0 10px 30px rgba(0,0,0,.27)!important;
+  }
+  body.admin-mobile-light .admin-bottom .nav-inner::before{display:none!important}
+  body.admin-mobile-light .admin-bottom .nav-btn{
+    color:#9a959f!important;
+    background:transparent!important;
+    box-shadow:none!important;
+  }
+  body.admin-mobile-light .admin-bottom .nav-btn.active{
+    color:#d1b4f0!important;
+    background:#3a3540!important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.04),
+      0 3px 10px rgba(0,0,0,.15)!important;
+  }
+  body.admin-mobile-light .admin-bottom .nav-btn.active::after{
+    width:20px!important;
+    height:2px!important;
+    bottom:2px!important;
+    background:linear-gradient(90deg,#9d72d2,#c3a0eb)!important;
+    box-shadow:0 0 7px rgba(173,126,224,.24)!important;
+  }
+  body.admin-mobile-light .admin-bottom .admin-nav-icon{
+    border:0!important;
+    background:transparent!important;
+    box-shadow:none!important;
+  }
+  body.admin-mobile-light .admin-bottom .nav-btn.active .admin-nav-icon{
+    border:0!important;
+    background:transparent!important;
+    box-shadow:none!important;
+    color:#d1b4f0!important;
+  }
+  body.admin-mobile-light .admin-bottom .admin-nav-icon svg{
+    stroke:currentColor!important;
+    filter:none!important;
+  }
+  body.admin-mobile-light .admin-nav-badge{
+    border-color:#29292d!important;
+    background:#d39238!important;
+    color:#fff!important;
+  }
+
+  body.admin-mobile-light .admin-bookings-page .admin-book-row:active,
+  body.admin-mobile-light .admin-client-row:active,
+  body.admin-mobile-light .v3-admin-row:active{
+    background:#303034!important;
+    transform:none!important;
+  }
+}
