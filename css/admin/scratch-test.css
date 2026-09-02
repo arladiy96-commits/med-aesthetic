@@ -423,3 +423,84 @@
   .scratch-test-celebration-content,.scratch-test-celebration-content:before,
   .scratch-test-celebration-icon,.scratch-test-celebration-content strong{animation:none!important;opacity:1!important;transform:none!important}
 }
+
+
+.scratch-surface-effects{
+  position:absolute;
+  z-index:5;
+  left:18px;
+  right:18px;
+  top:50px;
+  bottom:18px;
+  border-radius:17px;
+  overflow:hidden;
+  pointer-events:none;
+}
+.scratch-pointer-glint{
+  position:absolute;
+  left:0;
+  top:0;
+  width:90px;
+  height:90px;
+  margin:-45px 0 0 -45px;
+  border-radius:50%;
+  opacity:0;
+  mix-blend-mode:screen;
+  background:
+    radial-gradient(circle,rgba(255,255,255,.62) 0%,rgba(255,255,255,.2) 20%,rgba(255,255,255,0) 58%),
+    linear-gradient(135deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.28) 42%,rgba(255,255,255,0) 70%);
+  filter:blur(.3px);
+  transition:opacity .12s ease,transform .05s linear;
+}
+.scratch-pointer-glint.active{opacity:.95}
+.scratch-particle-layer{
+  position:absolute;
+  inset:0;
+  overflow:hidden;
+}
+.scratch-dust{
+  position:absolute;
+  width:8px;
+  height:3px;
+  margin:-1.5px 0 0 -4px;
+  border-radius:999px;
+  background:linear-gradient(90deg,rgba(255,255,255,.82),rgba(206,208,214,.18));
+  box-shadow:0 0 10px rgba(255,255,255,.15);
+  opacity:.9;
+  transform:translate(0,0) rotate(0deg) scale(var(--scale,1));
+  animation:scratchDustFly .66s cubic-bezier(.18,.78,.28,1) forwards;
+}
+.scratch-test-card:after{
+  content:"";
+  position:absolute;
+  inset:4px;
+  border-radius:21px;
+  pointer-events:none;
+  opacity:0;
+  background:
+    linear-gradient(115deg,rgba(255,255,255,0) 0%,rgba(255,232,176,.14) 48%,rgba(255,255,255,.62) 50%,rgba(255,232,176,.14) 52%,rgba(255,255,255,0) 100%);
+  mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  padding:2px;
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+}
+.scratch-test-card.is-revealed:after{
+  opacity:1;
+  animation:scratchGoldOutlineSweep 1.25s cubic-bezier(.16,.84,.24,1) both;
+}
+
+@keyframes scratchDustFly{
+  0%{opacity:.88;transform:translate(0,0) rotate(0deg) scale(var(--scale,1))}
+  100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--rot)) scale(.15)}
+}
+@keyframes scratchGoldOutlineSweep{
+  0%{background-position:-240px 0;box-shadow:0 0 0 rgba(228,191,108,0), inset 0 0 0 rgba(228,191,108,0)}
+  28%{opacity:1;box-shadow:0 0 18px rgba(228,191,108,.18), inset 0 0 14px rgba(255,240,197,.12)}
+  100%{background-position:240px 0;opacity:.22;box-shadow:0 0 6px rgba(228,191,108,.1), inset 0 0 8px rgba(255,240,197,.05)}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .scratch-dust,
+  .scratch-test-card.is-revealed:after{animation:none!important}
+}
