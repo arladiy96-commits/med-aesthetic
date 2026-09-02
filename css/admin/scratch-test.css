@@ -43,7 +43,7 @@
   width:100%;
   aspect-ratio:1.72/1;
   max-height:260px;
-  overflow:hidden;
+  overflow:visible;
   border-radius:24px;
   border:1px solid rgba(229,195,128,.38);
   background:
@@ -433,42 +433,27 @@
   top:50px;
   bottom:18px;
   border-radius:17px;
-  overflow:hidden;
+  overflow:visible;
   pointer-events:none;
 }
-.scratch-pointer-glint{
-  position:absolute;
-  left:0;
-  top:0;
-  width:90px;
-  height:90px;
-  margin:-45px 0 0 -45px;
-  border-radius:50%;
-  opacity:0;
-  mix-blend-mode:screen;
-  background:
-    radial-gradient(circle,rgba(255,255,255,.62) 0%,rgba(255,255,255,.2) 20%,rgba(255,255,255,0) 58%),
-    linear-gradient(135deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.28) 42%,rgba(255,255,255,0) 70%);
-  filter:blur(.3px);
-  transition:opacity .12s ease,transform .05s linear;
-}
-.scratch-pointer-glint.active{opacity:.95}
 .scratch-particle-layer{
   position:absolute;
   inset:0;
-  overflow:hidden;
+  overflow:visible;
+  pointer-events:none;
 }
 .scratch-dust{
   position:absolute;
-  width:8px;
-  height:3px;
-  margin:-1.5px 0 0 -4px;
+  width:12px;
+  height:4px;
+  margin:-2px 0 0 -6px;
   border-radius:999px;
-  background:linear-gradient(90deg,rgba(255,255,255,.82),rgba(206,208,214,.18));
-  box-shadow:0 0 10px rgba(255,255,255,.15);
-  opacity:.9;
+  background:linear-gradient(90deg,rgba(255,255,255,.98),rgba(218,220,226,.86) 38%,rgba(137,140,148,.6));
+  box-shadow:0 0 13px rgba(255,255,255,.34),0 2px 6px rgba(0,0,0,.22);
+  opacity:1;
   transform:translate(0,0) rotate(0deg) scale(var(--scale,1));
-  animation:scratchDustFly .66s cubic-bezier(.18,.78,.28,1) forwards;
+  animation:scratchDustFly var(--life,.9s) cubic-bezier(.12,.68,.24,1) forwards;
+  will-change:transform,opacity;
 }
 .scratch-test-card:after{
   content:"";
@@ -491,8 +476,10 @@
 }
 
 @keyframes scratchDustFly{
-  0%{opacity:.88;transform:translate(0,0) rotate(0deg) scale(var(--scale,1))}
-  100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--rot)) scale(.15)}
+  0%{opacity:1;transform:translate(0,0) rotate(0deg) scale(var(--scale,1))}
+  18%{opacity:1}
+  72%{opacity:.82}
+  100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--rot)) scale(.22)}
 }
 @keyframes scratchGoldOutlineSweep{
   0%{background-position:-240px 0;box-shadow:0 0 0 rgba(228,191,108,0), inset 0 0 0 rgba(228,191,108,0)}
