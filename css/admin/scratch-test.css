@@ -1,0 +1,185 @@
+/* Creator-only scratch-card playground. Intentionally isolated from other admin screens. */
+.admin-scratch-test-page{
+  min-height:100vh;
+  background:#08070b!important;
+  color:#f5f1f7!important;
+  padding-bottom:104px!important;
+}
+.admin-scratch-test-page .admin-date-row h1{color:#f7f2f8!important}
+.admin-scratch-test-page .admin-date-row p{color:#817a88!important}
+.admin-scratch-test-page .admin-link{
+  color:#e3bd73!important;
+  background:#141117!important;
+  border-color:rgba(227,189,115,.18)!important;
+}
+.scratch-test-note{
+  display:flex;
+  align-items:center;
+  gap:11px;
+  margin:10px 0 18px;
+  padding:12px 13px;
+  border:1px solid rgba(227,189,115,.15);
+  border-radius:16px;
+  background:linear-gradient(145deg,#121015,#0d0b10);
+  box-shadow:0 12px 34px rgba(0,0,0,.2);
+}
+.scratch-test-note>span{
+  flex:0 0 auto;
+  padding:5px 8px;
+  border:1px solid rgba(227,189,115,.25);
+  border-radius:999px;
+  color:#e9c67e;
+  font-size:8px;
+  font-weight:900;
+  letter-spacing:.14em;
+}
+.scratch-test-note div{min-width:0}
+.scratch-test-note b{display:block;color:#efe9f2;font-size:11px;line-height:1.25}
+.scratch-test-note small{display:block;margin-top:3px;color:#7e7784;font-size:8.5px;line-height:1.4}
+
+.scratch-test-stage{padding:5px 1px 0}
+.scratch-test-card{
+  position:relative;
+  width:100%;
+  aspect-ratio:1.72/1;
+  max-height:260px;
+  overflow:hidden;
+  border-radius:24px;
+  border:1px solid rgba(229,195,128,.38);
+  background:
+    radial-gradient(circle at 88% 5%,rgba(220,176,91,.16),transparent 30%),
+    radial-gradient(circle at 14% 90%,rgba(123,84,143,.2),transparent 37%),
+    linear-gradient(145deg,#17131b 0%,#0d0a10 53%,#151118 100%);
+  box-shadow:0 24px 60px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.05);
+  isolation:isolate;
+}
+.scratch-test-card:before{
+  content:"";
+  position:absolute;
+  inset:8px;
+  border:1px solid rgba(229,195,128,.12);
+  border-radius:18px;
+  pointer-events:none;
+}
+.scratch-test-brand{
+  position:absolute;
+  z-index:1;
+  top:19px;
+  left:21px;
+  display:flex;
+  align-items:baseline;
+  gap:5px;
+  letter-spacing:.075em;
+}
+.scratch-test-brand span{font-size:10px;font-weight:900;color:#f2edf4}
+.scratch-test-brand b{font-size:10px;font-weight:900;color:#d9ad5e}
+.scratch-test-brand em{
+  margin-left:7px;
+  color:#645d69;
+  font-size:6px;
+  font-style:normal;
+  font-weight:800;
+  letter-spacing:.13em;
+}
+.scratch-test-prize{
+  position:absolute;
+  z-index:1;
+  inset:48px 24px 22px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+.scratch-test-prize-icon{
+  width:28px;
+  height:28px;
+  display:grid;
+  place-items:center;
+  margin-bottom:3px;
+  border-radius:50%;
+  color:#e9c474;
+  border:1px solid rgba(233,196,116,.3);
+  background:rgba(233,196,116,.055);
+  font-size:12px;
+}
+.scratch-test-prize small{
+  color:#756d7a;
+  font-size:7px;
+  font-weight:850;
+  letter-spacing:.18em;
+}
+.scratch-test-prize strong{
+  display:block;
+  margin-top:3px;
+  color:#f7f0f7;
+  font-size:31px;
+  line-height:1.04;
+  font-weight:900;
+  letter-spacing:-.035em;
+  text-shadow:0 0 28px rgba(238,199,123,.08);
+}
+.scratch-test-prize p{
+  max-width:210px;
+  margin:6px 0 0;
+  color:#9a919f;
+  font-size:9px;
+  line-height:1.35;
+}
+#scratchTestCanvas{
+  position:absolute;
+  z-index:4;
+  left:18px;
+  right:18px;
+  top:50px;
+  bottom:18px;
+  width:calc(100% - 36px);
+  height:calc(100% - 68px);
+  border-radius:17px;
+  cursor:grab;
+  touch-action:none;
+  -webkit-user-select:none;
+  user-select:none;
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.42),0 8px 24px rgba(0,0,0,.2);
+  opacity:1;
+}
+#scratchTestCanvas:active{cursor:grabbing}
+#scratchTestCanvas.scratch-fade-away{
+  opacity:0;
+  transform:scale(1.015);
+  transition:opacity .5s ease,transform .5s ease;
+}
+.scratch-test-card.is-revealed{
+  box-shadow:0 26px 65px rgba(0,0,0,.46),0 0 34px rgba(223,180,96,.09),inset 0 1px 0 rgba(255,255,255,.06);
+}
+.scratch-test-hint{
+  margin:12px 0 0;
+  text-align:center;
+  color:#716a77;
+  font-size:9px;
+}
+.scratch-test-card.is-revealed + .scratch-test-hint{color:#b79a66}
+.scratch-test-actions{display:flex;margin-top:18px}
+.scratch-test-new{
+  width:100%;
+  min-height:46px;
+  border:1px solid rgba(224,188,116,.22);
+  border-radius:15px;
+  background:linear-gradient(145deg,#171319,#100d13);
+  color:#e8c780;
+  font:800 10.5px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  letter-spacing:.01em;
+  box-shadow:0 10px 28px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.04);
+}
+.scratch-test-new:active{transform:translateY(1px);filter:brightness(1.08)}
+.scratch-test-foot{
+  margin:13px 5px 0;
+  color:#625c67;
+  font-size:8.5px;
+  line-height:1.5;
+  text-align:center;
+}
+
+@media (min-width:700px){
+  .scratch-test-stage,.scratch-test-actions,.scratch-test-note,.scratch-test-foot{max-width:520px;margin-left:auto;margin-right:auto}
+}
