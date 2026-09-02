@@ -4036,27 +4036,32 @@ html.call-bridge-mode #app{
   function showScratchTestCelebration(prize){
     clearScratchTestCelebration();
     const overlay=document.createElement('div');
-    overlay.className='scratch-test-celebration';
-    const particles=Array.from({length:18},(_,i)=>`<span class="scratch-burst p${i+1}"></span>`).join('');
+    overlay.className='scratch-test-celebration premium';
+    const rays=Array.from({length:12},(_,i)=>`<span class="scratch-premium-ray r${i+1}"></span>`).join('');
+    const dust=Array.from({length:16},(_,i)=>`<span class="scratch-premium-dust d${i+1}"></span>`).join('');
     overlay.innerHTML=`<div class="scratch-test-celebration-backdrop"></div>
-      <div class="scratch-test-celebration-core">
-        <div class="scratch-test-celebration-glow"></div>
-        <div class="scratch-test-celebration-rings"></div>
-        <div class="scratch-test-celebration-fireworks">${particles}</div>
+      <div class="scratch-premium-scene">
+        <div class="scratch-premium-aura"></div>
+        <div class="scratch-premium-orbit orbit-one"></div>
+        <div class="scratch-premium-orbit orbit-two"></div>
+        <div class="scratch-premium-rays">${rays}</div>
+        <div class="scratch-premium-dust-field">${dust}</div>
         <div class="scratch-test-celebration-content">
-          <small>ТЕСТОВЫЙ ПРИЗ</small>
+          <small>MED AESTHETIC · ПОДАРОК</small>
           <div class="scratch-test-celebration-icon">${esc(prize?.icon||'★')}</div>
-          <h2>Открыто!</h2>
+          <h2>Ваш приз</h2>
           <strong>${esc(prize?.title||'Подарок')}</strong>
           <p>${esc(prize?.subtitle||'Тестовая награда открыта')}</p>
+          <div class="scratch-premium-divider"><i></i><span>✦</span><i></i></div>
         </div>
       </div>`;
     overlay.addEventListener('click',()=>overlay.remove());
     document.body.appendChild(overlay);
     requestAnimationFrame(()=>overlay.classList.add('show'));
     try{window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred?.('success')}catch(e){}
-    setTimeout(()=>{overlay.classList.add('fade-out')},3000);
-    setTimeout(()=>{overlay.remove()},3480);
+    setTimeout(()=>overlay.classList.add('settled'),1100);
+    setTimeout(()=>overlay.classList.add('fade-out'),3600);
+    setTimeout(()=>overlay.remove(),4100);
   }
 
   function openAdminScratchTest(){
