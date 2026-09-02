@@ -4018,7 +4018,7 @@ html.call-bridge-mode #app{
             <p>${esc(prize.subtitle)}</p>
           </div>
           <canvas id="scratchTestCanvas" aria-label="Сотрите защитный слой пальцем"></canvas>
-          <div class="scratch-surface-effects" aria-hidden="true"><div class="scratch-pointer-glint" id="scratchTestGlint"></div><div class="scratch-particle-layer" id="scratchParticleLayer"></div></div>
+          <div class="scratch-surface-effects" aria-hidden="true"><div class="scratch-particle-layer" id="scratchParticleLayer"></div></div>
         </div>
         <div class="scratch-test-hint" id="scratchTestHint">Проведи пальцем по серебристому слою</div>
       </section>
@@ -4035,89 +4035,24 @@ html.call-bridge-mode #app{
   }
 
 
-  let scratchAudioCtx=null;
-  let scratchAudioNodes=null;
-
-  function ensureScratchAudio(){
-    if(scratchAudioNodes)return scratchAudioNodes;
-    const AudioCtor=window.AudioContext||window.webkitAudioContext;
-    if(!AudioCtor)return null;
-    const ctx=new AudioCtor();
-    const buffer=ctx.createBuffer(1, ctx.sampleRate*1.5, ctx.sampleRate);
-    const data=buffer.getChannelData(0);
-    for(let i=0;i<data.length;i++) data[i]=Math.random()*2-1;
-    const source=ctx.createBufferSource();
-    source.buffer=buffer;
-    source.loop=true;
-    const band=ctx.createBiquadFilter();
-    band.type='bandpass';
-    band.frequency.value=1900;
-    band.Q.value=0.7;
-    const high=ctx.createBiquadFilter();
-    high.type='highpass';
-    high.frequency.value=650;
-    const gain=ctx.createGain();
-    gain.gain.value=0;
-    source.connect(band);
-    band.connect(high);
-    high.connect(gain);
-    gain.connect(ctx.destination);
-    source.start();
-    scratchAudioCtx=ctx;
-    scratchAudioNodes={ctx,source,band,high,gain};
-    return scratchAudioNodes;
-  }
-
-  function setScratchAudio(level=0){
-    const nodes=ensureScratchAudio();
-    if(!nodes)return;
-    const now=nodes.ctx.currentTime;
-    const target=Math.max(0,Math.min(.04,Number(level)||0));
-    nodes.gain.gain.cancelScheduledValues(now);
-    nodes.gain.gain.setValueAtTime(nodes.gain.gain.value, now);
-    nodes.gain.gain.linearRampToValueAtTime(target, now+.035);
-  }
-
-  function startScratchAudio(){
-    const nodes=ensureScratchAudio();
-    if(!nodes)return;
-    try{nodes.ctx.resume?.();}catch(e){}
-    setScratchAudio(.012);
-  }
-
-  function stopScratchAudio(){
-    if(!scratchAudioNodes)return;
-    setScratchAudio(0);
-  }
-
   function spawnScratchDust(layer,x,y,intensity=1){
     if(!layer)return;
-    const pieces=2+Math.min(3,Math.floor(intensity*2));
+    const pieces=4+Math.min(5,Math.floor(intensity*3));
     for(let i=0;i<pieces;i++){
       const dust=document.createElement('span');
       dust.className='scratch-dust';
-      const angle=(-1.2+Math.random()*2.4);
-      const radius=12+Math.random()*20*intensity;
-      dust.style.left=`${x+(Math.random()*10-5)}px`;
-      dust.style.top=`${y+(Math.random()*8-4)}px`;
+      const angle=(-2.85+Math.random()*2.55);
+      const radius=48+Math.random()*72*intensity;
+      dust.style.left=`${x+(Math.random()*14-7)}px`;
+      dust.style.top=`${y+(Math.random()*12-6)}px`;
       dust.style.setProperty('--dx', `${Math.cos(angle)*radius}px`);
-      dust.style.setProperty('--dy', `${Math.sin(angle)*radius-8}px`);
-      dust.style.setProperty('--rot', `${-35+Math.random()*70}deg`);
-      dust.style.setProperty('--scale', `${.8+Math.random()*.8}`);
+      dust.style.setProperty('--dy', `${Math.sin(angle)*radius-18-Math.random()*24}px`);
+      dust.style.setProperty('--rot', `${-150+Math.random()*300}deg`);
+      dust.style.setProperty('--scale', `${1.05+Math.random()*1.1}`);
+      dust.style.setProperty('--life', `${.72+Math.random()*.34}s`);
       layer.appendChild(dust);
-      setTimeout(()=>dust.remove(),680);
+      setTimeout(()=>dust.remove(),1250);
     }
-  }
-
-  function moveScratchGlint(glint,x,y){
-    if(!glint)return;
-    glint.classList.add('active');
-    glint.style.transform=`translate(${x}px,${y}px)`;
-  }
-
-  function hideScratchGlint(glint){
-    if(!glint)return;
-    glint.classList.remove('active');
   }
 
   function showScratchTestCelebration(prize){
@@ -4180,7 +4115,6 @@ html.call-bridge-mode #app{
     const canvas=document.getElementById("scratchTestCanvas");
     const card=document.getElementById("scratchTestCard");
     const hint=document.getElementById("scratchTestHint");
-    const glint=document.getElementById("scratchTestGlint");
     const particleLayer=document.getElementById("scratchParticleLayer");
     if(!canvas||!card)return;
     if(scratchTestRevealed){canvas.style.display="none";return;}
@@ -4232,7 +4166,6 @@ html.call-bridge-mode #app{
     const generation=scratchTestGeneration;
 
     if(particleLayer) particleLayer.innerHTML="";
-    hideScratchGlint(glint);
 
     const point=e=>{
       const r=canvas.getBoundingClientRect();
@@ -4247,8 +4180,7 @@ html.call-bridge-mode #app{
       if(!last){
         eraseAt(p);
         last=p;
-        moveScratchGlint(glint,p.x,p.y);
-        spawnScratchDust(particleLayer,p.x,p.y,.5);
+        spawnScratchDust(particleLayer,p.x,p.y,.75);
         return;
       }
       const dx=p.x-last.x, dy=p.y-last.y;
@@ -4260,10 +4192,8 @@ html.call-bridge-mode #app{
       eraseAt(p);
       last=p;
       moves++;
-      moveScratchGlint(glint,p.x,p.y);
-      const intensity=Math.max(.35,Math.min(1.25,distance/16));
+      const intensity=Math.max(.55,Math.min(1.35,distance/13));
       if(moves%2===0)spawnScratchDust(particleLayer,p.x,p.y,intensity);
-      setScratchAudio(.01 + Math.min(.018,intensity*.012));
       const now=performance.now();
       if(now-lastHaptic>92){
         try{window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.("light")}catch(e){}
@@ -4284,9 +4214,7 @@ html.call-bridge-mode #app{
       card.classList.add("is-revealed");
       if(hint)hint.textContent="Приз открыт · это тестовая карта";
       showScratchTestCelebration(ensureScratchTestPrize());
-      stopScratchAudio();
-      hideScratchGlint(glint);
-      canvas.style.pointerEvents="none";
+        canvas.style.pointerEvents="none";
       canvas.classList.add("scratch-fade-away");
       setTimeout(()=>{if(canvas)canvas.style.visibility="hidden"},520);
       haptic("medium");
@@ -4298,7 +4226,6 @@ html.call-bridge-mode #app{
 
     canvas.addEventListener("pointerdown",e=>{
       active=true;last=point(e);
-      startScratchAudio();
       try{canvas.setPointerCapture(e.pointerId)}catch(err){}
       scratchTo(last);
       e.preventDefault();
@@ -4311,9 +4238,7 @@ html.call-bridge-mode #app{
     const stop=e=>{
       if(!active)return;
       active=false;last=null;
-      stopScratchAudio();
-      hideScratchGlint(glint);
-      checkReveal();
+        checkReveal();
       try{canvas.releasePointerCapture(e.pointerId)}catch(err){}
       e.preventDefault();
     };
