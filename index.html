@@ -52,6 +52,7 @@
   <link rel="stylesheet" href="./css/admin/finance.css">
   <link rel="stylesheet" href="./css/admin/mobile-light.css">
   <link rel="stylesheet" href="./css/admin/certificates.css">
+  <link rel="stylesheet" href="./css/admin/scratch-test.css">
   <link rel="stylesheet" href="./css/navigation.css">
 
 <style>
@@ -3980,6 +3981,198 @@ html.call-bridge-mode #app{
     </div>`;
   }
 
+  const SCRATCH_TEST_PRIZES = [
+    {title:"500 ₸", subtitle:"бонус на следующий визит", icon:"✦"},
+    {title:"1 000 ₸", subtitle:"бонус на следующий визит", icon:"✦"},
+    {title:"2 000 ₸", subtitle:"бонус на следующий визит", icon:"✦"},
+    {title:"5 000 ₸", subtitle:"редкий тестовый приз", icon:"★"},
+    {title:"−10%", subtitle:"скидка на следующую услугу", icon:"◇"},
+    {title:"Подарок", subtitle:"бесплатная дополнительная услуга", icon:"♡"}
+  ];
+  let scratchTestPrize=null;
+  let scratchTestRevealed=false;
+  let scratchTestGeneration=0;
+
+  function pickScratchTestPrize(){
+    return SCRATCH_TEST_PRIZES[Math.floor(Math.random()*SCRATCH_TEST_PRIZES.length)];
+  }
+
+  function ensureScratchTestPrize(){
+    if(!scratchTestPrize)scratchTestPrize=pickScratchTestPrize();
+    return scratchTestPrize;
+  }
+
+  function adminScratchTestView(){
+    if(S.actualRole!=="creator")return adminMoreView();
+    const prize=ensureScratchTestPrize();
+    return `<main class="admin-page admin-more-page admin-scratch-test-page">${adminHeader()}
+      <div class="admin-date-row"><div><h1>Скретч-карта</h1><p>Только для создателя · тест механики</p></div><button class="admin-link" onclick="Beauty.go('admin-more')">Назад</button></div>
+      <section class="scratch-test-note"><span>ТЕСТ</span><div><b>Ничего не выдаётся клиентам</b><small>Приз выбирается только на этом телефоне и не записывается в Neon.</small></div></section>
+      <section class="scratch-test-stage">
+        <div class="scratch-test-card ${scratchTestRevealed?'is-revealed':''}" id="scratchTestCard">
+          <div class="scratch-test-brand"><span>MED</span><b>AESTHETIC</b><em>TEST CARD</em></div>
+          <div class="scratch-test-prize">
+            <div class="scratch-test-prize-icon">${esc(prize.icon)}</div>
+            <small>ВАШ ПРИЗ</small>
+            <strong>${esc(prize.title)}</strong>
+            <p>${esc(prize.subtitle)}</p>
+          </div>
+          <canvas id="scratchTestCanvas" aria-label="Сотрите защитный слой пальцем"></canvas>
+        </div>
+        <div class="scratch-test-hint" id="scratchTestHint">Проведи пальцем по серебристому слою</div>
+      </section>
+      <div class="scratch-test-actions">
+        <button class="scratch-test-new" onclick="Beauty.newScratchTestCard()">Новая тестовая карта</button>
+      </div>
+      <div class="scratch-test-foot">Позже эту же механику можно привязать к реальным акциям, кодам и призам на сервере.</div>
+    </main>${adminNav("admin-more")}${roleSheet()}`;
+  }
+
+  function openAdminScratchTest(){
+    if(S.actualRole!=="creator")return;
+    ensureScratchTestPrize();
+    S.view="admin-scratch-test";
+    render();
+    haptic();
+  }
+
+  function newScratchTestCard(){
+    if(S.actualRole!=="creator")return;
+    let next=pickScratchTestPrize();
+    if(SCRATCH_TEST_PRIZES.length>1 && scratchTestPrize){
+      let guard=0;
+      while(next.title===scratchTestPrize.title && guard<8){next=pickScratchTestPrize();guard++;}
+    }
+    scratchTestPrize=next;
+    scratchTestRevealed=false;
+    scratchTestGeneration++;
+    render();
+    haptic("medium");
+  }
+
+  function initScratchTestCanvas(){
+    if(S.view!=="admin-scratch-test" || S.actualRole!=="creator")return;
+    const canvas=document.getElementById("scratchTestCanvas");
+    const card=document.getElementById("scratchTestCard");
+    const hint=document.getElementById("scratchTestHint");
+    if(!canvas||!card)return;
+    if(scratchTestRevealed){canvas.style.display="none";return;}
+
+    const rect=canvas.getBoundingClientRect();
+    if(rect.width<20||rect.height<20)return;
+    const dpr=Math.min(window.devicePixelRatio||1,2);
+    canvas.width=Math.round(rect.width*dpr);
+    canvas.height=Math.round(rect.height*dpr);
+    const ctx=canvas.getContext("2d",{willReadFrequently:true});
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+
+    const w=rect.width, h=rect.height;
+    const gradient=ctx.createLinearGradient(0,0,w,h);
+    gradient.addColorStop(0,"#c9c9cd");
+    gradient.addColorStop(.24,"#8f9096");
+    gradient.addColorStop(.52,"#e2e2e4");
+    gradient.addColorStop(.78,"#999aa0");
+    gradient.addColorStop(1,"#cfcfd2");
+    ctx.globalCompositeOperation="source-over";
+    ctx.fillStyle=gradient;
+    ctx.fillRect(0,0,w,h);
+
+    // Soft foil texture: visual only, inexpensive and deterministic enough for a demo.
+    for(let i=0;i<220;i++){
+      const x=Math.random()*w, y=Math.random()*h, a=.025+Math.random()*.07;
+      ctx.fillStyle=`rgba(255,255,255,${a})`;
+      ctx.fillRect(x,y,1+Math.random()*2,1+Math.random()*2);
+    }
+    ctx.fillStyle="rgba(35,32,39,.48)";
+    ctx.textAlign="center";
+    ctx.textBaseline="middle";
+    ctx.font="800 12px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+    ctx.fillText("СОТРИ ЗАЩИТНЫЙ СЛОЙ",w/2,h/2-7);
+    ctx.font="650 9px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+    ctx.fillStyle="rgba(35,32,39,.36)";
+    ctx.fillText("проведи пальцем",w/2,h/2+12);
+
+    ctx.globalCompositeOperation="destination-out";
+    ctx.lineCap="round";
+    ctx.lineJoin="round";
+    ctx.lineWidth=36;
+
+    let active=false;
+    let last=null;
+    let moves=0;
+    let lastHaptic=0;
+    let finished=false;
+    const generation=scratchTestGeneration;
+
+    const point=e=>{
+      const r=canvas.getBoundingClientRect();
+      return {x:e.clientX-r.left,y:e.clientY-r.top};
+    };
+    const eraseAt=p=>{
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,18,0,Math.PI*2);
+      ctx.fill();
+    };
+    const scratchTo=p=>{
+      if(!last){eraseAt(p);last=p;return;}
+      ctx.beginPath();
+      ctx.moveTo(last.x,last.y);
+      ctx.lineTo(p.x,p.y);
+      ctx.stroke();
+      eraseAt(p);
+      last=p;
+      moves++;
+      const now=performance.now();
+      if(now-lastHaptic>85){
+        try{window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.("light")}catch(e){}
+        lastHaptic=now;
+      }
+      if(moves%7===0)checkReveal();
+    };
+    const erasedRatio=()=>{
+      const data=ctx.getImageData(0,0,canvas.width,canvas.height).data;
+      let transparent=0,total=0;
+      for(let i=3;i<data.length;i+=4*18){total++;if(data[i]<35)transparent++;}
+      return total?transparent/total:0;
+    };
+    const complete=()=>{
+      if(finished||generation!==scratchTestGeneration)return;
+      finished=true;
+      scratchTestRevealed=true;
+      card.classList.add("is-revealed");
+      if(hint)hint.textContent="Приз открыт · это тестовая карта";
+      canvas.style.pointerEvents="none";
+      canvas.classList.add("scratch-fade-away");
+      setTimeout(()=>{if(canvas)canvas.style.visibility="hidden"},520);
+      haptic("medium");
+      toast("Тестовый приз открыт");
+    };
+    const checkReveal=()=>{
+      if(erasedRatio()>=.54)complete();
+    };
+
+    canvas.addEventListener("pointerdown",e=>{
+      active=true;last=point(e);
+      try{canvas.setPointerCapture(e.pointerId)}catch(err){}
+      scratchTo(last);
+      e.preventDefault();
+    });
+    canvas.addEventListener("pointermove",e=>{
+      if(!active)return;
+      scratchTo(point(e));
+      e.preventDefault();
+    });
+    const stop=e=>{
+      if(!active)return;
+      active=false;last=null;
+      checkReveal();
+      try{canvas.releasePointerCapture(e.pointerId)}catch(err){}
+      e.preventDefault();
+    };
+    canvas.addEventListener("pointerup",stop);
+    canvas.addEventListener("pointercancel",stop);
+  }
+
   function adminReminderTestsView(){
     if(S.actualRole!=="creator")return adminMoreView();
     const upcoming=adminBookings
@@ -4030,7 +4223,7 @@ html.call-bridge-mode #app{
   }
 
   function adminMoreView(){
-    const creatorItem=S.actualRole==="creator"?`<button onclick="Beauty.openAdminAccess()"><span class="ico">♛</span><div><b>Администраторы</b><small>Telegram ID и права доступа</small></div><span class="go">›</span></button><button onclick="Beauty.openAdminReminderTests()"><span class="ico">⏰</span><div><b>Тест напоминаний</b><small>Проверка клиентских и админских сообщений</small></div><span class="go">›</span></button><button class="creator-danger-menu" onclick="Beauty.clearTestData()"><span class="ico">×</span><div><b>Очистить тестовые данные</b><small>Удалить все записи и клиентов перед запуском</small></div><span class="go">›</span></button>`:"";
+    const creatorItem=S.actualRole==="creator"?`<button onclick="Beauty.openAdminAccess()"><span class="ico">♛</span><div><b>Администраторы</b><small>Telegram ID и права доступа</small></div><span class="go">›</span></button><button onclick="Beauty.openAdminReminderTests()"><span class="ico">⏰</span><div><b>Тест напоминаний</b><small>Проверка клиентских и админских сообщений</small></div><span class="go">›</span></button><button onclick="Beauty.openAdminScratchTest()"><span class="ico">✦</span><div><b>Тест скретч-карты</b><small>Стереть слой и открыть случайный приз</small></div><span class="go">›</span></button><button class="creator-danger-menu" onclick="Beauty.clearTestData()"><span class="ico">×</span><div><b>Очистить тестовые данные</b><small>Удалить все записи и клиентов перед запуском</small></div><span class="go">›</span></button>`:"";
     return `<main class="admin-page admin-more-page">${adminHeader()}<div class="admin-date-row"><div><h1>Ещё</h1><p>Управление студией</p></div></div><div class="admin-menu">
       <button onclick="Beauty.openAdminServices()"><span class="ico">⌘</span><div><b>Услуги</b><small>Описание, цены и доступность</small></div><span class="go">›</span></button>
       <button onclick="Beauty.openAdminCertificates()"><span class="ico">▣</span><div><b>Сертификаты</b><small>Выдача, QR-проверка и погашение</small></div><span class="go">›</span></button>
@@ -4628,6 +4821,7 @@ html.call-bridge-mode #app{
     else if(S.view==="admin-access")html=adminAccessView();
     else if(S.view==="admin-finance")html=adminFinanceView();
     else if(S.view==="admin-reminder-tests")html=adminReminderTestsView();
+    else if(S.view==="admin-scratch-test")html=adminScratchTestView();
     else if(S.view==="admin-certificates")html=adminCertificatesView();
     else if(S.view==="admin-certificate-check")html=adminCertificateCheckView();
     else if(S.view==="home")html=home();
@@ -4649,6 +4843,7 @@ html.call-bridge-mode #app{
     document.querySelector("#app").innerHTML=html + testModeBar() + (S.roleMode==="client" ? roleSheet() : "") + (isStaffMode() ? adminBookingSheet() : "") + (isStaffMode() ? adminServiceSheet() : "") + (isStaffMode() ? adminCreateBookingSheet() : "") + (isStaffMode() ? adminRescheduleSheet() : "") + (isStaffMode() ? adminSlotSheet() : "") + (isStaffMode() ? adminClientSheet() : "") + (isStaffMode() ? adminSearchSheet() : "");
     if(S.view==="home") requestAnimationFrame(initHeroCarouselLoop);
     if(S.view==="certificate-detail") requestAnimationFrame(renderCertificateQr);
+    if(S.view==="admin-scratch-test") requestAnimationFrame(initScratchTestCanvas);
     if(S.view==="datetime") requestAnimationFrame(()=>{
       keepSelectedBookingDateVisible();
       ensureBookingAvailabilityFresh(true);
@@ -5023,6 +5218,8 @@ html.call-bridge-mode #app{
     },
     openAdminReminderTests,
     sendReminderTest,
+    openAdminScratchTest,
+    newScratchTestCard,
     loadAdmins(){return loadAdmins(false)},
     loadAdminAccessRequests(){return loadAdminAccessRequests(false)},
     decideAdminAccessRequest,
