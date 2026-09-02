@@ -183,3 +183,199 @@
 @media (min-width:700px){
   .scratch-test-stage,.scratch-test-actions,.scratch-test-note,.scratch-test-foot{max-width:520px;margin-left:auto;margin-right:auto}
 }
+
+
+.scratch-test-card.is-revealed .scratch-test-prize strong{
+  animation:scratchPrizePop .72s cubic-bezier(.18,.86,.22,1) both;
+}
+.scratch-test-card.is-revealed .scratch-test-prize-icon{
+  animation:scratchPrizeIconPop .72s cubic-bezier(.18,.86,.22,1) both;
+}
+
+.scratch-test-celebration{
+  position:fixed;
+  inset:0;
+  z-index:120000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:22px;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .22s ease;
+}
+.scratch-test-celebration.show{
+  opacity:1;
+  pointer-events:auto;
+}
+.scratch-test-celebration.fade-out{opacity:0}
+.scratch-test-celebration-backdrop{
+  position:absolute;
+  inset:0;
+  background:radial-gradient(circle at 50% 45%,rgba(232,198,122,.18),transparent 26%),rgba(7,6,10,.88);
+  backdrop-filter:blur(5px);
+}
+.scratch-test-celebration-core{
+  position:relative;
+  width:min(92vw,420px);
+  min-height:420px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.scratch-test-celebration-glow,
+.scratch-test-celebration-rings,
+.scratch-test-celebration-fireworks,
+.scratch-test-celebration-content{
+  position:absolute;
+}
+.scratch-test-celebration-glow{
+  width:290px;
+  height:290px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(232,197,117,.28) 0%,rgba(232,197,117,.14) 32%,rgba(119,76,168,.1) 56%,transparent 74%);
+  filter:blur(10px);
+  animation:scratchGlowPulse 1.8s ease-in-out infinite alternate;
+}
+.scratch-test-celebration-rings{
+  width:320px;
+  height:320px;
+  border-radius:50%;
+  border:1px solid rgba(232,197,117,.2);
+  box-shadow:0 0 0 22px rgba(232,197,117,.06),0 0 0 52px rgba(255,255,255,.03);
+  animation:scratchRingsPop 1s cubic-bezier(.16,.84,.22,1) both;
+}
+.scratch-test-celebration-fireworks{
+  inset:0;
+}
+.scratch-burst{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:8px;
+  height:8px;
+  margin:-4px 0 0 -4px;
+  border-radius:50%;
+  background:radial-gradient(circle,#f8e7bf 0%,#d9a84f 58%,rgba(217,168,79,0) 72%);
+  box-shadow:0 0 16px rgba(233,194,114,.6);
+  animation:scratchParticle 1.2s cubic-bezier(.18,.84,.22,1) forwards;
+}
+
+.scratch-burst.p1{--tx:-150px;--ty:-110px;animation-delay:0.00s}
+.scratch-burst.p2{--tx:-115px;--ty:-156px;animation-delay:0.03s}
+.scratch-burst.p3{--tx:-65px;--ty:-178px;animation-delay:0.06s}
+.scratch-burst.p4{--tx:-8px;--ty:-188px;animation-delay:0.09s}
+.scratch-burst.p5{--tx:58px;--ty:-178px;animation-delay:0.12s}
+.scratch-burst.p6{--tx:115px;--ty:-154px;animation-delay:0.15s}
+.scratch-burst.p7{--tx:152px;--ty:-105px;animation-delay:0.18s}
+.scratch-burst.p8{--tx:178px;--ty:-32px;animation-delay:0.21s}
+.scratch-burst.p9{--tx:182px;--ty:36px;animation-delay:0.24s}
+.scratch-burst.p10{--tx:154px;--ty:110px;animation-delay:0.27s}
+.scratch-burst.p11{--tx:110px;--ty:158px;animation-delay:0.30s}
+.scratch-burst.p12{--tx:48px;--ty:185px;animation-delay:0.33s}
+.scratch-burst.p13{--tx:-18px;--ty:192px;animation-delay:0.36s}
+.scratch-burst.p14{--tx:-82px;--ty:176px;animation-delay:0.39s}
+.scratch-burst.p15{--tx:-132px;--ty:136px;animation-delay:0.42s}
+.scratch-burst.p16{--tx:-176px;--ty:65px;animation-delay:0.45s}
+.scratch-burst.p17{--tx:-184px;--ty:-6px;animation-delay:0.48s}
+.scratch-burst.p18{--tx:-170px;--ty:-76px;animation-delay:0.51s}
+
+.scratch-test-celebration-content{
+  position:relative;
+  z-index:2;
+  width:min(88vw,340px);
+  padding:28px 22px 24px;
+  border-radius:28px;
+  border:1px solid rgba(230,192,108,.24);
+  background:linear-gradient(160deg,rgba(23,19,28,.96),rgba(11,9,14,.96));
+  box-shadow:0 28px 80px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.04);
+  text-align:center;
+  animation:scratchCardRise .62s cubic-bezier(.16,.86,.2,1) both;
+}
+.scratch-test-celebration-content small{
+  display:block;
+  color:#c7a15f;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.22em;
+}
+.scratch-test-celebration-icon{
+  width:58px;
+  height:58px;
+  margin:14px auto 10px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  border:1px solid rgba(231,196,118,.35);
+  background:rgba(231,196,118,.09);
+  color:#efc778;
+  font-size:26px;
+  box-shadow:0 0 30px rgba(231,196,118,.18);
+}
+.scratch-test-celebration-content h2{
+  margin:0;
+  color:#f3edf5;
+  font-size:22px;
+  line-height:1.05;
+}
+.scratch-test-celebration-content strong{
+  display:block;
+  margin-top:10px;
+  color:#ffe6a5;
+  font-size:42px;
+  line-height:.98;
+  font-weight:950;
+  letter-spacing:-.04em;
+  text-shadow:0 0 34px rgba(231,196,118,.16);
+  animation:scratchRewardPulse .92s cubic-bezier(.18,.88,.24,1) .12s both;
+}
+.scratch-test-celebration-content p{
+  margin:10px auto 0;
+  max-width:260px;
+  color:#b2aab7;
+  font-size:13px;
+  line-height:1.45;
+}
+
+@keyframes scratchPrizePop{
+  0%{transform:scale(.92);opacity:.65}
+  58%{transform:scale(1.07);opacity:1}
+  100%{transform:scale(1)}
+}
+@keyframes scratchPrizeIconPop{
+  0%{transform:scale(.75);opacity:.4}
+  62%{transform:scale(1.12);opacity:1}
+  100%{transform:scale(1)}
+}
+@keyframes scratchGlowPulse{
+  from{transform:scale(.92);opacity:.7}
+  to{transform:scale(1.08);opacity:1}
+}
+@keyframes scratchRingsPop{
+  0%{transform:scale(.6);opacity:0}
+  100%{transform:scale(1);opacity:1}
+}
+@keyframes scratchCardRise{
+  0%{transform:translateY(22px) scale(.88);opacity:0}
+  100%{transform:translateY(0) scale(1);opacity:1}
+}
+@keyframes scratchRewardPulse{
+  0%{transform:scale(.68);opacity:0}
+  55%{transform:scale(1.12);opacity:1}
+  100%{transform:scale(1)}
+}
+@keyframes scratchParticle{
+  0%{transform:translate(0,0) scale(.25);opacity:0}
+  18%{opacity:1}
+  100%{transform:translate(var(--tx),var(--ty)) scale(1);opacity:0}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .scratch-test-card.is-revealed .scratch-test-prize strong,
+  .scratch-test-card.is-revealed .scratch-test-prize-icon,
+  .scratch-test-celebration-glow,
+  .scratch-test-celebration-rings,
+  .scratch-burst,
+  .scratch-test-celebration-content,
+  .scratch-test-celebration-content strong{animation:none!important}
+}
