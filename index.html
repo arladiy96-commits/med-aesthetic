@@ -912,6 +912,99 @@ button:disabled.is-busy{
   }
 </style>
 
+
+<style id="external-call-bridge-css">
+html.call-bridge-mode,
+html.call-bridge-mode body{
+  position:static!important;
+  width:100%!important;
+  height:auto!important;
+  min-height:100%!important;
+  max-height:none!important;
+  overflow:auto!important;
+  background:#0b0c10!important;
+  color:#f1edf3!important;
+  touch-action:auto!important;
+}
+html.call-bridge-mode #app{
+  position:static!important;
+  inset:auto!important;
+  width:100%!important;
+  max-width:620px!important;
+  height:auto!important;
+  min-height:100vh!important;
+  max-height:none!important;
+  margin:0 auto!important;
+  padding:24px 18px calc(28px + env(safe-area-inset-bottom))!important;
+  overflow:visible!important;
+  opacity:1!important;
+  visibility:visible!important;
+  transform:none!important;
+}
+.call-bridge{
+  min-height:calc(100vh - 52px);
+  display:grid;
+  place-items:center;
+}
+.call-bridge-card{
+  width:100%;
+  padding:22px 18px;
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:22px;
+  background:linear-gradient(145deg,#16171d,#0f1015);
+  box-shadow:0 18px 44px rgba(0,0,0,.28);
+  text-align:center;
+}
+.call-bridge-brand{
+  color:#c6a96c;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:1.5px;
+}
+.call-bridge-card h1{
+  margin:14px 0 7px;
+  color:#f2eef4;
+  font-size:24px;
+  line-height:1.15;
+}
+.call-bridge-card p{
+  margin:0;
+  color:#8f8993;
+  font-size:13px;
+  line-height:1.5;
+}
+.call-bridge-number{
+  margin:18px 0 14px;
+  color:#eee9f1;
+  font-size:24px;
+  font-weight:750;
+  font-variant-numeric:tabular-nums;
+}
+.call-bridge-button{
+  width:100%;
+  min-height:54px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid rgba(208,175,98,.45);
+  border-radius:16px;
+  background:linear-gradient(145deg,#3a3427,#2b281f);
+  color:#e7cc8f;
+  font-size:16px;
+  font-weight:800;
+  text-decoration:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.call-bridge-button:active{transform:translateY(1px) scale(.995)}
+.call-bridge-note{
+  display:block;
+  margin-top:12px;
+  color:#6f6972;
+  font-size:11px;
+  line-height:1.45;
+}
+</style>
+
 </head>
 <body>
   <div id="app"></div>
@@ -920,6 +1013,30 @@ button:disabled.is-busy{
 /* MED AESTHETIC CLIENT v11 — JRMA root-path compatible */
 (() => {
   const tg = window.Telegram?.WebApp;
+  const callParam = new URLSearchParams(window.location.search).get("call");
+  if(callParam){
+    let digits=String(callParam||"").replace(/\D/g,"");
+    if(digits.length===11 && digits.startsWith("8"))digits="7"+digits.slice(1);
+    else if(digits.length===10)digits="7"+digits;
+    const number=digits?("+"+digits):"";
+    document.documentElement.classList.add("call-bridge-mode","app-ready");
+    const app=document.querySelector("#app");
+    if(app){
+      const safeNumber=number.replace(/"/g,"");
+      app.innerHTML=number
+        ? `<main class="call-bridge"><section class="call-bridge-card">
+             <div class="call-bridge-brand">MED AESTHETIC</div>
+             <h1>Позвонить клиенту</h1>
+             <p>Нажмите кнопку ниже — iPhone откроет системный звонок.</p>
+             <div class="call-bridge-number">${safeNumber}</div>
+             <a class="call-bridge-button" href="tel:${safeNumber}">☎ Позвонить</a>
+             <small class="call-bridge-note">После звонка можно вернуться в Telegram.</small>
+           </section></main>`
+        : `<main class="call-bridge"><section class="call-bridge-card"><h1>Номер не найден</h1><p>Вернитесь в Telegram и попробуйте ещё раз.</p></section></main>`;
+    }
+    return;
+  }
+
 
   function syncTelegramShell(){
     try{
@@ -4298,9 +4415,16 @@ button:disabled.is-busy{
     const number=phoneForTel(phone);
     if(!number){toast("Номер телефона не указан");return false}
     haptic();
-    // Keep this synchronous and directly inside the user's tap.
-    // iOS/Telegram WebView can block tel: if it is opened after await/timers.
-    window.location.href="tel:"+number;
+    const callUrl=location.origin+"/?call="+encodeURIComponent(number);
+    try{
+      if(tg?.openLink){
+        tg.openLink(callUrl);
+      }else{
+        window.open(callUrl,"_blank","noopener,noreferrer");
+      }
+    }catch(e){
+      window.open(callUrl,"_blank","noopener,noreferrer");
+    }
     return true;
   }
 
