@@ -4028,8 +4028,40 @@ html.call-bridge-mode #app{
     </main>${adminNav("admin-more")}${roleSheet()}`;
   }
 
+
+  function clearScratchTestCelebration(){
+    document.querySelector('.scratch-test-celebration')?.remove();
+  }
+
+  function showScratchTestCelebration(prize){
+    clearScratchTestCelebration();
+    const overlay=document.createElement('div');
+    overlay.className='scratch-test-celebration';
+    const particles=Array.from({length:18},(_,i)=>`<span class="scratch-burst p${i+1}"></span>`).join('');
+    overlay.innerHTML=`<div class="scratch-test-celebration-backdrop"></div>
+      <div class="scratch-test-celebration-core">
+        <div class="scratch-test-celebration-glow"></div>
+        <div class="scratch-test-celebration-rings"></div>
+        <div class="scratch-test-celebration-fireworks">${particles}</div>
+        <div class="scratch-test-celebration-content">
+          <small>ТЕСТОВЫЙ ПРИЗ</small>
+          <div class="scratch-test-celebration-icon">${esc(prize?.icon||'★')}</div>
+          <h2>Открыто!</h2>
+          <strong>${esc(prize?.title||'Подарок')}</strong>
+          <p>${esc(prize?.subtitle||'Тестовая награда открыта')}</p>
+        </div>
+      </div>`;
+    overlay.addEventListener('click',()=>overlay.remove());
+    document.body.appendChild(overlay);
+    requestAnimationFrame(()=>overlay.classList.add('show'));
+    try{window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred?.('success')}catch(e){}
+    setTimeout(()=>{overlay.classList.add('fade-out')},3000);
+    setTimeout(()=>{overlay.remove()},3480);
+  }
+
   function openAdminScratchTest(){
     if(S.actualRole!=="creator")return;
+    clearScratchTestCelebration();
     ensureScratchTestPrize();
     S.view="admin-scratch-test";
     render();
@@ -4038,6 +4070,7 @@ html.call-bridge-mode #app{
 
   function newScratchTestCard(){
     if(S.actualRole!=="creator")return;
+    clearScratchTestCelebration();
     let next=pickScratchTestPrize();
     if(SCRATCH_TEST_PRIZES.length>1 && scratchTestPrize){
       let guard=0;
@@ -4095,7 +4128,7 @@ html.call-bridge-mode #app{
     ctx.globalCompositeOperation="destination-out";
     ctx.lineCap="round";
     ctx.lineJoin="round";
-    ctx.lineWidth=36;
+    ctx.lineWidth=24;
 
     let active=false;
     let last=null;
@@ -4110,7 +4143,7 @@ html.call-bridge-mode #app{
     };
     const eraseAt=p=>{
       ctx.beginPath();
-      ctx.arc(p.x,p.y,18,0,Math.PI*2);
+      ctx.arc(p.x,p.y,12,0,Math.PI*2);
       ctx.fill();
     };
     const scratchTo=p=>{
@@ -4127,7 +4160,7 @@ html.call-bridge-mode #app{
         try{window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.("light")}catch(e){}
         lastHaptic=now;
       }
-      if(moves%7===0)checkReveal();
+      if(moves%10===0)checkReveal();
     };
     const erasedRatio=()=>{
       const data=ctx.getImageData(0,0,canvas.width,canvas.height).data;
@@ -4141,6 +4174,7 @@ html.call-bridge-mode #app{
       scratchTestRevealed=true;
       card.classList.add("is-revealed");
       if(hint)hint.textContent="Приз открыт · это тестовая карта";
+      showScratchTestCelebration(ensureScratchTestPrize());
       canvas.style.pointerEvents="none";
       canvas.classList.add("scratch-fade-away");
       setTimeout(()=>{if(canvas)canvas.style.visibility="hidden"},520);
@@ -4148,7 +4182,7 @@ html.call-bridge-mode #app{
       toast("Тестовый приз открыт");
     };
     const checkReveal=()=>{
-      if(erasedRatio()>=.54)complete();
+      if(erasedRatio()>=.7)complete();
     };
 
     canvas.addEventListener("pointerdown",e=>{
